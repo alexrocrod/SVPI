@@ -157,12 +157,14 @@ end
 if ismember('ex5',exlist)
 %% Ex4e
 
-Z = zeros(1000,2000);
+fact = 30;
+Z = zeros(100,200);
 x0 = 50;
-y0 = 60;
-% r = 20;
+y0 = 100;
 x = 1:size(Z,2);
 y = 1:size(Z,1);
+x = x/fact;
+y = y/fact;
 
 [X,Y] = meshgrid(x,y);
 C = (((X-x0).^2 + (Y-y0).^2 - 1).^3 - (X-x0).^2.*(Y-y0).^3 <= 0);
@@ -170,16 +172,4 @@ Z(C) = 1;
 flipud(Z);
 imshow(Z) 
 
-
-
-
-
 end
-
-
-
-
-
-
-
-
