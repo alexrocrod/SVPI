@@ -38,6 +38,7 @@ figure(2); imshow(newZ1);
 end
 if ismember('ex2a',exlist)
 %% Ex2a
+close all
 A = imread('bolt1.png');
 
 cols = 600;
