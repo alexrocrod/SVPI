@@ -7,12 +7,14 @@ exlist = {'ex1','ex2','ex3','ex4','ex5','ex6','ex7'};
 
 if ismember('ex1',exlist)
 %% Ex1
-
-A = zeros(200,200);
+figure(1)
+lins = 200;
+cols = 200;
+A = zeros(lins,cols);
 dx = 50;
 dy = 80;
-cx = 200/2-dx/2;
-cy = 200/2-dy/2;
+cx = lins/2-dx/2;
+cy = cols/2-dy/2;
 A(cx:cx+dx,cy:cy+dy) = 1;
 
 subplot(1,4,1)
@@ -33,15 +35,20 @@ D = medfilt2(B,[3 3]);
 subplot(1,4,4)
 imshow(D)
 
+pause(2)
+
 end
 if ismember('ex2',exlist)
 %% Ex2
+clearvars -except exlist
 figure(2)
-A = zeros(200,200);
+lins = 200;
+cols = 200;
+A = zeros(lins,cols);
 dx = 50;
 dy = 80;
-cx = 200/2-dx/2;
-cy = 200/2-dy/2;
+cx = lins/2-dx/2;
+cy = cols/2-dy/2;
 A(cx:cx+dx,cy:cy+dy) = 1;
 
 subplot(1,3,1)
@@ -62,16 +69,20 @@ imshow(C)
 str = sprintf('Isolados: %d',nnz(C));
 xlabel(str);
 
+pause(2)
 
 end
 if ismember('ex3',exlist)
 %% Ex3
+clearvars -except exlist
 figure(3)
-A = zeros(200,200);
+lins = 200;
+cols = 200;
+A = zeros(lins,cols);
 dx = 50;
 dy = 80;
-cx = 200/2-dx/2;
-cy = 200/2-dy/2;
+cx = lins/2-dx/2;
+cy = cols/2-dy/2;
 A(cx:cx+dx,cy:cy+dy) = 1;
 
 subplot(1,3,1)
@@ -112,9 +123,12 @@ for n=1:4
     xlabel(str);
 end
 
+pause(2)
+
 end
 if ismember('ex4',exlist)
 %% Ex4
+clearvars -except exlist
 figure(4)
 A=[
 0 0 0 0 0 1 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
@@ -140,20 +154,27 @@ A=[
 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
 ];
 
-subplot(1,2,1)
-grid on
+subplot(1,3,1)
 imshow(A)
 
 F = [ 0  1  0;  1  -4  1;  0  1  0];
 temp = filter2(F,A);
 B = (temp==-1); 
-subplot(1,2,2)
-grid on
+subplot(1,3,2)
 imshow(B)
+
+subplot(1,3,3)
+imshow(A)
+[xs,ys] = ind2sub(size(A),find(B==1));
+text(ys,xs,'X','Color','r')
+
+
+pause(2)
 
 end
 if ismember('ex5',exlist)
 %% Ex5
+clearvars -except exlist
 figure(5)
 A=[
 0 0 0 0 0 1 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
@@ -223,14 +244,15 @@ while nint>0
     str = sprintf('Nint: %d',nint);
     xlabel(str);
 
-    pause(1)
+    pause(0.1)
 end
 
+pause(2)
 
 end
 if ismember('ex6',exlist)
 %% Ex6
-
+clearvars -except exlist
 figure(6)
 A=[
 0 0 0 0 0 1 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
@@ -256,22 +278,28 @@ A=[
 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
 ];
 
-subplot(1,2,1)
-grid on
+subplot(1,3,1)
 imshow(A)
 
 F = [ 0  1  0;  1  -4  1;  0  1  0];
 temp = filter2(F,A);
 B = (temp==-3); 
 B(1,:) = 0; B(:,1) = 0; B(end,:) = 0; B(:,end) = 0;
-subplot(1,2,2)
-grid on
+subplot(1,3,2)
 imshow(B)
+
+subplot(1,3,3)
+imshow(A)
+[xs,ys] = ind2sub(size(A),find(B==1));
+text(ys,xs,'X','Color','r')
+
+pause(2)
 
 end
 
 if ismember('ex7',exlist)
 %% Ex7
+clearvars -except exlist
 figure(7)
 A=[
 0 0 0 0 0 1 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
@@ -325,10 +353,6 @@ for ola=1:4
     end
     A2=rot90(A2);
 end
-
-
-
-
 
 
 
