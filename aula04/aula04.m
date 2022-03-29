@@ -295,17 +295,17 @@ A=[
 subplot(1,3,1)
 imshow(A)
 
-% F = [ 0  1  0;  1  -4  1;  0  1  0];
-% temp = filter2(F,A);
-% B = (temp==-3); 
-% B(1,:) = 0; B(:,1) = 0; B(end,:) = 0; B(:,end) = 0;
+F = [ 0  1  0;  1  -4  1;  0  1  0];
+temp = filter2(F,A);
+B = (temp==-3); 
+B(1,:) = 0; B(:,1) = 0; B(end,:) = 0; B(:,end) = 0;
 
 % F = [ 1  1  1;  1  -4  1;  1  1  1];
-F = [ 1   5  1
-      5  30  5
-      1   5  1];
-temp = filter2(F,A);
-B = (temp==35); 
+% F = [ 1   5  1
+%       5  30  5
+%       1   5  1];
+% temp = filter2(F,A);
+% B = (temp==35); 
 
 subplot(1,3,2)
 imshow(B)
@@ -358,12 +358,17 @@ for ola=1:4
     subplot(1,3,1)
     imshow(Z)
     
-    F = [ 0  1  0;  1  -4  1;  0  1  0];
+%     F = [ 0  1  0;  1  -4  1;  0  1  0];
+    F = [ 1   5  1
+      5  30  5
+      1   5  1];
+
     nbecos=1;
     while nbecos>0
         temp = filter2(F,Z);
         B = (temp==-3); 
         B(1,:) = 0; B(:,1) = 0; B(end,:) = 0; B(:,end) = 0;
+%         B = (temp==35); 
         subplot(1,3,2)
         imshow(B)
 
