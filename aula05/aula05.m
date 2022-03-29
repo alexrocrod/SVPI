@@ -75,40 +75,40 @@ line([Ts(2) Ts(2)],[0 1e3],'Color','r')
 
 figure(2)
 subplot(2,3,1)
-title("Pretos e Brancos")
 B=zeros(size(A));
 B(A<Ts(1) | A>Ts(2)) = 1;
 imshow(B)
+title("Pretos e Brancos")
 
 subplot(2,3,2)
-title("Cinzentos")
 B=zeros(size(A));
 B(A>Ts(1) & A<Ts(2)) = 1;
 imshow(B)
+title("Cinzentos")
 
 subplot(2,3,3)
-title("Pretos")
 B=zeros(size(A));
 B(A<Ts(1)) = 1;
 imshow(B)
+title("Pretos")
 
 subplot(2,3,4)
-title("Brancos")
 B=zeros(size(A));
 B(A>Ts(2)) = 1;
 imshow(B)
+title("Brancos")
 
 subplot(2,3,5)
-title("Pretos e Cinzentos")
 B=zeros(size(A));
 B(A>Ts(1)) = 1;
 imshow(B)
+title("Pretos e Cinzentos")
 
 subplot(2,3,6)
-title("Brancos e Cinzentos")
 B=zeros(size(A));
 B(A<Ts(2)) = 1;
 imshow(B)
+title("Brancos e Cinzentos")
 
 
 end
@@ -147,6 +147,50 @@ if ismember('ex5',exlist)
 clearvars -except exlist
 figure(5)
 
+A = im2double(imread("rice.png"));
+
+A_1hist = imbinarize(A);
+
+xsplit = round(size(A,1)/2);
+ysplit = round(size(A,2)/2);
+
+B = zeros(size(A));
+
+B(1:xsplit,1:ysplit) = imbinarize(A(1:xsplit,1:ysplit));
+B(1:xsplit,ysplit:end) = imbinarize(A(1:xsplit,ysplit:end));
+B(xsplit:end,1:ysplit) = imbinarize(A(xsplit:end,1:ysplit));
+B(xsplit:end,ysplit:end) = imbinarize(A(xsplit:end,ysplit:end));
+
+subplot(1,3,1)
+imshow(A)
+hold on
+line([xsplit xsplit],[0 size(A,2)],'Color','r')
+line([0 size(A,1)],[ysplit ysplit],'Color','r')
+
+subplot(1,3,2)
+imshow(B)
+
+subplot(1,3,3)
+imshow(A_1hist)
+
+figure(1)
+subplot(2,2,1)
+imshow(A_1hist)
+title("Limiar Global")
+
+subplot(2,2,2)
+imshow(B)
+title("Multi-histograma")
+
+subplot(2,2,3)
+diffs = xor(A_1hist,B);
+imshow(diffs)
+title("Diferenças")
+
+subplot(2,2,4)
+B_med = medfilt2(B);
+imshow(B_med)
+title("Multi-hist + mediana")
 
 end
 if ismember('ex6',exlist)
@@ -154,12 +198,41 @@ if ismember('ex6',exlist)
 clearvars -except exlist
 figure(6)
 
+A = im2double(imread("rice.png"));
+N=5;
+M=3;
+
+xsplit = round(size(A,1)/M);
+ysplit = round(size(A,2)/N);
+
+subplot(1,2,1)
+imshow(A)
+hold on
+
+for i=2:M
+    for j=2:N
+        xi = (i-1)*xsplit+1;
+        yi = (j-1)*ysplit+1;
+
+        line([xi xi],[0 size(A,2)],'Color','r')
+        line([0 size(A,1)],[yi yi],'Color','r')
+    end
+end
+
+B = MultiRegionBin(A,N,M);
+subplot(1,2,2)
+imshow(B)
+
+
+
 end
 
 if ismember('ex7',exlist)
 %% Ex7
 clearvars -except exlist
 figure(7)
+
+
 
 
 end
