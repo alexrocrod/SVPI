@@ -248,16 +248,13 @@ imshow(B)
 end
 
 function B = autobinwithmask(A,M)
-    A2 = A(logical(M));
-    A2_bin = imbinarize(A2);
-
     B = A;
-    B(logical(M)) = A2_bin;
+    B(M) = autobin(A(M));
 end
 
 
 function M = circularROI(y0,x0,ri,re,A)
-    M = zeros(size(A));
+    M = zeros(size(A),'logical');
     for i=1:size(A,1)
         for j=1:size(A,2)
             temp = (i-x0)^2 + (j-y0)^2;
