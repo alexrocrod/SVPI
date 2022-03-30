@@ -232,7 +232,38 @@ if ismember('ex7',exlist)
 clearvars -except exlist
 figure(7)
 
+A = im2double(imread("rice.png"));
+subplot(1,3,1)
+imshow(A)
+
+M = circularROI(100,50,80,120,A);
+subplot(1,3,2)
+imshow(M)
+
+B = autobinwithmask(A,M);
+subplot(1,3,3)
+imshow(B)
 
 
+end
 
+function B = autobinwithmask(A,M)
+    A2 = A(logical(M));
+    A2_bin = imbinarize(A2);
+
+    B = A;
+    B(logical(M)) = A2_bin;
+end
+
+
+function M = circularROI(y0,x0,ri,re,A)
+    M = zeros(size(A));
+    for i=1:size(A,1)
+        for j=1:size(A,2)
+            temp = (i-x0)^2 + (j-y0)^2;
+            if ((temp >= ri^2) && (temp <= re^2))
+                M(i,j) = 1;
+            end
+        end
+    end
 end
