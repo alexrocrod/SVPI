@@ -37,11 +37,12 @@ function NumMec = tp1_92993()
 %     addpath('../sequencias/Seq350')
 %     listaF=dir('../sequencias/Seq350/svpi2022_TP1_img_*.png');
     fig1 = figure(1);
-    fig2 = figure(2);
-    fig3 = figure(3);
+%     fig2 = figure(2);
+%     fig3 = figure(3);
 
     numFiles = size(listaF,1);
-    for idxImg = 1:numFiles
+%     for idxImg = 1:numFiles
+    idxImg = 1;
         imName = listaF(idxImg).name;
         NumSeq = str2double(imName(18:20));
         NumImg = str2double(imName(22:23));
@@ -58,12 +59,12 @@ function NumMec = tp1_92993()
         N=numel(regions);
         SS=ceil(sqrt(N));
         
-        figure(2)
-        for k=1:N 
-            subplot( SS, SS, k);
-            imshow( regions{k} );
-            drawnow
-        end
+%         figure(2)
+%         for k=1:N 
+%             subplot( SS, SS, k);
+%             imshow( regions{k} );
+%             drawnow
+%         end
 
 
 
@@ -135,15 +136,131 @@ function NumMec = tp1_92993()
 %         end
 
         %% Autobin
-        figure(4)
-        for k=1:N 
+%         figure(4)
+%         for k=1:N 
+%             subplot( SS, SS, k);
+%             B = autobin(regions{k});
+%             imshow(B);
+%             
+%         
+%             %% Get Domino Dots
+%             is1 = false;
+%             countDoms = 0;
+%             for i=1:size(B,1)
+%                 for j=1:size(B,2)
+%                     if is1 == true && B(i,j)==0 
+%                         is1 = false;
+%                         countDoms = countDoms + 1;
+%                     end
+%                     if is1 == false && B(i,j)==1
+%                         is1 = true;
+%                     end
+%                 end
+%             end
+% 
+%             str = sprintf('Dots: %d',countDoms);
+%             xlabel(str);
+%             
+%             drawnow
+% 
+%         end
+        figure(7)
+        domKs = [];
+        for k=1:N
             subplot( SS, SS, k);
             B = autobin(regions{k});
-            imshow(B);
-            drawnow
+
+            sx = size(B,1);
+            sy = size(B,2);
+            
+            % rotate to horizontal
+            if sx>sy
+                B = rot90(B);
+            end
+
+            sy = size(B,2);
+            sx = size(B,1);
+            
+            if sx ~= sy
+                perc = 2/100;
+                t1 = 0.5-perc/2;
+                t2 = 0.5+perc/2;
+                area = round(perc*sy*sx);
+                if nnz(B(:,round(sy*t1):round(sy*t2))) > 0.7 * area
+                    B(:,round(sy*t1):round(sy*t2)) = 0;
+                    domKs = [domKs k];
+
+                    B(1:round(sy*perc),:)= 0;
+                    B(end-round(sy*perc):end,:)= 0;
+                    B(:,1:round(sx*perc))= 0;
+                    B(:,end-round(sx*perc):end)= 0;
+
+                    imshow(B)
+                    str = sprintf('Domino %d',k);
+                    xlabel(str);
+                    
+                end
+                
+            end
+
+            regions{k} = double(B);
+            
+            
         end
+        domKs
+
+        %% Detect squares
+        figure(5)
+        for k=1:N 
+            if ismember(k,domKs)
+                subplot( SS, SS, k);
+                B = autobin(regions{k});
+            
+                % Get Domino Dots
+    %             F = [ 1  1  1;  1  1  1;  1  1  1];
+                l = 9;
+                Fsq = ones(l,l);
+
+                Floz = zeros(l,l);
+                se = strel('diamond',floor(l/2));
+                idx = se.Neighborhood;
+                Floz(idx) = 1;
+
+                Fcir = zeros(l,l);
+                se = strel('disk',ceil(l/2));
+                idx = se.Neighborhood;
+                Fcir(idx) = 1
+
+%                 while nnz(B)>50
+                    C = filter2(Fsq,B);
+                    Bsq = (C==l*l);
+                    if nnz(Bsq)>0
+                        B = Bsq;
+                    else
+                        C = filter2(Floz,B);
+                        Bloz = (C==l*l);
+
+                        if nnz(Bloz)>0
+                            B = Bloz;
+                        else
+                            C = filter2(Fcir,B);
+                            Bcir = (C==l*l);
+                            if nnz(Bloz)>0
+                                B = Bcir;
+                            end
+                        end
+                    end
+%                 end
     
-        pause(2)
+                imshow(B);
+    
+                str = sprintf('Dots: %d',nnz(B));
+                xlabel(str);
+                
+                drawnow
+            end
+        end
+
 
         %% Write Table Entry
         T = table(NumMec, NumSeq, NumImg, tDom, tDice, tCard, RDO, ...
@@ -154,13 +271,8 @@ function NumMec = tp1_92993()
             writetable(T,'tp1_92993.txt', 'WriteVariableNames',false, 'WriteMode','append')
         end
 
-        %% 
-
-
-        %% 
-    
-        pause(1)
-    end
+        pause(2)
+%     end
 
 
 
