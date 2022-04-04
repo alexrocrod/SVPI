@@ -300,5 +300,63 @@ for k = 1:N
 %     pause(0.01)
 end
 
+%% Ex9_2
+figure(10)
+
+A = im2double(imread("Tcomluz.jpg"));
+Z = edge(A,'canny',[0 0.5],2);
+X = false(size(Z));
+
+subplot(1,2,1);
+imshow(A);
+hold on
+axis on
+title({'Edges overlayed with','larger outer countours'});
+
+myAxis = axis;
+subplot(1,2,2), hold on, axis ij, axis equal, axis(myAxis), grid on;
+imshow(X)
+title({'Separate plot of the','larger outer countours'})
+
+[L,N] = bwlabel(Z);
+max_size = 0;
+max_k = 0;
+
+for k = 1:N
+    C = (L==k);
+
+    BB = bwboundaries(C,'noholes');
+    boundary = BB{1};
+
+    if length(boundary)> max_size
+        max_k = k;
+        max_size = length(boundary);
+    end
+end
+
+C = (L==max_k);
+BB = bwboundaries(C,'noholes');
+boundary = BB{1};
+
+subplot(1,2,1);
+plot(boundary(:,2),boundary(:,1),'r');
+
+subplot(1,2,2);
+plot(boundary(:,2),boundary(:,1),'r');
+
+
+for k = 1:N
+    if ( k==max_k), continue; end
+    C = (L==k);
+
+    BB = bwboundaries(C,'noholes');
+    boundary = BB{1};
+
+    subplot(1,2,2);
+    plot(boundary(:,2),boundary(:,1),'g');
+
+%     pause(0.01)
+end
+
 
 end
