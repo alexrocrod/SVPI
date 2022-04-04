@@ -42,7 +42,8 @@ function NumMec = tp1_92993()
 
     NumImg = size(listaF,1);
 %     for idxImg = 1:NumImg
-    idxImg = 1;
+%     idxImg = 1;
+    idxImg = 11;
         imName = listaF(idxImg).name;
         NumSeq = str2double(imName(18:20));
         NumImg = str2double(imName(22:23));
@@ -59,12 +60,18 @@ function NumMec = tp1_92993()
         N=numel(regions);
         SS=ceil(sqrt(N));
         
-%         figure(2)
-%         for k=1:N 
-%             subplot( SS, SS, k);
-%             imshow( regions{k} );
-%             drawnow
-%         end
+        figure(2)
+        for k=1:N 
+            subplot( SS, SS, k);
+            if k==5
+                temp = ones(size(regions{k})) - regions{k};
+                imshow(autobin(imadjust(temp)));
+            else
+                imshow( autobin(imadjust(regions{k})) );
+            end
+            xlabel(k)
+            drawnow
+        end
 
 
 
@@ -166,16 +173,21 @@ function NumMec = tp1_92993()
 %         end
         figure(7)
         domKs = [];
+        numDomsRoted = 0;
         for k=1:N
             subplot( SS, SS, k);
+            
             B = autobin(regions{k});
 
+            
             sx = size(B,1);
             sy = size(B,2);
             
+            rotated = false;
             % rotate to horizontal
             if sx>sy
                 B = rot90(B);
+                rotated = true;
             end
 
             sy = size(B,2);
@@ -189,6 +201,10 @@ function NumMec = tp1_92993()
                 if nnz(B(:,round(sy*t1):round(sy*t2))) > 0.7 * area
                     B(:,round(sy*t1):round(sy*t2)) = 0;
                     domKs = [domKs k];
+
+                    if (rotated)
+                        numDomsRoted=numDomsRoted+1; 
+                    end
 
                     B(1:round(sy*perc),:)= 0;
                     B(end-round(sy*perc):end,:)= 0;
@@ -209,59 +225,94 @@ function NumMec = tp1_92993()
             
         end
         domKs
+        tDom = length(domKs);
+        RDO = tDom - numDomsRoted; 
 
         %% Detect squares
-        figure(5)
-        for k=1:N 
-            if ismember(k,domKs)
-                subplot( SS, SS, k);
-                B = autobin(regions{k});
+%         figure(5)
+%         for k=1:N 
+%             if ismember(k,domKs)
+%                 subplot( SS, SS, k);
+%                 B = autobin(regions{k});
+%             
+%                 % Get Domino Dots
+%     %             F = [ 1  1  1;  1  1  1;  1  1  1];
+%                 l = 9;
+%                 Fsq = ones(l,l);
+% 
+%                 Floz = zeros(l,l);
+%                 se = strel('diamond',floor(l/2));
+%                 idx = se.Neighborhood;
+%                 Floz(idx) = 1;
+% 
+%                 Fcir = zeros(l,l);
+%                 se = strel('disk',ceil(l/2));
+%                 idx = se.Neighborhood;
+%                 Fcir(idx) = 1;
+% 
+% %                 while nnz(B)>50
+%                     C = filter2(Fsq,B);
+%                     Bsq = (C==nnz(Fsq));
+%                     if nnz(Bsq)>0 && nnz(Bsq) < 12
+%                         B = Bsq;
+%                     else
+%                         C = filter2(Floz,B);
+%                         Bloz = (C==nnz(Floz));
+% 
+%                         if nnz(Bloz)>0 && nnz(Bloz) < 12
+%                             B = Bloz;
+%                         else
+%                             C = filter2(Fcir,B);
+%                             Bcir = (C==nnz(Fcir));
+%                             if nnz(Bloz)>0 && nnz(Bcir) < 12
+%                                 B = Bcir;
+%                             end
+%                         end
+%                     end
+% %                 end
+%     
+%                 imshow(B);
+%     
+%                 str = sprintf('Dots: %d',nnz(B));
+%                 xlabel(str);
+%                 
+%                 drawnow
+%             end
+%         end
+
+
+        %% Get Edges
+
+        figure(8)
+        for k=1:N
+            subplot( SS, SS, k);
+            B = edge(regions{k},'log');
+%             B = bwareaopen(B,10);
+            imshow(B)
+            myAxis = axis;
+            hold on, axis ij, axis equal, axis(myAxis), grid on;
+            [L,Nb] = bwlabel(B);
+
+            for x = 1:Nb
+                C = (L==x);
+%                 if ( nnz(C) < minSize), continue; end
             
-                % Get Domino Dots
-    %             F = [ 1  1  1;  1  1  1;  1  1  1];
-                l = 9;
-                Fsq = ones(l,l);
+                BB = bwboundaries(C,'noholes');
+                boundary = BB{1};
+            
+                plot(boundary(:,2),boundary(:,1),'b');
+           end
 
-                Floz = zeros(l,l);
-                se = strel('diamond',floor(l/2));
-                idx = se.Neighborhood;
-                Floz(idx) = 1;
+            str= sprintf("N=%d\n",Nb);  
+            xlabel(str)
 
-                Fcir = zeros(l,l);
-                se = strel('disk',ceil(l/2));
-                idx = se.Neighborhood;
-                Fcir(idx) = 1;
-
-%                 while nnz(B)>50
-                    C = filter2(Fsq,B);
-                    Bsq = (C==nnz(Fsq));
-                    if nnz(Bsq)>0 && nnz(Bsq) < 12
-                        B = Bsq;
-                    else
-                        C = filter2(Floz,B);
-                        Bloz = (C==nnz(Floz));
-
-                        if nnz(Bloz)>0 && nnz(Bloz) < 12
-                            B = Bloz;
-                        else
-                            C = filter2(Fcir,B);
-                            Bcir = (C==nnz(Fcir));
-                            if nnz(Bloz)>0 && nnz(Bcir) < 12
-                                B = Bcir;
-                            end
-                        end
-                    end
-%                 end
-    
-                imshow(B);
-    
-                str = sprintf('Dots: %d',nnz(B));
-                xlabel(str);
-                
-                drawnow
+            % Dominos
+            if ismember(k,domKs)
+                PntDom = PntDom + Nb;
             end
         end
 
+            
 
         %% Write Table Entry
         T = table(NumMec, NumSeq, NumImg, tDom, tDice, tCard, RDO, ...
