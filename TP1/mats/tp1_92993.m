@@ -36,22 +36,22 @@ function NumMec = tp1_92993()
 
 %     addpath('../sequencias/Seq350')
 %     listaF=dir('../sequencias/Seq350/svpi2022_TP1_img_*.png');
-    fig1 = figure(1);
+%     fig1 = figure(1);
 %     fig2 = figure(2);
 %     fig3 = figure(3);
 
-    numFiles = size(listaF,1);
-%     for idxImg = 1:numFiles
+    NumImg = size(listaF,1);
+%     for idxImg = 1:NumImg
     idxImg = 1;
         imName = listaF(idxImg).name;
         NumSeq = str2double(imName(18:20));
         NumImg = str2double(imName(22:23));
 
-        clf(fig1)
+%         clf(fig1)
    
         A = im2double(imread(imName));
-        figure(fig1)
-        imshow(A)
+%         figure(fig1)
+%         imshow(A)
     
         %% SubImages (provisorio)
     
@@ -192,7 +192,8 @@ function NumMec = tp1_92993()
 
                     B(1:round(sy*perc),:)= 0;
                     B(end-round(sy*perc):end,:)= 0;
-                    B(:,1:round(sx*perc))= 0;
+%                     B(:,1:round(sx*perc))= 0;
+                    B(:,1:round(sx*perc*2))= 0;
                     B(:,end-round(sx*perc):end)= 0;
 
                     imshow(B)
@@ -229,23 +230,23 @@ function NumMec = tp1_92993()
                 Fcir = zeros(l,l);
                 se = strel('disk',ceil(l/2));
                 idx = se.Neighborhood;
-                Fcir(idx) = 1
+                Fcir(idx) = 1;
 
 %                 while nnz(B)>50
                     C = filter2(Fsq,B);
-                    Bsq = (C==l*l);
-                    if nnz(Bsq)>0
+                    Bsq = (C==nnz(Fsq));
+                    if nnz(Bsq)>0 && nnz(Bsq) < 12
                         B = Bsq;
                     else
                         C = filter2(Floz,B);
-                        Bloz = (C==l*l);
+                        Bloz = (C==nnz(Floz));
 
-                        if nnz(Bloz)>0
+                        if nnz(Bloz)>0 && nnz(Bloz) < 12
                             B = Bloz;
                         else
                             C = filter2(Fcir,B);
-                            Bcir = (C==l*l);
-                            if nnz(Bloz)>0
+                            Bcir = (C==nnz(Fcir));
+                            if nnz(Bloz)>0 && nnz(Bcir) < 12
                                 B = Bcir;
                             end
                         end
