@@ -3,7 +3,7 @@
 % Abril 2022
 % Aula 05
 
-exlist = {'ex1','ex2','ex3','ex4','ex5','ex6','ex7'};
+exlist = {'ex1','ex2','ex3','ex4','ex5','ex6','ex7','ex8','ex9'};
 
 if ismember('ex1',exlist)
 %% Ex1
@@ -245,6 +245,69 @@ subplot(1,3,3)
 imshow(B)
 
 
+end
+
+if ismember('ex8',exlist)
+%% Ex8
+clearvars -except exlist
+figure(8)
+
+A = im2double(imread("rice.png"));
+subplot(1,3,1)
+imshow(A)
+title("Original")
+
+T = adaptthresh(A);
+B = imbinarize(A,T);
+subplot(1,3,2)
+imshow(B)
+title("Adaptative binarization")
+
+Fiso =[-1 -1 -1; -1 8 -1; -1 -1 -1];
+temp = filter2(Fiso,B);
+C = (temp>4);
+D = B;
+D(C) = 0;
+subplot(1,3,3)
+imshow(D)
+title("Cleaned Image")
+
+
+
+end
+
+if ismember('ex9',exlist)
+%% Ex9
+clearvars -except exlist
+figure(9)
+
+
+A = im2double(imread("samples2.png"));
+subplot(1,2,1)
+imshow(A)
+title("Original")
+
+% for sensi = 0:0.1:1
+% for sensi = 0.5:0.05:0.9
+% for sensi = 0.6:0.02:0.8
+% for sensi = 0.61:0.01:0.7
+% for sensi = 0.64:0.005:0.67
+% for sensi = 0.60:0.005:0.64
+sensi = 0.62;
+    T = adaptthresh(A,sensi);
+    B = imbinarize(A,T);
+    
+    if nnz(B)>0.5*(size(B,1)*size(B,2))
+        B = not(B);
+    end
+    B = bwareaopen(B,100);
+
+    subplot(1,2,2)
+    imshow(B)
+    title("Adaptative binarization "+ num2str(sensi))
+    drawnow
+    pause(1)
+% end
 end
 
 function B = autobinwithmask(A,M)
