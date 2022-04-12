@@ -3,8 +3,9 @@ close all
 
 load("matlab.mat","regions","diceKs")
 
+rodados = [];
 for i=1:length(diceKs)
-    ss = 7;
+    ss = 3;
     figure(i)
     dado1 = regions{diceKs(i)};
     
@@ -29,8 +30,8 @@ for i=1:length(diceKs)
 %     xlabel(str)
 %     
 %     subplot(1,ss,2)
-    A = strel('diamond',round(size(dado1,1)/2)-1);
-    dia = A.Neighborhood;
+%     A = strel('diamond',round(size(dado1,1)/2)-1);
+%     dia = A.Neighborhood;
 %     imshow(dia)
 %     
 %     subplot(1,ss,3)
@@ -55,7 +56,6 @@ for i=1:length(diceKs)
 % 
 %     str= sprintf("N=%d\n",Nb);  
 %     xlabel(str)
-
 %     subplot(1,ss,4)
 %     iguais = dado2==dado1;
 %     imshow(iguais)
@@ -67,25 +67,23 @@ for i=1:length(diceKs)
 %         fprintf("esta rodado")
 %     end
 
-    subplot(1,ss,5)
-    A = strel('diamond',floor(size(dado1,1)/2));
+%     subplot(1,ss,2)
+    A = strel('diamond',floor(size(dado1,1)/2)+2); %+0
     dia = A.Neighborhood;
-    imshow(edge(dia))
+%     imshow(edge(dia))
 
 %     subplot(1,ss,6)
     [Gmag,Gdir] = imgradient(dado1);
 %     imshow(Gmag>3)
 %     ola = Gmag>3;
-
 %     dia2 = dia;
 %     sx = size(dado1,1);
 %     min = round(sx/4);
 %     max = round(3*sx/4);
 %     dia2(min:max,min:max)=0;
-
 %     subplot(1,ss,7)
 
-    B = strel('diamond',floor(size(dado1,1)/2)-2);
+    B = strel('diamond',floor(size(dado1,1)/2)-1); %-2
     diamin = B.Neighborhood;
     deltas = size(dia,1)-size(diamin,1);
     deltas = round(deltas/2);
@@ -99,11 +97,32 @@ for i=1:length(diceKs)
 %     ola = edge(dado1);
     ola = Gmag>1;
 
-    if nnz(ola(zona(1:size(ola,1),1:size(ola,1)))) > 0.2 * area
+    if nnz(ola(zona(1:size(ola,1),1:size(ola,1)))) > 0.2 * area %.2
         xlabel("rodado")
-        fprintf("esta rodado %d\n",i)
+        fprintf("rodou %d\n",i)
+        rodadosK = [rodados diceKs(i)];
+
+        
+        A = imrotate(regions{diceKs(i)},45);
+
+
+        x = size(regions{diceKs(i)},1);
+        l = ceil(x/sqrt(2))+1;
+        deltal = round(l/2)+1;
+        xmeio = round(size(A,1)/2);
+
+
+        regions{diceKs(i)} = A(xmeio-deltal:xmeio+deltal,xmeio-deltal:xmeio+deltal);
+        
     end
 
+    subplot(1,ss,2)
+    imshow(regions{diceKs(i)})
+
+    subplot(1,ss,3)
+    imshow(autobin(regions{diceKs(i)}))
+
+    
     
 
 %     pause(2)

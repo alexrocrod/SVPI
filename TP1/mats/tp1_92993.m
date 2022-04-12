@@ -239,8 +239,8 @@ function NumMec = tp1_92993()
                 
 
                 % Perceber se estao a 45º
-                
-                
+                c2=2;
+                B = autobin(imadjust(regions{k}(c2+1:end-c2,c2+1:end-c2))); 
 
                 imshow(B)
                 str = sprintf('Dado %d',k);
