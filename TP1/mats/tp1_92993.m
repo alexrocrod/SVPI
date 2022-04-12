@@ -236,9 +236,16 @@ function NumMec = tp1_92993()
                 end
             else % Quadrados -> Dados e NOISE <<<<<
                 diceKs = [diceKs k];
+                
+
+                % Perceber se estao a 45º
+                
+                
+
                 imshow(B)
                 str = sprintf('Dado %d',k);
                 xlabel(str);
+                
             end
 
             regions{k} = double(B);
@@ -328,7 +335,13 @@ function NumMec = tp1_92993()
 
             for x = 1:Nb
                 C = (L==x);
-%                 if ( nnz(C) < minSize), continue; end
+%                 if ( nnz(C) > 2*sx)
+%                     BB = bwboundaries(C,'noholes');
+%                     boundary = BB{1};
+%                 
+%                     plot(boundary(:,2),boundary(:,1),'r');
+%                     continue
+%                 end
             
                 BB = bwboundaries(C,'noholes');
                 boundary = BB{1};
