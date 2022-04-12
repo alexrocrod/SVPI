@@ -37,6 +37,9 @@ function NumMec = tp1_92993()
 
 %     addpath('../sequencias/Seq350')
 %     listaF=dir('../sequencias/Seq350/svpi2022_TP1_img_*.png');
+%     fig1 = figure(1);
+%     fig2 = figure(2);
+%     fig3 = figure(3);
 
     MaxImg = size(listaF,1);
 %     for idxImg = 1:MaxImg
@@ -57,10 +60,15 @@ function NumMec = tp1_92993()
         figure(2)
         for k=1:N 
             subplot( SS, SS, k);
-%             imshow(autobin(imadjust(regions{k})));
-            imshow(autobin(imadjust(regions{k}(3:end-3,3:end-3))));
+%             if k==5
+%                 temp = ones(size(regions{k})) - regions{k};
+%                 imshow(autobin(imadjust(temp)));
+%             else
+%                 imshow( autobin(imadjust(regions{k})) );
+%             end
+            imshow(imadjust(regions{k}(3:end-3,3:end-3)));
             xlabel(k)
-%             drawnow
+            drawnow
         end
 
 
@@ -161,18 +169,15 @@ function NumMec = tp1_92993()
 %             drawnow
 % 
 %         end
-%         figure(7)
+        figure(7)
         domKs = [];
         diceKs = [];
         cardKs = [];
         numDomsRoted = 0;
-        figure(7)
         for k=1:N
             subplot( SS, SS, k);
             
-            cut = 5;
-            B = autobin(imadjust(regions{k}(cut+1:end-cut,cut+1:end-cut)));
-%             B = autobin(imadjust(regions{k}));
+            B = autobin(imadjust(regions{k}(3:end-3,3:end-3)));
 
             
             sx = size(B,1);
@@ -189,19 +194,13 @@ function NumMec = tp1_92993()
             sx = size(B,1);
             
             if sx ~= sy
-                perc = 4/100;
+                perc = 2/100;
                 t1 = 0.5-perc/2;
                 t2 = 0.5+perc/2;
                 area = round(perc*sy*sx);
 
-                centerB = B(:,round(sy*t1):round(sy*t2));
-                [gx,gy] = imgradientxy(centerB);
-                vertlines = gx>0;
-
                 % Dominos
-                if nnz(vertlines) > 0.3 * area
-%                     t1 = 0.5-perc;
-%                     t2 = 0.5+perc;
+                if nnz(B(:,round(sy*t1):round(sy*t2))) > 0.7 * area
                     B(:,round(sy*t1):round(sy*t2)) = 0;
                     domKs = [domKs k];
 
@@ -209,36 +208,24 @@ function NumMec = tp1_92993()
                         numDomsRoted=numDomsRoted+1; 
                     end
 
-                    perc = 2/100;
                     B(1:round(sy*perc),:)= 0;
                     B(end-round(sy*perc):end,:)= 0;
 %                     B(:,1:round(sx*perc))= 0;
                     B(:,1:round(sx*perc*2))= 0;
-                    B(:,end-round(sx*perc*2):end)= 0;
+                    B(:,end-round(sx*perc):end)= 0;
 
                     imshow(B)
-%                     hold on
-%                     imshow(vertlines)
                     str = sprintf('Domino %d',k);
                     xlabel(str);
                 else % cards e NOISE <<<<<
 
-%                     B = B(10:end-10,:);
+                    B = B(10:end-10,:);
 
                     cardKs = [cardKs k];
-
-                    imshow(B)
-%                     hold on
-%                     imshow(vertlines)
-                    str = sprintf('Carta %d',k);
-                    xlabel(str);
                     
                 end
             else % Quadrados -> Dados e NOISE <<<<<
                 diceKs = [diceKs k];
-                imshow(B)
-                str = sprintf('Dado %d',k);
-                xlabel(str);
             end
 
             regions{k} = double(B);
@@ -349,7 +336,7 @@ function NumMec = tp1_92993()
                 [L,Nb1] = bwlabel(B1);
                 [L,Nb2] = bwlabel(B2);
 
-                if Nb1==Nb2 
+                if Nb1==Nb2
                     tDuplas = tDuplas + 1;
                     disp(k)
                 end
