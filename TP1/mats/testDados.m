@@ -5,83 +5,12 @@ load("matlab.mat","regions","diceKs")
 
 rodados = [];
 for i=1:length(diceKs)
-    ss = 3;
-    figure(i)
     dado1 = regions{diceKs(i)};
-    
-    subplot(1,ss,1)
-    imshow(dado1)
 
-%     B = dado1;
-% 
-%     myAxis = axis;
-%     hold on, axis ij, axis equal, axis(myAxis), grid on;
-%     [L,Nb] = bwlabel(B);
-% 
-%     for x = 1:Nb
-%         C = (L==x);
-%     
-%         BB = bwboundaries(C,'noholes');
-%         boundary = BB{1};
-%     
-%         plot(boundary(:,2),boundary(:,1),'b');
-%     end
-%     str= sprintf("N=%d\n",Nb);  
-%     xlabel(str)
-%     
-%     subplot(1,ss,2)
-%     A = strel('diamond',round(size(dado1,1)/2)-1);
-%     dia = A.Neighborhood;
-%     imshow(dia)
-%     
-%     subplot(1,ss,3)
-%     dado2 = zeros(size(dado1));
-%     dado2(dia) = dado1(dia);
-%     imshow(dado2)
-% 
-%     B = dado2;
-% 
-%     myAxis = axis;
-%     hold on, axis ij, axis equal, axis(myAxis), grid on;
-%     [L,Nb] = bwlabel(B);
-% 
-%     for x = 1:Nb
-%         C = (L==x);
-%     
-%         BB = bwboundaries(C,'noholes');
-%         boundary = BB{1};
-%     
-%         plot(boundary(:,2),boundary(:,1),'b');
-%    end
-% 
-%     str= sprintf("N=%d\n",Nb);  
-%     xlabel(str)
-%     subplot(1,ss,4)
-%     iguais = dado2==dado1;
-%     imshow(iguais)
-%     
-% 
-%     Niguais = nnz(iguais);
-%     N = size(dado1,1)*size(dado1,2);
-%     if Niguais < 0.5*N
-%         fprintf("esta rodado")
-%     end
-
-%     subplot(1,ss,2)
     A = strel('diamond',floor(size(dado1,1)/2)+2); %+0
     dia = A.Neighborhood;
-%     imshow(edge(dia))
 
-%     subplot(1,ss,6)
     [Gmag,Gdir] = imgradient(dado1);
-%     imshow(Gmag>3)
-%     ola = Gmag>3;
-%     dia2 = dia;
-%     sx = size(dado1,1);
-%     min = round(sx/4);
-%     max = round(3*sx/4);
-%     dia2(min:max,min:max)=0;
-%     subplot(1,ss,7)
 
     B = strel('diamond',floor(size(dado1,1)/2)-1); %-2
     diamin = B.Neighborhood;
@@ -89,22 +18,18 @@ for i=1:length(diceKs)
     deltas = round(deltas/2);
     d2 = zeros(size(dia));
     d2(deltas+1:end-deltas,deltas+1:end-deltas) = diamin;
-%     imshow(dia & not(d2))
 
     zona = dia & not(d2);
     area = nnz(zona);
 
-%     ola = edge(dado1);
-    ola = Gmag>1;
+    edges = Gmag>1;
 
-    if nnz(ola(zona(1:size(ola,1),1:size(ola,1)))) > 0.2 * area %.2
-        xlabel("rodado")
-        fprintf("rodou %d\n",i)
+    if nnz(edges(zona(1:size(edges,1),1:size(edges,1)))) > 0.2 * area %.2
+
         rodadosK = [rodados diceKs(i)];
 
         
         A = imrotate(regions{diceKs(i)},45);
-
 
         x = size(regions{diceKs(i)},1);
         l = ceil(x/sqrt(2))+1;
@@ -116,14 +41,4 @@ for i=1:length(diceKs)
         
     end
 
-    subplot(1,ss,2)
-    imshow(regions{diceKs(i)})
-
-    subplot(1,ss,3)
-    imshow(autobin(regions{diceKs(i)}))
-
-    
-    
-
-%     pause(2)
 end

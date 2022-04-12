@@ -40,7 +40,7 @@ function NumMec = tp1_92993()
 
     MaxImg = size(listaF,1);
 %     for idxImg = 1:MaxImg
-    idxImg = 11;
+    idxImg = 12;
         imName = listaF(idxImg).name;
         NumSeq = str2double(imName(18:20));
         NumImg = str2double(imName(22:23));
@@ -165,6 +165,7 @@ function NumMec = tp1_92993()
         domKs = [];
         diceKs = [];
         cardKs = [];
+        rodados = [];
         numDomsRoted = 0;
         figure(7)
         for k=1:N
@@ -240,8 +241,42 @@ function NumMec = tp1_92993()
 
                 % Perceber se estao a 45º
                 c2=2;
-                B = autobin(imadjust(regions{k}(c2+1:end-c2,c2+1:end-c2))); 
-
+                dado1 = autobin(imadjust(regions{k}(c2+1:end-c2,c2+1:end-c2))); 
+                
+                A = strel('diamond',floor(size(dado1,1)/2)+2); %+0
+                dia = A.Neighborhood;
+            
+                [Gmag,Gdir] = imgradient(dado1);
+            
+                C = strel('diamond',floor(size(dado1,1)/2)-1); %-2
+                diamin = C.Neighborhood;
+                deltas = size(dia,1)-size(diamin,1);
+                deltas = round(deltas/2);
+                d2 = zeros(size(dia));
+                d2(deltas+1:end-deltas,deltas+1:end-deltas) = diamin;
+            
+                zona = dia & not(d2);
+                area = nnz(zona);
+            
+                edges = Gmag>1;
+            
+                if nnz(edges(zona(1:size(edges,1),1:size(edges,1)))) > 0.2 * area %.2
+            
+                    rodados = [rodados k];
+           
+                    A = imrotate(dado1,45);
+            
+                    x = size(dado1,1);
+                    l = ceil(x/sqrt(2))+1;
+                    deltal = round(l/2)+1;
+                    xmeio = round(size(A,1)/2);
+            
+            
+                    B = A(xmeio-deltal:xmeio+deltal,xmeio-deltal:xmeio+deltal);
+                    
+                end
+%                 B = autobin(imadjust(double(B(cut+1:end-cut,cut+1:end-cut))));
+                    
                 imshow(B)
                 str = sprintf('Dado %d',k);
                 xlabel(str);
@@ -257,8 +292,9 @@ function NumMec = tp1_92993()
         RDO = tDom - numDomsRoted; 
 
         diceKs
+        rodados
         tDice = length(diceKs);
-        RFO = tDice; % POR AGORA TUDO A 0º
+        RFO = tDice - length(rodados);
 
         cardKs
         tCard = length(cardKs);
