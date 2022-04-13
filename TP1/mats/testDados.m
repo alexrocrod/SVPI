@@ -1,42 +1,35 @@
 clear
 close all
 
-load("matlab.mat","regions","diceKs")
+load("matlab.mat","regions","noiseKs")
 
-ss = 3;
-for i=1:length(diceKs)
+ss = 2;
+exacts = [0     7     6     0     7     7     0     0     6     8     4     5     5];
+
+for i=1:length(noiseKs)
     figure(i)
-    dado1 = regions{diceKs(i)};
+%     dado1 = regions{noiseKs(i)}(cut+1:end-cut,cut+1:end-cut);
+    cut = round(0.1*size(regions{noiseKs(i)},1)); % 0.1
+    dado1 = regions{noiseKs(i)}(cut+1:end-cut,:);
 
     subplot(1,ss,1)
     imshow(dado1);
 
     subplot(1,ss,2)
-    B = edge(dado1,'log');
-%             B = bwareaopen(B,10);
-    imshow(B)
-    myAxis = axis;
-    hold on, axis ij, axis equal, axis(myAxis), grid on;
-    [L,Nb] = bwlabel(B);
+    B = edge(dado1,'roberts'); % roberts
+    C = bwareaopen(B,round(0.5*size(B,1))); % 0.5
+    D = bwmorph(C,'close');
+    imshow(D)
 
-    for x = 1:Nb
-        C = (L==x);
-%                 if ( nnz(C) > 2*sx)
-%                     BB = bwboundaries(C,'noholes');
-%                     boundary = BB{1};
-%                 
-%                     plot(boundary(:,2),boundary(:,1),'r');
-%                     continue
-%                 end
-    
-        BB = bwboundaries(C,'noholes');
-        boundary = BB{1};
-    
-        plot(boundary(:,2),boundary(:,1),'b');
-   end
-
-    str= sprintf("N=%d\n",Nb);  
+    [L,Nb] = bwlabel(D);
+    str = sprintf("N=%d\n",Nb);  
     xlabel(str)
+
+    if Nb ~= exacts(i)
+        fprintf("Errado v3 no %d\n",i);
+    end
+
+
 
     
 end
