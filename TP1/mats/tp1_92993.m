@@ -12,19 +12,19 @@ function NumMec = tp1_92993()
 
     %% Init Vars
     NumMec = 92993;
-    NumSeq = 0;
-    NumImg = 0;
+%     NumSeq = 0;
+%     NumImg = 0;
     tDom = 0;
     tDice = 0;
     tCard = 0;
     RDO = 0;
     RFO = 0;
-    tDuplas = 0;
-    PntDom = 0;
-    PntDad = 0;
-    CopOuros = 0;
-    EspPaus = 0;
-    Ouros = 0;
+%     tDuplas = 0;
+%     PntDom = 0;
+%     PntDad = 0;
+%     CopOuros = 0;
+%     EspPaus = 0;
+%     Ouros = 0;
     StringPT = "";
 
 
@@ -39,8 +39,16 @@ function NumMec = tp1_92993()
 %     listaF=dir('../sequencias/Seq350/svpi2022_TP1_img_*.png');
 
     MaxImg = size(listaF,1);
-%     for idxImg = 1:MaxImg
-    idxImg = 11;
+    for idxImg = 1:MaxImg
+%     idxImg = 11;
+        
+        tDuplas = 0;
+        PntDom = 0;
+        PntDad = 0;
+        CopOuros = 0;
+        EspPaus = 0;
+        Ouros = 0;
+
         imName = listaF(idxImg).name;
         NumSeq = str2double(imName(18:20));
         NumImg = str2double(imName(22:23));
@@ -55,23 +63,23 @@ function NumMec = tp1_92993()
         SS=ceil(sqrt(N));
         
 
-        figure(1)
-        for k=1:N 
-            subplot( SS, SS, k);
-            imshow(regions{k})
-            xlabel(k)
-%             drawnow
-        end
-
-
-        figure(2)
-        for k=1:N 
-            subplot( SS, SS, k);
-%             imshow(autobin(imadjust(regions{k})));
-            imshow(autobin(imadjust(regions{k}(3:end-3,3:end-3))));
-            xlabel(k)
-%             drawnow
-        end
+%         figure(1)
+%         for k=1:N 
+%             subplot( SS, SS, k);
+%             imshow(regions{k})
+%             xlabel(k)
+% %             drawnow
+%         end
+% 
+% 
+%         figure(2)
+%         for k=1:N 
+%             subplot( SS, SS, k);
+% %             imshow(autobin(imadjust(regions{k})));
+%             imshow(autobin(imadjust(regions{k}(3:end-3,3:end-3))));
+%             xlabel(k)
+% %             drawnow
+%         end
 
 
 
@@ -177,7 +185,7 @@ function NumMec = tp1_92993()
         cardKs = [];
         rodados = [];
         numDomsRoted = 0;
-        figure(7)
+%         figure(7)
         for k=1:N
             subplot( SS, SS, k);
             
@@ -230,9 +238,9 @@ function NumMec = tp1_92993()
                     B(:,1:round(sx*perc*2))= 0;
                     B(:,end-round(sx*perc*2):end)= 0;
 
-                    imshow(B)
-                    str = sprintf('Domino %d',k);
-                    xlabel(str);
+%                     imshow(B)
+%                     str = sprintf('Domino %d',k);
+%                     xlabel(str);
 
                 else % cards e NOISE <<<<<
 
@@ -240,9 +248,9 @@ function NumMec = tp1_92993()
 
                     cardKs = [cardKs k];
 
-                    imshow(B)
-                    str = sprintf('Carta %d',k);
-                    xlabel(str);
+%                     imshow(B)
+%                     str = sprintf('Carta %d',k);
+%                     xlabel(str);
                     
                 end
 
@@ -278,14 +286,15 @@ function NumMec = tp1_92993()
                     rodados = [rodados k];
                     
                     % rodar
-                    A = imrotate(dado1,45);
+%                     A = imrotate(dado1,45);
+                    A = imrotate(regions{k},45);
             
                     % reduzir imagem ao dado
                     x = size(dado1,1);
                     xmeio = round(size(A,1)/2);
 
                     l = floor(x/sqrt(2));
-                    deltal = round(l/2)-5;
+                    deltal = round(l/2)-6; % 8
             
 %                     B = A(xmeio-deltal:xmeio+deltal,xmeio-deltal:xmeio+deltal);
 
@@ -294,9 +303,9 @@ function NumMec = tp1_92993()
                 end
 %                 B = autobin(imadjust(double(B(cut+1:end-cut,cut+1:end-cut))));
                     
-                imshow(B)
-                str = sprintf('Dado %d',k);
-                xlabel(str);
+%                 imshow(B)
+%                 str = sprintf('Dado %d',k);
+%                 xlabel(str);
                 
             end
 
@@ -304,19 +313,19 @@ function NumMec = tp1_92993()
             
             
         end
-        domKs
+%         domKs
         tDom = length(domKs);
         RDO = tDom - numDomsRoted; 
 
-        diceKs
-        rodados
+%         diceKs
+%         rodados
         tDice = length(diceKs);
         RFO = tDice - length(rodados);
 
-        cardKs
+%         cardKs
         tCard = length(cardKs);
 
-        fprintf("Total=%d, Dominos=%d, Dados=%d, Cartas=%d\n",N,tDom,tDice,tCard)
+%         fprintf("Total=%d, Dominos=%d, Dados=%d, Cartas=%d\n",N,tDom,tDice,tCard)
 
 
         %% Detect squares
@@ -376,34 +385,34 @@ function NumMec = tp1_92993()
         
         PntCartas = [];
 
-        figure(8)
+%         figure(8)
         for k=1:N
-            subplot( SS, SS, k);
+%             subplot( SS, SS, k);
             B = edge(regions{k},'log');
 %             B = bwareaopen(B,10);
-            imshow(B)
-            myAxis = axis;
-            hold on, axis ij, axis equal, axis(myAxis), grid on;
+%             imshow(B)
+%             myAxis = axis;
+%             hold on, axis ij, axis equal, axis(myAxis), grid on;
             [L,Nb] = bwlabel(B);
 
-            for x = 1:Nb
-                C = (L==x);
-%                 if ( nnz(C) > 2*sx)
-%                     BB = bwboundaries(C,'noholes');
-%                     boundary = BB{1};
-%                 
-%                     plot(boundary(:,2),boundary(:,1),'r');
-%                     continue
-%                 end
-            
-                BB = bwboundaries(C,'noholes');
-                boundary = BB{1};
-            
-                plot(boundary(:,2),boundary(:,1),'b');
-           end
+%             for x = 1:Nb
+%                 C = (L==x);
+% %                 if ( nnz(C) > 2*sx)
+% %                     BB = bwboundaries(C,'noholes');
+% %                     boundary = BB{1};
+% %                 
+% %                     plot(boundary(:,2),boundary(:,1),'r');
+% %                     continue
+% %                 end
+%             
+%                 BB = bwboundaries(C,'noholes');
+%                 boundary = BB{1};
+%             
+%                 plot(boundary(:,2),boundary(:,1),'b');
+%            end
 
-            str= sprintf("N=%d\n",Nb);  
-            xlabel(str)
+%             str= sprintf("N=%d\n",Nb);  
+%             xlabel(str)
 
             
             if ismember(k,domKs) % Dominos
@@ -417,7 +426,7 @@ function NumMec = tp1_92993()
 
                 if Nb1==Nb2 
                     tDuplas = tDuplas + 1;
-                    disp(k)
+%                     disp(k)
                 end
 
             elseif ismember(k,diceKs) % Dados
@@ -443,9 +452,9 @@ function NumMec = tp1_92993()
         end
 
 %         pause(2)
-%     end
+    end
 
-        save
+%         save
 
 
 end
