@@ -29,19 +29,17 @@ function NumMec = tp1_92993()
 
 
     %% Open Image
-%     addpath('../')
-%     listaF=dir('../svpi2022_TP1_img_*.png'); %%%%%%%%%<<<<
 
     addpath('../sequencias/Seq160')
     listaF=dir('../sequencias/Seq160/svpi2022_TP1_img_*.png');
 
-%     addpath('../sequencias/Seq350')
-%     listaF=dir('../sequencias/Seq350/svpi2022_TP1_img_*.png');
+%     addpath('../sequencias/Seq530')
+%     listaF=dir('../sequencias/Seq530/svpi2022_TP1_img_*.png');
 
     MaxImg = size(listaF,1);
     showplot = false;
     for idxImg = 1:MaxImg
-%     idxImg = 11; showplot = true;
+%     idxImg = 12; showplot = true;
         
         tDuplas = 0;
         PntDom = 0;
@@ -78,6 +76,7 @@ function NumMec = tp1_92993()
         cardKs = [];
         rodados = [];
         PntCartas = [];
+        noiseKs = [];
         numDomsRoted = 0;
 
         if showplot
@@ -91,9 +90,7 @@ function NumMec = tp1_92993()
             
             
             cut = 5;
-            B = autobin(imadjust(regions{k}(cut+1:end-cut,cut+1:end-cut)));
-%             B = autobin(imadjust(regions{k}));
-
+            B = autobin(imadjust(regions{k}(cut:end-cut,cut:end-cut)));
             
             sx = size(B,1);
             sy = size(B,2);
@@ -122,16 +119,10 @@ function NumMec = tp1_92993()
                 
                 if nnz(vertlines) > 0.3 * area % Dominos
                     B(:,round(sy*t1):round(sy*t2)) = 0; % clean
-                    domKs = [domKs k];
+                    
 
-                    if (rotated)
-                        numDomsRoted=numDomsRoted+1; 
-                    end
-
+                    
                     % clean borders               
-%                     cut = 2;
-%                     B = autobin(imadjust(double(B(cut+1:end-cut,cut+1:end-cut))));
-
                     perc = 2/100;
                     B(1:round(sy*perc),:)= 0;
                     B(end-round(sy*perc):end,:)= 0;
@@ -139,29 +130,66 @@ function NumMec = tp1_92993()
                     B(:,1:round(sx*perc*2))= 0;
                     B(:,end-round(sx*perc*2):end)= 0;
 
+
+                    % Detect Pintas
+                    %             B = edge(B,'log');
+                    B = edge(B,'roberts');
+        %             B = bwareaopen(B,round(0.5*size(B,1)));
+        %             B = bwmorph(B,'close');
+                    [L,Nb] = bwlabel(B);
+
+                    % Pintas de cada lado
+                    B1 = B(:,1:round(size(B,2)/2));
+                    B2 = B(:,round(size(B,2)/2):end);
+                    [L2,Nb1] = bwlabel(B1);
+                    [L2,Nb2] = bwlabel(B2);
+                    
+                    if (Nb1>6 || Nb2>6 || Nb==0) 
+                        noiseKs = [noiseKs k];
+                        B = ones(size(B));
+                    else
+                        if (rotated)
+                            numDomsRoted=numDomsRoted+1; 
+                        end
+                        domKs = [domKs k];
+                        if Nb1+Nb2 ~= Nb
+                            fprintf("Erro Domino: %d + %d != %d\n",Nb1,Nb2,N);
+                        end
+                        PntDom = PntDom + Nb1 + Nb2;
+                        if Nb1==Nb2 
+                            tDuplas = tDuplas + 1;
+                        end
+                    end
+                    
                     if showplot
                         imshow(B)
-                        str = sprintf('Domino %d',k);
+                        str = sprintf('Dom.%d,N1=%d,N2=%d',k,Nb1,Nb2);
                         xlabel(str);
                     end
 
                 else % cards e NOISE <<<<<
+                    cut = round(0.12*size(B,1)); % 0.1
+                    B = B(cut+1:end-cut,:);
+                    B = bwareaopen(B,round(0.4*size(B,1))); % 0.5
+                    B = bwmorph(B,'close');
+                    [L,Nb] = bwlabel(B);
+                    if (Nb>9 || Nb==0) 
+                        noiseKs = [noiseKs k];
+                        B = ones(size(B));
+                    else
+                        PntCartas = [PntCartas Nb];
 
-%                     B = B(10:end-10,:); % clean number and corner info
-
-                    cardKs = [cardKs k];
-                    
+                        cardKs = [cardKs k];
+                    end
                     if showplot
                         imshow(B)
-                        str = sprintf('Carta %d',k);
+                        str = sprintf('C%d,N=%d',k,Nb);
                         xlabel(str);
                     end
                     
                 end
 
             else % Quadrados -> Dados e NOISE <<<<<
-                diceKs = [diceKs k];
-                
 
                 % Perceber se estao a 45º
                 c2=2;
@@ -206,12 +234,33 @@ function NumMec = tp1_92993()
                     B = autobin(imadjust(double(A(xmeio-deltal:xmeio+deltal,xmeio-deltal:xmeio+deltal))));
                     
                 end
+%                 cut = 3;
 %                 B = autobin(imadjust(double(B(cut+1:end-cut,cut+1:end-cut))));
-                    
-              
+
+                
+%                 B = edge(B,'log');
+%                 B = edge(B,'roberts');
+% %                 B = imdilate(B,ones(3,1));
+% %                 B = imdilate(B,ones(1,3));
+% 
+%                 B = bwareaopen(B,round(0.5*size(B,1)));
+%                 B = bwmorph(B,'close');
+                
+                B = bwmorph(B,'remove');
+
+                [L,Nb] = bwlabel(B);
+                if (Nb>6 || Nb==0) % NOISE
+                    noiseKs = [noiseKs k];
+                    rodados(rodados==k) = [];
+                    B = ones(size(B));
+                else
+                    diceKs = [diceKs k];
+                    PntDad = PntDad + Nb;
+                end
+
                 if showplot
                     imshow(B)
-                    str = sprintf('Dado %d',k);
+                    str = sprintf('D.%d,N=%d',k,Nb);
                     xlabel(str);
                 end
                 
@@ -221,112 +270,35 @@ function NumMec = tp1_92993()
             
             
         end
-%         tDom = length(domKs);
-%         RDO = tDom - numDomsRoted; 
-% 
-%         tDice = length(diceKs);
-%         RFO = tDice - length(rodados);
-% 
-%         tCard = length(cardKs);
-% 
-%         if showplot
-%             domKs
-%             diceKs
-%             rodados
-%             cardKs
-%             fprintf("Total=%d, Dominos=%d, Dados=%d, Cartas=%d\n",N,tDom,tDice,tCard)
-%         end
         
 
         %% Get Edges
-        
-        noiseKs = [];
-        
+     
 
-        if showplot
-            figure(8)
-        end
-        for k=1:N
-            
-%             B = edge(regions{k},'log');
-            B = edge(regions{k},'roberts');
-            B = bwareaopen(B,round(0.5*size(B,1)));
-            B = bwmorph(B,'close');
-
-            [L,Nb] = bwlabel(B);
-
-            if showplot
-                subplot( SS, SS, k);
-                imshow(B)
-                myAxis = axis;
-                hold on, axis ij, axis equal, axis(myAxis), grid on;
-                   
-
-            for x = 1:Nb
-                C = (L==x);
-%                 if ( nnz(C) > 2*sx)
+%             if showplot
+%                 subplot( SS, SS, k);
+%                 imshow(B)
+%                 myAxis = axis;
+%                 hold on, axis ij, axis equal, axis(myAxis), grid on;
+%                    
+% 
+%                 for x = 1:Nb
+%                     C = (L==x);
+%                 
 %                     BB = bwboundaries(C,'noholes');
 %                     boundary = BB{1};
 %                 
-%                     plot(boundary(:,2),boundary(:,1),'r');
-%                     continue
-%                 end
-            
-                BB = bwboundaries(C,'noholes');
-                boundary = BB{1};
-            
-                plot(boundary(:,2),boundary(:,1),'b');
-           end
-
-            str= sprintf("N=%d\n",Nb);  
-            xlabel(str)
-
-            end
-            
-            if ismember(k,domKs) % Dominos
-                
-                % Pintas de cada lado
-                B1 = B(:,1:round(size(B,2)/2));
-                B2 = B(:,round(size(B,2)/2):end);
-                [L,Nb1] = bwlabel(B1);
-                [L,Nb2] = bwlabel(B2);
-                
-                if (Nb1>6 || Nb2>6 || Nb==0) 
-                    domKs(domKs==k) = []; % remove invalid
-                    noiseKs = [noiseKs k];
-                    continue
-                end
-                PntDom = PntDom + Nb1 + Nb2;
-                if Nb1==Nb2 
-                    tDuplas = tDuplas + 1;
-%                     disp(k)
-                end
-
-            elseif ismember(k,diceKs) % Dados
-                if (Nb>6 || Nb==0) 
-                    diceKs(diceKs==k) = []; % remove invalid
-                    noiseKs = [noiseKs k];
-                    continue
-                end
-                PntDad = PntDad + Nb;
-            elseif ismember(k,cardKs) % Cartas
-                if (Nb>9 || Nb==0) 
-                    cardKs(cardKs==k) = []; % remove invalid
-                    noiseKs = [noiseKs k];
-                    continue
-                end
-                PntCartas = [PntCartas Nb];
-            end
-        end
+%                     plot(boundary(:,2),boundary(:,1),'b');
+%                end
+%     
+%                 str= sprintf("N=%d\n",Nb);  
+%                 xlabel(str)
+% 
+%             end
         
         PntCartas = sort(PntCartas);
 
         StringPT = strjoin(string(PntCartas),'');
-
-            
-        if showplot
-            noiseKs
-        end
 
         tDom = length(domKs);
         RDO = tDom - numDomsRoted; 
@@ -337,6 +309,7 @@ function NumMec = tp1_92993()
         tCard = length(cardKs);
 
         if showplot
+            noiseKs
             domKs
             diceKs
             rodados
