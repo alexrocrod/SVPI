@@ -30,16 +30,16 @@ function NumMec = tp1_92993()
 
     %% Open Image
 
-    addpath('../sequencias/Seq160')
-    listaF=dir('../sequencias/Seq160/svpi2022_TP1_img_*.png');
+%     addpath('../sequencias/Seq160')
+%     listaF=dir('../sequencias/Seq160/svpi2022_TP1_img_*.png');
 
-%     addpath('../sequencias/Seq530')
-%     listaF=dir('../sequencias/Seq530/svpi2022_TP1_img_*.png');
+    addpath('../sequencias/Seq530')
+    listaF=dir('../sequencias/Seq530/svpi2022_TP1_img_*.png');
 
     MaxImg = size(listaF,1);
     showplot = false;
-    for idxImg = 1:MaxImg
-%     idxImg = 12; showplot = true;
+%     for idxImg = 1:MaxImg
+    idxImg = 1; showplot = true;
         
         tDuplas = 0;
         PntDom = 0;
@@ -57,7 +57,8 @@ function NumMec = tp1_92993()
     
         %% SubImages (provisorio)
     
-        regions=vs_getsubimages(A); %extract all regions
+        regionsOrig=vs_getsubimages(A); %extract all regions
+        regions=vs_getsubimages(A);
         N=numel(regions);
         SS=ceil(sqrt(N));
         
@@ -79,6 +80,7 @@ function NumMec = tp1_92993()
         noiseKs = [];
         numDomsRoted = 0;
 
+
         if showplot
             figure(7)
         end
@@ -87,6 +89,7 @@ function NumMec = tp1_92993()
             if showplot
                 subplot( SS, SS, k);
             end
+            regions{k} = medfilt2(filter2(fspecial('average',3),regionsOrig{k}));
             
             
             cut = 5;
@@ -126,23 +129,22 @@ function NumMec = tp1_92993()
                     perc = 2/100;
                     B(1:round(sy*perc),:)= 0;
                     B(end-round(sy*perc):end,:)= 0;
-%                     B(:,1:round(sx*perc))= 0;
-                    B(:,1:round(sx*perc*2))= 0;
+                    B(:,1:round(sx*perc))= 0;
+%                     B(:,1:round(sx*perc*2))= 0;
                     B(:,end-round(sx*perc*2):end)= 0;
 
 
                     % Detect Pintas
-                    %             B = edge(B,'log');
-                    B = edge(B,'roberts');
-        %             B = bwareaopen(B,round(0.5*size(B,1)));
-        %             B = bwmorph(B,'close');
-                    [L,Nb] = bwlabel(B);
+                    B = edging(B);
+                
+
+                    [~,Nb] = bwlabel(B);
 
                     % Pintas de cada lado
                     B1 = B(:,1:round(size(B,2)/2));
                     B2 = B(:,round(size(B,2)/2):end);
-                    [L2,Nb1] = bwlabel(B1);
-                    [L2,Nb2] = bwlabel(B2);
+                    [~,Nb1] = bwlabel(B1);
+                    [~,Nb2] = bwlabel(B2);
                     
                     if (Nb1>6 || Nb2>6 || Nb==0) 
                         noiseKs = [noiseKs k];
@@ -169,9 +171,9 @@ function NumMec = tp1_92993()
 
                 else % cards e NOISE <<<<<
                     cut = round(0.12*size(B,1)); % 0.1
-                    B = B(cut+1:end-cut,:);
-                    B = bwareaopen(B,round(0.4*size(B,1))); % 0.5
-                    B = bwmorph(B,'close');
+                    B = B(cut:end-cut,:);
+                    B = edging(B);
+
                     [L,Nb] = bwlabel(B);
                     if (Nb>9 || Nb==0) 
                         noiseKs = [noiseKs k];
@@ -211,7 +213,7 @@ function NumMec = tp1_92993()
                 area = nnz(zona);
                 
                 % edges
-                [Gmag,Gdir] = imgradient(dado1);
+                [Gmag,~] = imgradient(dado1);
                 edges = Gmag>1;
             
                 if nnz(edges(zona(1:size(edges,1),1:size(edges,1)))) > 0.2 * area %.2
@@ -238,15 +240,7 @@ function NumMec = tp1_92993()
 %                 B = autobin(imadjust(double(B(cut+1:end-cut,cut+1:end-cut))));
 
                 
-%                 B = edge(B,'log');
-%                 B = edge(B,'roberts');
-% %                 B = imdilate(B,ones(3,1));
-% %                 B = imdilate(B,ones(1,3));
-% 
-%                 B = bwareaopen(B,round(0.5*size(B,1)));
-%                 B = bwmorph(B,'close');
-                
-                B = bwmorph(B,'remove');
+                B = edging(B);
 
                 [L,Nb] = bwlabel(B);
                 if (Nb>6 || Nb==0) % NOISE
@@ -328,10 +322,21 @@ function NumMec = tp1_92993()
         end
 
 %         pause(2)
-    end
+%     end
 
-%         save
+        save
 
 
 end
 
+
+function B = edging(A)
+    B = A;
+%     B = medfilt2(B);
+    B = edge(B,'roberts');
+    B = bwareaopen(B,round(0.5*size(B,1)));
+    B = bwmorph(B,'close');
+    
+%     B = bwmorph(B,'remove'); % remove
+%     B = bwareaopen(B,round(0.2*size(B,1)));
+end

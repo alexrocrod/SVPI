@@ -1,0 +1,45 @@
+close 
+clear
+
+
+addpath('../sequencias/Seq160')
+listaF=dir('../sequencias/Seq160/svpi2022_TP1_img_*.png');
+
+
+idxImg = 11;
+imName = listaF(idxImg).name;
+
+% ss = 3;
+
+
+
+regions=vs_getsubimages(A); %extract all regions
+N=numel(regions);
+SS=ceil(sqrt(N));
+
+figure(1)
+for k=1:N 
+    subplot( SS, SS, k);
+    imshow(regions{k})
+    xlabel(k)
+end
+
+
+figure(2)
+for k=1:N 
+    subplot( SS, SS, k);
+    imshow(medfiltfilter2(fspecial('average',3),regions{k}))
+    xlabel(k)
+end
+
+subplot(1,ss,1)
+A = im2double(imread(imName));
+imshow(A)
+
+subplot(1,ss,2)
+Adnoise = filter2(fspecial('average',3),A);
+imshow(Adnoise)
+
+subplot(1,ss,3)
+B = medfilt2(Adnoise);
+imshow(B)

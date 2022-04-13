@@ -1,33 +1,21 @@
 clear
 close all
 
-load("matlab.mat","regions","cardKs")
+load("matlab.mat","regions","cardKs","A","noiseKs")
 
-ss = 2;
-exacts = [0     7     6     0     7     7     0     0     6     8     4     5     5];
+% ss = 2;
+% exacts = [0     7     6     0     7     7     0     0     6     8     4     5     5];
 
-for i=1:length(cardKs)
-    figure(i)
-    card1 = regions{cardKs(i)};
-
-    subplot(1,ss,1)
-    imshow(card1);
-
-%     subplot(1,ss,2)
-%     B = edge(card1,'roberts'); % roberts
-%     C = bwareaopen(B,round(0.5*size(B,1))); % 0.5
-%     D = bwmorph(C,'close');
-%     imshow(D)
+% for i=1:length(cardKs)
+%     figure(i)
+%     card1 = regions{cardKs(i)};
 % 
-%     [L,Nb] = bwlabel(D);
-%     str = sprintf("N=%d\n",Nb);  
-%     xlabel(str)
-% 
-%     if Nb ~= exacts(i)
-%         fprintf("Errado v3 no %d\n",i);
-%     end
+%     subplot(1,ss,1)
+%     imshow(card1);
+%     
+% end
 
 
 
-    
-end
+
+
