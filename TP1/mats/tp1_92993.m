@@ -7,7 +7,7 @@ function NumMec = tp1_92993()
     %% 
 
     close all
-    clear al
+    clear
     clc
 
     %% Init Vars
@@ -38,8 +38,8 @@ function NumMec = tp1_92993()
 
     MaxImg = size(listaF,1);
     showplot = false;
-%     for idxImg = 1:MaxImg
-    idxImg = 1; showplot = true;
+    for idxImg = 1:MaxImg
+%     idxImg = 1; showplot = true;
         
         tDuplas = 0;
         PntDom = 0;
@@ -90,7 +90,7 @@ function NumMec = tp1_92993()
                 subplot( SS, SS, k);
             end
             regions{k} = medfilt2(filter2(fspecial('average',3),regionsOrig{k}));
-            
+%             regions{k} = wiener2(regionsOrig{k},[5 5]);
             
             cut = 5;
             B = autobin(imadjust(regions{k}(cut:end-cut,cut:end-cut)));
@@ -315,16 +315,16 @@ function NumMec = tp1_92993()
         %% Write Table Entry
         T = table(NumMec, NumSeq, NumImg, tDom, tDice, tCard, RDO, ...
             RFO, tDuplas, PntDom, PntDad, CopOuros, EspPaus, Ouros, StringPT);
-        if idxImg==1
-            writetable(T,'tp1_92993.txt', 'WriteVariableNames',false)
-        else
+%         if idxImg==1
+%             writetable(T,'tp1_92993.txt', 'WriteVariableNames',false)
+%         else
             writetable(T,'tp1_92993.txt', 'WriteVariableNames',false, 'WriteMode','append')
-        end
+%         end
 
 %         pause(2)
-%     end
+    end
 
-        save
+%         save
 
 
 end

@@ -1,0 +1,11 @@
+close all
+clear 
+
+
+A_exact160 = readtable("tp1_seq_160_results.txt");
+A_exact530 = readtable("tp1_seq_530_results.txt");
+
+disp(A_exact530(1,:))
+
+% A_exact160.VariableNames = ["NumMec", "NumSeq", "NumImg", "tDom", "tDice", "tCard", "RDO",   RFO, tDuplas, PntDom, PntDad, CopOuros, EspPaus, Ouros, StringPT]
+
