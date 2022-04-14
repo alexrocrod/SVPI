@@ -54,8 +54,8 @@ for k=1:N
 
     % Test Noise
     C = bwmorph(B,'erode',2);
-    if nnz(C) < 0.01*sx*sy
-        fprintf("nnz=%d, m= %d, noise: %d\n",nnz(C),0.01*sx*sy ,k)
+    if nnz(C) < 0.01*nnz(B)
+        fprintf("nnz=%d, m= %d, noise: %d\n",nnz(C),0.01*nnz(B) ,k)
         imshow(B)
         xlabel("noise")
     
@@ -66,39 +66,18 @@ for k=1:N
             regions{k} = rot90(regions{k});
         end
         
-        dx = round(px*size(B,1));
-        dy = round(py*size(B,2));
-        area = dx*dy;
-        CantoSupDir = B(1:dx,end-dy:end);
-        nnzSupDir = nnz(CantoSupDir);
-        CantoInfDir = B(end-dx:end,end-dy:end);
-        nnzInfDir = nnz(CantoInfDir);
-        CantoSupEsq = B(1:dx,1:dy);
-        nnzSupEsq = nnz(CantoSupEsq);
-        CantoInfEsq = B(end-dx:end,1:dy);
-        nnzInfEsq = nnz(CantoInfEsq);
-
-        if (nnzInfEsq > perc*area && nnzSupDir > perc*area  && ...
-                nnzInfDir < perc0*area && nnzSupEsq < perc0*area)
-% %             Tapar os q nao tem nada
-%             B(1:dx,1:dy) = 1;
-%             B(end-dx:end,end-dy:end) = 1;
-            B(1:dx,1:dy) = 0;
-            B(end-dx:end,end-dy:end) = 0;
-
+        [res,B] = sepCartas(B,perc,perc0,px,py);
+        if res == 0
             imshow(B)
-            xlabel("carta 1")
+            xlabel("carta NA")
+        elseif res ==1
+            imshow(B)
+            xlabel("carta tipo1")
             cartas1k = [cartas1k k];
-            
-        elseif (nnzInfDir > perc*area && nnzSupEsq > perc*area && ...
-                nnzInfEsq < perc0*area && nnzSupDir < perc0*area)
-            B(end-dx:end,1:dy) = 0;
-            B(1:dx,end-dy:end) = 0;
+        elseif res == 2
             imshow(B)
-            xlabel("carta 2")
+            xlabel("carta tipo2")
             cartas2k = [cartas2k k];
-        else
-            imshow(B)
         end
     
     else
@@ -113,8 +92,9 @@ end
 figure(4)
 idx = 1;
 cut = 2; % 5
-nrows = 4;
+nrows = 5;
 means = zeros(length(cartas1k),1);
+meansCopas = zeros(length(cartas1k),1);
 for k=cartas1k
     
 %     B = regions2{k};
@@ -154,12 +134,21 @@ for k=cartas1k
     imshow(ouro1)
     
     means(idx) = mean(imresize(clean0s,10)~=imresize(ouro1,10),'all');
+%     means(idx) = mean(clean0s~=ouro1,'all');
     if means(idx) < 1e-1
         xlabel("Ouros")
     else
-        xlabel(sprintf("Ndif:%.2f",means(idx)))
+        load copa.mat
+        copa = imresize(copa,size(clean0s));
+        subplot(nrows, length(cartas1k), idx+length(cartas1k)*4);
+        imshow(copa)
+        meansCopa(idx) = mean(imresize(clean0s,10)~=imresize(copa,10),'all');
+        if meansCopa(idx) < 2e-1
+            xlabel("Copas")
+        else
+            xlabel(sprintf("O:%.2f,C:%.2f",means(idx),meansCopa(idx)))
+        end
     end
-    
 
     idx = idx + 1;
 
@@ -239,6 +228,34 @@ function Ibin= autobin(I)
     
     if nnz(Ibin)>0.5*(size(Ibin,1)*size(Ibin,2))
         Ibin = not(Ibin);
+    end
+end
+
+function [res,B] = sepCartas(B,perc,perc0,px,py)
+    
+    dx = round(px*size(B,1));
+    dy = round(py*size(B,2));
+    area = dx*dy;
+    nnzSupDir = nnz(B(1:dx,end-dy:end));
+    nnzInfDir = nnz(B(end-dx:end,end-dy:end));
+    nnzSupEsq = nnz(B(1:dx,1:dy));
+    nnzInfEsq = nnz(B(end-dx:end,1:dy));
+
+    if (nnzInfEsq > perc*area && nnzSupDir > perc*area  && ...
+            nnzInfDir < perc0*area && nnzSupEsq < perc0*area)
+        B(1:dx,1:dy) = 0;
+        B(end-dx:end,end-dy:end) = 0;
+
+        res=1;
+        
+    elseif (nnzInfDir > perc*area && nnzSupEsq > perc*area && ...
+            nnzInfEsq < perc0*area && nnzSupDir < perc0*area)
+        B(end-dx:end,1:dy) = 0;
+        B(1:dx,end-dy:end) = 0;
+        
+        res = 2;
+    else
+        res = 0;
     end
 end
 

@@ -30,11 +30,11 @@ function NumMec = tp1_92993()
 
     %% Open Image
 
-%     addpath('../sequencias/Seq160')
-%     listaF=dir('../sequencias/Seq160/svpi2022_TP1_img_*.png');
+    addpath('../sequencias/Seq160')
+    listaF=dir('../sequencias/Seq160/svpi2022_TP1_img_*.png');
 
-    addpath('../sequencias/Seq530')
-    listaF=dir('../sequencias/Seq530/svpi2022_TP1_img_*.png');
+%     addpath('../sequencias/Seq530')
+%     listaF=dir('../sequencias/Seq530/svpi2022_TP1_img_*.png');
 
     MaxImg = size(listaF,1);
     showplot = false;
@@ -108,7 +108,7 @@ function NumMec = tp1_92993()
 
             % Test Noise
             C = bwmorph(B,'erode',2);
-            minNNZ =  0.01*nnz(B);
+            minNNZ =  0.01*sx*sy;
             if nnz(C) < minNNZ
                 noiseKs = [noiseKs k];
                 if showplot
@@ -426,7 +426,7 @@ function NumMec = tp1_92993()
 %         pause(2)
     end
 
-%         save
+        save
 
 
 end
