@@ -39,7 +39,7 @@ function NumMec = tp1_92993()
     MaxImg = size(listaF,1);
     showplot = false;
 %     for idxImg = 1:MaxImg
-    idxImg = 1; showplot = true;
+    idxImg = 2; showplot = true;
         
         tDuplas = 0;
         PntDom = 0;
@@ -78,7 +78,15 @@ function NumMec = tp1_92993()
         rodados = [];
         PntCartas = [];
         noiseKs = [];
+        ourosk = [];
         numDomsRoted = 0;
+        cartas1k = [];
+        cartas2k = [];
+        px = 0.15; % 0.14
+        py = 0.25; % 0.25
+        difPer = 1.5;
+%         perc = 0.15; % 0.15 
+        perc0 = 0.1; % 0.1
 
 
         if showplot
@@ -97,13 +105,26 @@ function NumMec = tp1_92993()
             
             sx = size(B,1);
             sy = size(B,2);
-            
+
+            % Test Noise
+            C = bwmorph(B,'erode',2);
+            minNNZ =  0.01*sx*sy;
+            if nnz(C) < minNNZ
+                noiseKs = [noiseKs k];
+                if showplot
+                    fprintf("nnz=%d, m= %d, noise: %d\n",nnz(C),minNNZ ,k)
+                    imshow(B)
+                    xlabel("noise")
+                end
+                continue
+            end      
                        
             if sx ~= sy
                 rotated = false;
                 % rotate to horizontal
                 if sx>sy
                     B = rot90(B);
+                    regions{k} = rot90(regions{k});
                     rotated = true;
                     sy = size(B,2);
                     sx = size(B,1);
@@ -146,7 +167,7 @@ function NumMec = tp1_92993()
                     [~,Nb1] = bwlabel(B1);
                     [~,Nb2] = bwlabel(B2);
                     
-                    if (Nb1>6 || Nb2>6 || Nb==0) 
+                    if false %(Nb1>6 || Nb2>6 || Nb==0) 
                         noiseKs = [noiseKs k];
                         B = ones(size(B));
                     else
@@ -175,18 +196,87 @@ function NumMec = tp1_92993()
                     B = edging(B);
 
                     [L,Nb] = bwlabel(B);
-                    if (Nb>9 || Nb==0) 
+                    if false %(Nb>9 || Nb==0) 
                         noiseKs = [noiseKs k];
                         B = ones(size(B));
                     else
                         PntCartas = [PntCartas Nb];
 
                         cardKs = [cardKs k];
+
+                        cut = 3; % 5
+                        D = autobin(imadjust(regions{k}(cut:end-cut,cut:end-cut)));
+                        dx = round(px*size(D,1));
+                        dy = round(py*size(D,2));
+                        area = dx*dy;
+                        nnzSupDir = nnz(D(1:dx,end-dy:end));
+                        nnzInfDir = nnz(D(end-dx:end,end-dy:end));
+                        nnzSupEsq = nnz(D(1:dx,1:dy));
+                        nnzInfEsq = nnz(D(end-dx:end,1:dy));
+                        perc = 0.15; % 0.15 
+
+%                         if (nnzInfEsq > difPer*nnzInfDir && nnzSupDir > difPer*nnzSupEsq )
+                        if (nnzInfEsq > perc*area && nnzSupDir > perc*area  && ...
+                                nnzInfDir < perc0*area && nnzSupEsq < perc0*area) 
+                            D(1:dx,1:dy) = 0;
+                            D(end-dx:end,end-dy:end) = 0;
+                            cartas1k = [cartas1k k];
+                            
+                            cut = 2;
+                            C = regions{k}(cut:end-cut,cut:end-cut);
+                            CantoSupDir = rot90(C(1:dx,end-dy:end));
+%                             CantoInfEsq = rot90(C(end-dx:end,1:dy));
+                            CSDbin = autobin(imadjust(CantoSupDir));
+%                             CIEbin = autobin(imadjust(CantoInfEsq));
+                            dx2 = round(0.55*size(CSDbin,1)); 
+                            NaipeSD = CSDbin(dx2:end,:);
+                            clean0s = NaipeSD(any(NaipeSD,2),:);
+                            clean0s = clean0s(:,any(clean0s,1));
+                            ouro1 = strel('diamond',ceil(0.5*size(clean0s,1))).Neighborhood;
+                            ouro1 = imresize(ouro1,size(clean0s));
+                            meanx = mean(imresize(clean0s,10)~=imresize(ouro1,10),'all');
+                            if meanx < 1e-1
+                                ourosk = [ourosk k];
+                            end
+%                         else  
+                        elseif (nnzInfDir > perc*area && nnzSupEsq > perc*area && ...
+                                nnzInfEsq < perc0*area && nnzSupDir < perc0*area)
+                            B(end-dx:end,1:dy) = 0;
+                            B(1:dx,end-dy:end) = 0;
+                            cartas2k = [cartas2k k];
+
+                            cut = 2;
+                            C = regions{k}(cut:end-cut,cut:end-cut);
+%                             CantoInf = C(end-dx:end,end-dy:end); % dir
+                            CantoSup = C(1:dx,1:dy); % esq
+                            CSDbin = autobin(imadjust(CantoSup));
+%                             CIEbin = autobin(imadjust(CantoInf));
+                            dx2 = round(0.55*size(CSDbin,1)); 
+                            NaipeSD = CSDbin(dx2:end,:);
+                            clean0s = NaipeSD(any(NaipeSD,2),:);
+                            clean0s = clean0s(:,any(clean0s,1));
+                            ouro1 = strel('diamond',ceil(0.5*size(clean0s,1))).Neighborhood;
+                            ouro1 = imresize(ouro1,size(clean0s));
+                            meanx = mean(imresize(clean0s,10)~=imresize(ouro1,10),'all');
+                            disp(meanx)
+                            if meanx < 1e-1
+                                ourosk = [ourosk k];
+                            end
+                        end
+
+                        
+
+
                     end
                     if showplot
                         imshow(B)
-                        str = sprintf('C%d,N=%d',k,Nb);
-                        xlabel(str);
+                        if ismember(k,ourosk)
+                            str = sprintf('C%d,N=%d,Ouros',k,Nb);
+                            xlabel(str);
+                        else
+                            str = sprintf('C%d,N=%d',k,Nb);
+                            xlabel(str);
+                        end
                     end
                     
                 end
@@ -246,7 +336,7 @@ function NumMec = tp1_92993()
                 B = edging(B);
 
                 [L,Nb] = bwlabel(B);
-                if (Nb>6 || Nb==0) % NOISE
+                if false % (Nb>6 || Nb==0) % NOISE
                     noiseKs = [noiseKs k];
                     if ismember(k,rodados)
                         rodados(rodados==k) = [];
@@ -308,12 +398,18 @@ function NumMec = tp1_92993()
 
         tCard = length(cardKs);
 
+        Ouros = length(ourosk);
+        CopOuros = Ouros + 0; %+copas
+
+        EspPaus = tCard - CopOuros;
+
         if showplot
             noiseKs
             domKs
             diceKs
             rodados
             cardKs
+            ourosk
             fprintf("Total=%d, Dominos=%d, Dados=%d, Cartas=%d\n",N,tDom,tDice,tCard)
         end
         

@@ -1,12 +1,12 @@
-close 
-clear
+close all
+clear all
 
 
 addpath('../sequencias/Seq160')
 listaF=dir('../sequencias/Seq160/svpi2022_TP1_img_*.png');
 
 
-idxImg = 1;
+idxImg = 2;
 imName = listaF(idxImg).name;
 
 
@@ -52,7 +52,15 @@ for k=1:N
     sx = size(B,1);
     sy = size(B,2);
 
-    if sx ~= sy
+    % Test Noise
+    C = bwmorph(B,'erode',2);
+    if nnz(C) < 0.01*sx*sy
+        fprintf("nnz=%d, m= %d, noise: %d\n",nnz(C),0.01*sx*sy ,k)
+        imshow(B)
+        xlabel("noise")
+    
+
+    elseif sx ~= sy
         if sx>sy
             B = rot90(B);
             regions{k} = rot90(regions{k});
@@ -125,32 +133,16 @@ for k=cartas1k
 
     subplot(nrows, length(cartas1k), idx);
     imshow(CantoSupDir)
-    
-
-%     subplot(nrows, length(cartas1k), idx+length(cartas1k));
-%     imshow(CantoInfEsq)
 
     CSDbin = autobin(imadjust(CantoSupDir));
     CIEbin = autobin(imadjust(CantoInfEsq));
 
-%     subplot(nrows, length(cartas1k), idx+length(cartas1k));
-%     imshow(CSDbin)
-
-%     subplot(nrows, length(cartas1k), idx+length(cartas1k)*3);
-%     imshow(CIEbin)
-    
     dx2 = round(0.55*size(CSDbin,1)); 
     NaipeSD = CSDbin(dx2:end,:);
-    
     
     subplot(nrows, length(cartas1k), idx+length(cartas1k));
     imshow(NaipeSD)
 
-%     edgeNaipe = edging(NaipeSD);
-%     subplot(nrows, length(cartas1k), idx+length(cartas1k)*3);
-%     imshow(edgeNaipe)
-
-%     ouros = strel('diamond',)
     clean0s = NaipeSD(any(NaipeSD,2),:);
     clean0s = clean0s(:,any(clean0s,1));
     subplot(nrows, length(cartas1k), idx+length(cartas1k)*2);
@@ -165,7 +157,7 @@ for k=cartas1k
     if means(idx) < 1e-1
         xlabel("Ouros")
     else
-        xlabel(sprintf("Ndif:%d",means(idx)))
+        xlabel(sprintf("Ndif:%.2f",means(idx)))
     end
     
 
@@ -173,7 +165,9 @@ for k=cartas1k
 
 end
 
+
 if not(isempty(cartas2k))
+    cartas1k = cartas2k;
     figure(5)
     idx = 1;
     for k=cartas2k
@@ -188,29 +182,40 @@ if not(isempty(cartas2k))
         dx = round(px*size(B,1)); % 0.14
         dy = round(py*size(B,2)); % 0.25??
         
-        CantoInfDir = B(end-dx:end,end-dy:end);
-        CantoSupEsq = B(1:dx,1:dy);
-    
-        subplot(4, length(cartas2k), idx);
-        imshow(CantoInfDir)
-    
-        subplot(4, length(cartas2k), idx+length(cartas2k));
-        imshow(CantoSupEsq)
+        CantoInf = B(end-dx:end,end-dy:end); % dir
+        CantoSup = B(1:dx,1:dy); % esq
 
-        CSEbin = autobin(imadjust(CantoSupEsq));
-        CIDbin = autobin(imadjust(CantoInfDir));
-
-        subplot(4, length(cartas2k), idx+length(cartas2k)*2);
-        imshow(CIDbin)
+        subplot(nrows, length(cartas1k), idx);
+        imshow(CantoSup)
     
-        subplot(4, length(cartas2k), idx+length(cartas2k)*3);
-        imshow(CSEbin)
-            
+        CSDbin = autobin(imadjust(CantoSup));
+        CIEbin = autobin(imadjust(CantoInf));
     
-        idx = idx + 1;
-    
+        dx2 = round(0.55*size(CSDbin,1)); 
+        NaipeSD = CSDbin(dx2:end,:);
         
+        subplot(nrows, length(cartas1k), idx+length(cartas1k));
+        imshow(NaipeSD)
     
+        clean0s = NaipeSD(any(NaipeSD,2),:);
+        clean0s = clean0s(:,any(clean0s,1));
+        subplot(nrows, length(cartas1k), idx+length(cartas1k)*2);
+        imshow(clean0s)
+       
+        ouro1 = strel('diamond',ceil(0.5*size(clean0s,1))).Neighborhood;
+        ouro1 = imresize(ouro1,size(clean0s));
+        subplot(nrows, length(cartas1k), idx+length(cartas1k)*3);
+        imshow(ouro1)
+        
+        means(idx) = mean(imresize(clean0s,10)~=imresize(ouro1,10),'all');
+        if means(idx) < 1e-1
+            xlabel("Ouros")
+        else
+            xlabel(sprintf("Ndif:%.2f",means(idx)))
+        end
+   
+        idx = idx + 1;
+
     end
 end
 
