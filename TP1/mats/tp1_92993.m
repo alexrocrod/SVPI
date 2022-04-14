@@ -30,16 +30,16 @@ function NumMec = tp1_92993()
 
     %% Open Image
 
-%     addpath('../sequencias/Seq160')
-%     listaF=dir('../sequencias/Seq160/svpi2022_TP1_img_*.png');
+    addpath('../sequencias/Seq160')
+    listaF=dir('../sequencias/Seq160/svpi2022_TP1_img_*.png');
 
-    addpath('../sequencias/Seq530')
-    listaF=dir('../sequencias/Seq530/svpi2022_TP1_img_*.png');
+%     addpath('../sequencias/Seq530')
+%     listaF=dir('../sequencias/Seq530/svpi2022_TP1_img_*.png');
 
     MaxImg = size(listaF,1);
     showplot = false;
-    for idxImg = 1:MaxImg
-%     idxImg = 1; showplot = true;
+%     for idxImg = 1:MaxImg
+    idxImg = 1; showplot = true;
         
         tDuplas = 0;
         PntDom = 0;
@@ -198,7 +198,7 @@ function NumMec = tp1_92993()
                 dado1 = autobin(imadjust(regions{k}(c2+1:end-c2,c2+1:end-c2))); 
                 
                 % diamond exterior
-                A = strel('diamond',floor(size(dado1,1)/2)+2); %+2
+                A = strel('diamond',floor(size(dado1,1)/2)+1); %+2
                 dia = A.Neighborhood;
             
                 % diamond interior
@@ -213,8 +213,11 @@ function NumMec = tp1_92993()
                 area = nnz(zona);
                 
                 % edges
-                [Gmag,~] = imgradient(dado1);
-                edges = Gmag>1;
+%                 [Gmag,~] = imgradient(dado1);
+%                 edges = Gmag>1;
+
+                edges = edging(dado1);
+                B = dado1;
             
                 if nnz(edges(zona(1:size(edges,1),1:size(edges,1)))) > 0.2 * area %.2
             
@@ -229,7 +232,7 @@ function NumMec = tp1_92993()
                     xmeio = round(size(A,1)/2);
 
                     l = floor(x/sqrt(2));
-                    deltal = round(l/2)-6; % 8
+                    deltal = round(l/2)-6; % 6
             
 %                     B = A(xmeio-deltal:xmeio+deltal,xmeio-deltal:xmeio+deltal);
 
@@ -245,7 +248,10 @@ function NumMec = tp1_92993()
                 [L,Nb] = bwlabel(B);
                 if (Nb>6 || Nb==0) % NOISE
                     noiseKs = [noiseKs k];
-                    rodados(rodados==k) = [];
+                    if ismember(k,rodados)
+                        rodados(rodados==k) = [];
+                        fprintf("Removeu rodado %d\n",k)
+                    end
                     B = ones(size(B));
                 else
                     diceKs = [diceKs k];
@@ -322,9 +328,9 @@ function NumMec = tp1_92993()
 %         end
 
 %         pause(2)
-    end
+%     end
 
-%         save
+        save
 
 
 end
@@ -340,3 +346,12 @@ function B = edging(A)
 %     B = bwmorph(B,'remove'); % remove
 %     B = bwareaopen(B,round(0.2*size(B,1)));
 end
+function Ibin= autobin(I) 
+    Ibin = double(imbinarize(I));
+    
+    if nnz(Ibin)>0.5*(size(Ibin,1)*size(Ibin,2))
+        Ibin = not(Ibin);
+    end
+end
+
+
