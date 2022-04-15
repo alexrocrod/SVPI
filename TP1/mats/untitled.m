@@ -75,8 +75,31 @@
 clear all
 close all
 
-load res
-any(res,2)
+
+A = getCopaMatrix(); 
+% imshow(getCopaMatrix())
+
+B = bwmorph(A,"remove");
+imshow(B)
+
+
+function copa = getCopaMatrix()
+    A = false(501,501);
+    idx = 1;
+    for x=-250:250
+        idy = 1;
+        for y = -250:250
+            if (x^2 + y^2 - 1e4)^3 < 200*x^2*y^3
+                A(end-idy,idx) = true;
+            end
+            idy = idy + 1;
+        end
+        idx = idx +1;
+    end
+    
+    copa = A(any(A,2),:);
+    copa = copa(:,any(copa,1));
+end
 
 
 

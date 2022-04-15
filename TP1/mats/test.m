@@ -122,11 +122,11 @@ for k=cartas
     
     [res,means(idx)] = classNaipe(B,tipo,ouro,px,py,tolOuros);
     if res
-        xlabel(sprintf("Ouros tp%d",tipo))
+        xlabel(sprintf("T%d,O:%.2f,C:%.2f\nOuros tp%d",tipo,means(idx),meansCopa(idx),tipo))
     else
         [res,meansCopa(idx)] = classNaipe(B,tipo,copa,px,py,tolCopas);
         if res
-            xlabel(sprintf("Copas tp%d",tipo))
+            xlabel(sprintf("T%d,O:%.2f,C:%.2f\nCopas tp%d",tipo,means(idx),meansCopa(idx),tipo))
         else
             xlabel(sprintf("T%d,O:%.2f,C:%.2f",tipo,means(idx),meansCopa(idx)))
         end
@@ -213,6 +213,17 @@ function [res,meanC] = classNaipe(carta, tipo,naipe,px,py,tol)
 
     clean0s = getNaipe(carta,tipo,px,py);
 
+
+%     naipe = bwmorph(naipe,'remove'); % usar so a border
+%     clean0s = imresize(clean0s,sc);
+%     clean0s = bwmorph(clean0s,'remove');
+% %     clean0s = bwmorph(clean0s,'dilate');
+%     naipe = imdilate(naipe,ones(1,3));
+%     meanC = mean(clean0s~=imresize(naipe,size(clean0s)),'all');
+
+
+
+
     meanC = mean(imresize(clean0s,sc)~=imresize(naipe,sc*size(clean0s)),'all');
 
     if meanC < tol
@@ -236,16 +247,11 @@ function res = getNaipe(carta, tipo,px, py)
     CSbin = autobin(imadjust(CantoSup));
 
     dx2 = round(0.55*size(CSbin,1)); 
-    NaipeSD = CSbin(dx2:end,:);
-    
-%     clean0s = NaipeSD(any(NaipeSD,2),:);
-%     res = clean0s(:,any(clean0s,1));
+    res = CSbin(dx2:end,:);
 
     % clean rows/cols with only one nnz
 %     res = res(:,(sum(res,1)-1)>0);
 %     res = res((sum(res,2)-1)>0,:);
-
-    res = NaipeSD;
 
     res = bwareaopen(res,3);
 
@@ -257,7 +263,6 @@ function res = getNaipe(carta, tipo,px, py)
 %     res(end-sx:end,end-sy:end) = 0;
 %     res(end-sx:end,1:sy) = 0;
     
-
 
     % clean all zeros rows/cols
     res = res(:,any(res,1));
