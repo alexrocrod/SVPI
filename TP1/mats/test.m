@@ -5,8 +5,11 @@ clear all
 addpath('../sequencias/Seq160')
 listaF=dir('../sequencias/Seq160/svpi2022_TP1_img_*.png');
 
+% addpath('../sequencias/Seq530')
+% listaF=dir('../sequencias/Seq530/svpi2022_TP1_img_*.png');
 
-idxImg = 2;
+
+idxImg = 1;
 imName = listaF(idxImg).name;
 
 
@@ -17,20 +20,8 @@ regions2=vs_getsubimages(A); %working
 N=numel(regions);
 SS=ceil(sqrt(N));
 
-% figure(1)
-% for k=1:N 
-%     subplot( SS, SS, k);
-%     imshow(regions{k})
-%     xlabel(k)
-% end
-
-
-% figure(2)
 for k=1:N 
-%     subplot( SS, SS, k);
     regions2{k} = medfilt2(filter2(fspecial('average',3),regions{k}));
-%     imshow(regions2{k})
-%     xlabel(k)
 end
 
 
@@ -43,9 +34,11 @@ perc0 = 0.1; % 0.1
 px = 0.15; % 0.14
 py = 0.25; % 0.25
 
+
 for k=1:N 
     subplot( SS, SS, k);
     cut = 2; % 5
+%     B = autobin(imadjust(regions{k}(cut:end-cut,cut:end-cut)));
     B = autobin(imadjust(regions2{k}(cut:end-cut,cut:end-cut)));
 %     B = edging(B);
     
@@ -84,69 +77,58 @@ for k=1:N
         imshow(B)
     end
 
-    regions2{k} = B;
+    regions2{k} = double(B);
 
 end
 
+cartas = [cartas1k cartas2k];
+
+
+cut = 2; % 5
+nrows = 2;
+
+copa = getCopaMatrix();
+ouro = strel('diamond',250).Neighborhood;
+tolOuros = 0.2;
+tolCopas = 0.2;
+
 
 figure(4)
+means = zeros(length(cartas),1);
+meansCopa = zeros(length(cartas),1);
+
 idx = 1;
-cut = 2; % 5
-nrows = 5;
-means = zeros(length(cartas1k),1);
-meansCopas = zeros(length(cartas1k),1);
-for k=cartas1k
+for k=cartas
     
-%     B = regions2{k};
-%     B = regions{k};
-    
+%     B = regions{k}(cut:end-cut,cut:end-cut);
     B = regions{k}(cut:end-cut,cut:end-cut);
-    
-    sx = size(B,1);
-    sy = size(B,2);
 
-    dx = round(px*size(B,1)); % 0.14
-    dy = round(py*size(B,2)); % 0.25??
-    CantoSupDir = rot90(B(1:dx,end-dy:end));
-    CantoInfEsq = rot90(B(end-dx:end,1:dy));
+    dx = round(px*size(B,1)); 
+    dy = round(py*size(B,2));
 
-
-    subplot(nrows, length(cartas1k), idx);
-    imshow(CantoSupDir)
-
-    CSDbin = autobin(imadjust(CantoSupDir));
-    CIEbin = autobin(imadjust(CantoInfEsq));
-
-    dx2 = round(0.55*size(CSDbin,1)); 
-    NaipeSD = CSDbin(dx2:end,:);
-    
-    subplot(nrows, length(cartas1k), idx+length(cartas1k));
-    imshow(NaipeSD)
-
-    clean0s = NaipeSD(any(NaipeSD,2),:);
-    clean0s = clean0s(:,any(clean0s,1));
-    subplot(nrows, length(cartas1k), idx+length(cartas1k)*2);
-    imshow(clean0s)
-   
-    ouro1 = strel('diamond',ceil(0.5*size(clean0s,1))).Neighborhood;
-    ouro1 = imresize(ouro1,size(clean0s));
-    subplot(nrows, length(cartas1k), idx+length(cartas1k)*3);
-    imshow(ouro1)
-    
-    means(idx) = mean(imresize(clean0s,10)~=imresize(ouro1,10),'all');
-%     means(idx) = mean(clean0s~=ouro1,'all');
-    if means(idx) < 1e-1
-        xlabel("Ouros")
+    if ismember(k,cartas1k)
+        tipo=1;
+        CantoSup = rot90(B(1:dx,end-dy:end));
     else
-        load copa.mat
-        copa = imresize(copa,size(clean0s));
-        subplot(nrows, length(cartas1k), idx+length(cartas1k)*4);
-        imshow(copa)
-        meansCopa(idx) = mean(imresize(clean0s,10)~=imresize(copa,10),'all');
-        if meansCopa(idx) < 2e-1
-            xlabel("Copas")
+        tipo=2;
+        CantoSup = rot90(rot90(rot90(B(1:dx,1:dy))));
+    end
+
+    subplot(nrows,length(cartas),idx)
+    imshow(CantoSup)
+
+    subplot(nrows,length(cartas),idx + length(cartas))
+    imshow(getNaipe(B,tipo,px,py))
+    
+    [res,means(idx)] = classNaipe(B,tipo,ouro,px,py,tolOuros);
+    if res
+        xlabel(sprintf("Ouros tp%d",tipo))
+    else
+        [res,meansCopa(idx)] = classNaipe(B,tipo,copa,px,py,tolCopas);
+        if res
+            xlabel(sprintf("Copas tp%d",tipo))
         else
-            xlabel(sprintf("O:%.2f,C:%.2f",means(idx),meansCopa(idx)))
+            xlabel(sprintf("T%d,O:%.2f,C:%.2f",tipo,means(idx),meansCopa(idx)))
         end
     end
 
@@ -155,60 +137,8 @@ for k=cartas1k
 end
 
 
-if not(isempty(cartas2k))
-    cartas1k = cartas2k;
-    figure(5)
-    idx = 1;
-    for k=cartas2k
-    
-    %     B = regions2{k};
-    %     B = regions{k};
-        B = regions{k}(cut:end-cut,cut:end-cut);
-        
-        sx = size(B,1);
-        sy = size(B,2);
-    
-        dx = round(px*size(B,1)); % 0.14
-        dy = round(py*size(B,2)); % 0.25??
-        
-        CantoInf = B(end-dx:end,end-dy:end); % dir
-        CantoSup = B(1:dx,1:dy); % esq
-
-        subplot(nrows, length(cartas1k), idx);
-        imshow(CantoSup)
-    
-        CSDbin = autobin(imadjust(CantoSup));
-        CIEbin = autobin(imadjust(CantoInf));
-    
-        dx2 = round(0.55*size(CSDbin,1)); 
-        NaipeSD = CSDbin(dx2:end,:);
-        
-        subplot(nrows, length(cartas1k), idx+length(cartas1k));
-        imshow(NaipeSD)
-    
-        clean0s = NaipeSD(any(NaipeSD,2),:);
-        clean0s = clean0s(:,any(clean0s,1));
-        subplot(nrows, length(cartas1k), idx+length(cartas1k)*2);
-        imshow(clean0s)
-       
-        ouro1 = strel('diamond',ceil(0.5*size(clean0s,1))).Neighborhood;
-        ouro1 = imresize(ouro1,size(clean0s));
-        subplot(nrows, length(cartas1k), idx+length(cartas1k)*3);
-        imshow(ouro1)
-        
-        means(idx) = mean(imresize(clean0s,10)~=imresize(ouro1,10),'all');
-        if means(idx) < 1e-1
-            xlabel("Ouros")
-        else
-            xlabel(sprintf("Ndif:%.2f",means(idx)))
-        end
-   
-        idx = idx + 1;
-
-    end
-end
-
 % deck = ["♠","♥","♦","♣"] + ["A"; (2:10)';'J';'Q';'K'];
+
 
 function B = edging(A)
     B = A;
@@ -259,4 +189,82 @@ function [res,B] = sepCartas(B,perc,perc0,px,py)
     end
 end
 
+function copa = getCopaMatrix()
+    A = false(501,501);
+    idx = 1;
+    for x=-250:250
+        idy = 1;
+        for y = -250:250
+            if (x^2 + y^2 - 1e4)^3 < 200*x^2*y^3
+                A(end-idy,idx) = true;
+            end
+            idy = idy + 1;
+        end
+        idx = idx +1;
+    end
+    
+    copa = A(any(A,2),:);
+    copa = copa(:,any(copa,1));
+end
+
+function [res,meanC] = classNaipe(carta, tipo,naipe,px,py,tol)
+    res = false;
+    sc = 10;
+
+    clean0s = getNaipe(carta,tipo,px,py);
+
+    meanC = mean(imresize(clean0s,sc)~=imresize(naipe,sc*size(clean0s)),'all');
+
+    if meanC < tol
+        res = true;
+    end
+
+end
+
+function res = getNaipe(carta, tipo,px, py)
+
+    B = carta;
+    dx = round(px*size(B,1)); % 0.14
+    dy = round(py*size(B,2)); % 0.25??
+
+    if tipo == 1
+        CantoSup = rot90(B(1:dx,end-dy:end));
+    elseif tipo == 2
+        CantoSup = rot90(rot90(rot90(B(1:dx,1:dy))));
+    end
+
+    CSbin = autobin(imadjust(CantoSup));
+
+    dx2 = round(0.55*size(CSbin,1)); 
+    NaipeSD = CSbin(dx2:end,:);
+    
+%     clean0s = NaipeSD(any(NaipeSD,2),:);
+%     res = clean0s(:,any(clean0s,1));
+
+    % clean rows/cols with only one nnz
+%     res = res(:,(sum(res,1)-1)>0);
+%     res = res((sum(res,2)-1)>0,:);
+
+    res = NaipeSD;
+
+    res = bwareaopen(res,3);
+
+    % clean corner noise
+%     sx = round(0.1*size(res,1));
+%     sy = round(0.1*size(res,2));
+%     res(1:sx,1:sy) = 0;
+%     res(1:sx,end-sy:end) = 0;
+%     res(end-sx:end,end-sy:end) = 0;
+%     res(end-sx:end,1:sy) = 0;
+    
+
+
+    % clean all zeros rows/cols
+    res = res(:,any(res,1));
+    res = res(any(res,2),:);
+end
+
+
+
+ 
 
