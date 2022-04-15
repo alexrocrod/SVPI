@@ -217,7 +217,7 @@ function NumMec = tp1_92993()
                         D = regions{k}(cut:end-cut,cut:end-cut);
                         
                         
-                        perc = 0.15;
+                        perc = 0.15
                         [res,D] = sepCartas(D,perc,perc0,px,py);
                         tipo = 0;
                         if res == 0
