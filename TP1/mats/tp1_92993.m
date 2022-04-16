@@ -96,7 +96,7 @@ function NumMec = tp1_92993()
         espada = rot90(rot90(copa));
 
         tolOuros = 0.20; % 0.12 0.2
-        tolCopas = 0.20; % 0.12 0.2
+        tolCopas = 0.40; % 0.12 0.2
         tolEspadas = 0.20; % 0.12 0.2
 
         means = -ones(N,1);
@@ -253,21 +253,27 @@ function NumMec = tp1_92993()
                         restipo = res;
 
                         if tipo ~=0
-                            [res,means(k)] = classNaipe(D,tipo,ouro,px,py,tolOuros,acept);
-                            [~,meansEspadas(k)] = classNaipe(D,tipo,espada,px,py,tolEspadas,acept);
-                            if res
-                                ourosk = [ourosk k];
-                                [~,meansCopa(k)] = classNaipe(D,tipo,copa,px,py,tolCopas,acept);
-                                str = sprintf("T%d,O:%.2f,C:%.2f,E:%.2f\nOuros tp%d",tipo,means(k),meansCopa(k),meansEspadas(k),restipo);
-                            else
-                                [res,meansCopa(k)] = classNaipe(D,tipo,copa,px,py,tolCopas,acept);
-                                if res
-                                    copask = [copask k];
-                                    str =sprintf("T%d,O:%.2f,C:%.2f,E:%.2f\nCopas tp%d",tipo,means(k),meansCopa(k),meansEspadas(k),restipo);
-                                else
-                                    str = sprintf("T%d,O:%.2f,C:%.2f,E:%.2f tp%d",tipo,means(k),meansCopa(k),meansEspadas(k),restipo);
+                            [resO,means(k)] = classNaipe(D,tipo,ouro,px,py,tolOuros,acept);
+                            [resE,meansEspadas(k)] = classNaipe(D,tipo,espada,px,py,tolEspadas,acept);
+                            [resC,meansCopa(k)] = classNaipe(D,tipo,copa,px,py,tolCopas,acept);
+                            meansx = [means(k), meansEspadas(k), meansCopa(k)];
+                            resx = [resO,resE,resC];
+                            strRes = ["Ouros","Espadas","Copas"];
+                            [~,sortedI] = sort(meansx);
+                            str = sprintf("T%d,O:%.2f,C:%.2f,E:%.2f\n%s tp%d",tipo,means(k),meansCopa(k),meansEspadas(k),"Desc.",restipo);
+                            for idx=sortedI
+                                if resx(idx)
+                                    str = sprintf("T%d,O:%.2f,C:%.2f,E:%.2f\n%s tp%d",tipo,means(k),meansCopa(k),meansEspadas(k),strRes(idx),restipo);
+                                    if idx==1
+                                        ourosk = [ourosk k];
+                                    elseif idx==3
+                                        copask = [copask k];
+                                    else
+                                    end
+                                    break
                                 end
                             end
+
                         end
 
 
