@@ -1,5 +1,5 @@
 close all
-clear 
+clear all
 
 
 A_exact160 = readtable("tp1_seq_160_results.txt");

@@ -25,7 +25,6 @@ for k=1:N
 end
 
 
-
 figure(3)
 cartas1k = [];
 cartas2k = [];
@@ -58,6 +57,12 @@ for k=1:N
             B = rot90(B);
             regions{k} = rot90(regions{k});
         end
+
+%         if k==37
+%             figure(100)
+%             imshow(B)
+%             pause(10)
+%         end
         
         [res,B] = sepCartas(B,perc,perc0,px,py);
         if res == 0
@@ -81,60 +86,77 @@ for k=1:N
 
 end
 
-cartas = [cartas1k cartas2k];
-
-
-cut = 2; % 5
-nrows = 2;
-
-copa = getCopaMatrix();
-ouro = strel('diamond',250).Neighborhood;
-tolOuros = 0.2;
-tolCopas = 0.2;
-
-
-figure(4)
-means = zeros(length(cartas),1);
-meansCopa = zeros(length(cartas),1);
-
-idx = 1;
-for k=cartas
-    
+% cartas = [cartas1k cartas2k];
+% 
+% 
+% cut = 2; % 5
+% nrows = 3;
+% 
+% copa = getCopaMatrix();
+% ouro = strel('diamond',250).Neighborhood;
+% tolOuros = 0.12;
+% tolCopas = 0.12;
+% 
+% 
+% figure(4)
+% means = zeros(length(cartas),1);
+% meansCopa = zeros(length(cartas),1);
+% 
+% idx = 1;
+% for k=cartas
+%     
 %     B = regions{k}(cut:end-cut,cut:end-cut);
-    B = regions{k}(cut:end-cut,cut:end-cut);
-
-    dx = round(px*size(B,1)); 
-    dy = round(py*size(B,2));
-
-    if ismember(k,cartas1k)
-        tipo=1;
-        CantoSup = rot90(B(1:dx,end-dy:end));
-    else
-        tipo=2;
-        CantoSup = rot90(rot90(rot90(B(1:dx,1:dy))));
-    end
-
-    subplot(nrows,length(cartas),idx)
-    imshow(CantoSup)
-
-    subplot(nrows,length(cartas),idx + length(cartas))
-    imshow(getNaipe(B,tipo,px,py))
-    
-    [res,means(idx)] = classNaipe(B,tipo,ouro,px,py,tolOuros);
-    if res
-        xlabel(sprintf("T%d,O:%.2f,C:%.2f\nOuros tp%d",tipo,means(idx),meansCopa(idx),tipo))
-    else
-        [res,meansCopa(idx)] = classNaipe(B,tipo,copa,px,py,tolCopas);
-        if res
-            xlabel(sprintf("T%d,O:%.2f,C:%.2f\nCopas tp%d",tipo,means(idx),meansCopa(idx),tipo))
-        else
-            xlabel(sprintf("T%d,O:%.2f,C:%.2f",tipo,means(idx),meansCopa(idx)))
-        end
-    end
-
-    idx = idx + 1;
-
-end
+% 
+%     dx = round(px*size(B,1)); 
+%     dy = round(py*size(B,2));
+% 
+%     if ismember(k,cartas1k)
+%         tipo=1;
+%         CantoSup = rot90(B(1:dx,end-dy:end));
+%     else
+%         tipo=2;
+%         CantoSup = rot90(rot90(rot90(B(1:dx,1:dy))));
+%     end
+% 
+%     subplot(nrows,length(cartas),idx)
+%     imshow(CantoSup)
+% 
+%     Naipe0 = getNaipe0(B,tipo,px,py);
+% 
+% 
+%     subplot(nrows,length(cartas),idx + length(cartas))
+% %     imshow(getNaipe(B,tipo,px,py))
+%     imshow(Naipe0)
+% 
+% %     per = bwperim(Naipe0);
+% %     Ar = bwarea(Naipe0);
+% 
+% %     subplot(nrows,length(cartas),idx + length(cartas)*2)
+% %     imshow(per)
+% 
+% %     P = nnz(per);
+% 
+% %     T = size(Naipe0,1)*size(Naipe0,2);
+% 
+% %     [L,Nb] = bwlabel(Naipe0);
+% 
+% %     xlabel(sprintf("T%d,P:%.2f,A:%.2f \n P/A:%.2f,Nb:%d\nP/T:%.2f,A/T:%.2f",tipo,P,Ar,P/Ar,Nb,P/T,Ar/T))
+%     
+%     [res,means(idx)] = classNaipe(B,tipo,ouro,px,py,tolOuros);
+%     if res
+%         xlabel(sprintf("T%d,O:%.2f,C:%.2f\nOuros",tipo,means(idx),meansCopa(idx)))
+%     else
+%         [res,meansCopa(idx)] = classNaipe(B,tipo,copa,px,py,tolCopas);
+%         if res
+%             xlabel(sprintf("T%d,O:%.2f,C:%.2f\nCopas",tipo,means(idx),meansCopa(idx)))
+%         else
+%             xlabel(sprintf("T%d,O:%.2f,C:%.2f",tipo,means(idx),meansCopa(idx)))
+%         end
+%     end
+% 
+%     idx = idx + 1;
+% 
+% end
 
 
 % deck = ["♠","♥","♦","♣"] + ["A"; (2:10)';'J';'Q';'K'];
@@ -173,15 +195,15 @@ function [res,B] = sepCartas(B,perc,perc0,px,py)
 
     if (nnzInfEsq > perc*area && nnzSupDir > perc*area  && ...
             nnzInfDir < perc0*area && nnzSupEsq < perc0*area)
-        B(1:dx,1:dy) = 0;
-        B(end-dx:end,end-dy:end) = 0;
+%         B(1:dx,1:dy) = 0;
+%         B(end-dx:end,end-dy:end) = 0;
 
         res=1;
         
     elseif (nnzInfDir > perc*area && nnzSupEsq > perc*area && ...
             nnzInfEsq < perc0*area && nnzSupDir < perc0*area)
-        B(end-dx:end,1:dy) = 0;
-        B(1:dx,end-dy:end) = 0;
+%         B(end-dx:end,1:dy) = 0;
+%         B(1:dx,end-dy:end) = 0;
         
         res = 2;
     else
@@ -211,7 +233,8 @@ function [res,meanC] = classNaipe(carta, tipo,naipe,px,py,tol)
     res = false;
     sc = 10;
 
-    clean0s = getNaipe(carta,tipo,px,py);
+%     clean0s = getNaipe(carta,tipo,px,py);
+    clean0s = getNaipe0(carta,tipo,px,py);
 
 
 %     naipe = bwmorph(naipe,'remove'); % usar so a border
@@ -269,7 +292,55 @@ function res = getNaipe(carta, tipo,px, py)
     res = res(any(res,2),:);
 end
 
+function res = getNaipe0(carta, tipo,px, py)
 
+    B = carta;
+    dx = round(px*size(B,1)); % 0.14
+    dy = round(py*size(B,2)); % 0.25??
+
+    if tipo == 1
+        CantoSup = rot90(B(1:dx,end-dy:end));
+    elseif tipo == 2
+        CantoSup = rot90(rot90(rot90(B(1:dx,1:dy))));
+    end
+
+    CSbin = autobin(imadjust(CantoSup));
+
+    dx2 = round(0.55*size(CSbin,1)); 
+    res = CSbin(dx2:end,:);
+
+    [~,Nb] = bwlabel(res);
+
+    ola = bwmorph(res,'shrink', inf);
+    ppi = filter2([1 1 1; 1 -8 1; 1 1 1], ola);
+%     marker = (abs(ppi)==8);
+%     acept = 7;
+%     while nnz(marker)==0
+%         marker = (abs(ppi)>acept);
+%         acept = acept - 1;
+%     end
+    marker = (abs(ppi)>5);
+    indexes = find(marker);
+    prev = res;
+    curArea = 0;
+
+    for i=1:length(indexes)
+        mk2 = false(size(marker));
+        mk2(indexes(i)) = true;
+        temp = imreconstruct(mk2, prev);
+        Ar = bwarea(temp);
+        if  Ar > curArea
+            curArea = Ar;
+            res = temp;
+        end
+    end
+    
+
+    % clean all zeros rows/cols
+    res = res(:,any(res,1));
+    res = res(any(res,2),:);
+
+end
 
  
 

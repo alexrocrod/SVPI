@@ -30,16 +30,16 @@ function NumMec = tp1_92993()
 
     %% Open Image
 
-%     addpath('../sequencias/Seq160')
-%     listaF=dir('../sequencias/Seq160/svpi2022_TP1_img_*.png');
+    addpath('../sequencias/Seq160')
+    listaF=dir('../sequencias/Seq160/svpi2022_TP1_img_*.png');
 
-    addpath('../sequencias/Seq530')
-    listaF=dir('../sequencias/Seq530/svpi2022_TP1_img_*.png');
+%     addpath('../sequencias/Seq530')
+%     listaF=dir('../sequencias/Seq530/svpi2022_TP1_img_*.png');
 
     MaxImg = size(listaF,1);
     showplot = false;
 %     for idxImg = 1:MaxImg
-    idxImg = 2; showplot = true;
+    idxImg = 1; showplot = true;
         
         tDuplas = 0;
         PntDom = 0;
@@ -85,14 +85,13 @@ function NumMec = tp1_92993()
         cartas2k = [];
         px = 0.15; % 0.14
         py = 0.25; % 0.25
-        difPer = 1.5;
         perc = 0.15; % 0.15 
         perc0 = 0.1; % 0.1
 
         copa = getCopaMatrix();
         ouro = strel('diamond',250).Neighborhood;
-        tolOuros = 0.2;
-        tolCopas = 0.2;
+        tolOuros = 0.12; 
+        tolCopas = 0.12;
         means = -ones(N,1);
         meansCopa = -ones(N,1);
         str = "";
@@ -106,10 +105,10 @@ function NumMec = tp1_92993()
             if showplot
                 subplot( SS, SS, k);
             end
-            regions{k} = medfilt2(filter2(fspecial('average',3),regionsOrig{k}));
+%             regions{k} = medfilt2(filter2(fspecial('average',3),regionsOrig{k}));
 %             regions{k} = wiener2(regionsOrig{k},[5 5]);
             
-            cut = 5;
+            cut = 5; 
             B = autobin(imadjust(regions{k}(cut:end-cut,cut:end-cut)));
             
             sx = size(B,1);
@@ -165,7 +164,13 @@ function NumMec = tp1_92993()
 
 
                     % Detect Pintas
-                    B = edging(B);
+                    B = edge(B,'roberts');
+
+%                     B = bwareaopen(B,round(0.5*size(B,1)));
+%                     B = bwmorph(B,'close');
+
+
+%                     B = edging(B);
                 
 
                     [~,Nb] = bwlabel(B);
@@ -176,7 +181,7 @@ function NumMec = tp1_92993()
                     [~,Nb1] = bwlabel(B1);
                     [~,Nb2] = bwlabel(B2);
                     
-                    if false %(Nb1>6 || Nb2>6 || Nb==0) 
+                    if (Nb1>6 || Nb2>6 || Nb==0) 
                         noiseKs = [noiseKs k];
                         B = ones(size(B));
                     else
@@ -202,6 +207,10 @@ function NumMec = tp1_92993()
                 else % cards e NOISE <<<<<
                     cut = round(0.12*size(B,1)); % 0.1
                     B = B(cut:end-cut,:);
+
+%                     B = bwareaopen(B,round(0.4*size(B,1))); % 0.5
+%                     B = bwmorph(B,'close');
+
                     B = edging(B);
 
                     [L,Nb] = bwlabel(B);
@@ -214,7 +223,7 @@ function NumMec = tp1_92993()
                         cardKs = [cardKs k];
 
                         cut = 2; % 5
-                        D = regions{k}(cut:end-cut,cut:end-cut);
+                        D = autobin(imadjust(regions{k}(cut:end-cut,cut:end-cut)));
                         
                         
                         perc = 0.15;
@@ -222,26 +231,30 @@ function NumMec = tp1_92993()
                         tipo = 0;
                         if res == 0
                             fprintf("Carta NA, k=%d\n",k)
+                            tipo = 1; %%%%%% <<<<<
                         elseif res ==1
+%                             fprintf("Carta 1, k=%d\n",k)
                             cartas1k = [cartas1k k];
                             tipo=1;
                         elseif res == 2
+%                             fprintf("Carta 2, k=%d\n",k)
                             cartas2k = [cartas2k k];
                             tipo=2;
                         end
+                        restipo = res;
 
                         if tipo ~=0
                             [res,means(k)] = classNaipe(D,tipo,ouro,px,py,tolOuros);
                             if res
                                 ourosk = [ourosk k];
-                                str = sprintf("T%d,O:%.2f,C:%.2f\nOuros tp%d",tipo,means(k),meansCopa(k),tipo);
+                                str = sprintf("T%d,O:%.2f,C:%.2f\nOuros tp%d",tipo,means(k),meansCopa(k),restipo);
                             else
                                 [res,meansCopa(k)] = classNaipe(D,tipo,copa,px,py,tolCopas);
                                 if res
                                     copask = [copask k];
-                                    str =sprintf("T%d,O:%.2f,C:%.2f\nCopas tp%d",tipo,means(k),meansCopa(k),tipo);
+                                    str =sprintf("T%d,O:%.2f,C:%.2f\nCopas tp%d",tipo,means(k),meansCopa(k),restipo);
                                 else
-                                    str = sprintf("T%d,O:%.2f,C:%.2f",tipo,means(k),meansCopa(k));
+                                    str = sprintf("T%d,O:%.2f,C:%.2f tp%d",tipo,means(k),meansCopa(k),restipo);
                                 end
                             end
                         end
@@ -250,6 +263,7 @@ function NumMec = tp1_92993()
 
                     end
                     if showplot
+%                         imshow(regions{k})
                         imshow(B)
                         xlabel(str)
                     end
@@ -260,10 +274,10 @@ function NumMec = tp1_92993()
 
                 % Perceber se estao a 45º
                 c2=2;
-                dado1 = autobin(imadjust(regions{k}(c2+1:end-c2,c2+1:end-c2))); 
+                dado1 = autobin(imadjust(regionsOrig{k}(c2+1:end-c2,c2+1:end-c2))); 
                 
                 % diamond exterior
-                A = strel('diamond',floor(size(dado1,1)/2)+1); %+2
+                A = strel('diamond',floor(size(dado1,1)/2)+2); %+2
                 dia = A.Neighborhood;
             
                 % diamond interior
@@ -278,10 +292,8 @@ function NumMec = tp1_92993()
                 area = nnz(zona);
                 
                 % edges
-%                 [Gmag,~] = imgradient(dado1);
-%                 edges = Gmag>1;
-
-                edges = edging(dado1);
+                [Gmag,~] = imgradient(dado1);
+                edges = Gmag>1;
                 B = dado1;
             
                 if nnz(edges(zona(1:size(edges,1),1:size(edges,1)))) > 0.2 * area %.2
@@ -306,12 +318,20 @@ function NumMec = tp1_92993()
                 end
 %                 cut = 3;
 %                 B = autobin(imadjust(double(B(cut+1:end-cut,cut+1:end-cut))));
+%                 B = edge(B,'log');
+%                 B = edge(B,'roberts');
+% %                 B = imdilate(B,ones(3,1));
+% %                 B = imdilate(B,ones(1,3));
+% 
+%                 B = bwareaopen(B,round(0.5*size(B,1)));
+%                 B = bwmorph(B,'close');
 
+                B = bwmorph(B,'remove');
                 
-                B = edging(B);
+%                 B = edging(B);
 
                 [L,Nb] = bwlabel(B);
-                if false % (Nb>6 || Nb==0) % NOISE
+                if false %(Nb>6 || Nb==0) % NOISE
                     noiseKs = [noiseKs k];
                     if ismember(k,rodados)
                         rodados(rodados==k) = [];
@@ -337,29 +357,9 @@ function NumMec = tp1_92993()
         end
         
 
-        %% Get Edges
+        %% Save Vars
      
 
-%             if showplot
-%                 subplot( SS, SS, k);
-%                 imshow(B)
-%                 myAxis = axis;
-%                 hold on, axis ij, axis equal, axis(myAxis), grid on;
-%                    
-% 
-%                 for x = 1:Nb
-%                     C = (L==x);
-%                 
-%                     BB = bwboundaries(C,'noholes');
-%                     boundary = BB{1};
-%                 
-%                     plot(boundary(:,2),boundary(:,1),'b');
-%                end
-%     
-%                 str= sprintf("N=%d\n",Nb);  
-%                 xlabel(str)
-% 
-%             end
         
         PntCartas = sort(PntCartas);
 
@@ -374,7 +374,8 @@ function NumMec = tp1_92993()
         tCard = length(cardKs);
 
         Ouros = length(ourosk);
-        CopOuros = Ouros + 0; %+copas
+        Copas = length(copask);
+        CopOuros = Ouros + Copas; %+copas
 
         EspPaus = tCard - CopOuros;
 
@@ -385,6 +386,7 @@ function NumMec = tp1_92993()
             rodados
             cardKs
             ourosk
+            copask
             fprintf("Total=%d, Dominos=%d, Dados=%d, Cartas=%d\n",N,tDom,tDice,tCard)
         end
         
@@ -474,8 +476,16 @@ end
 function [res,meanC] = classNaipe(carta, tipo,naipe,px,py,tol)
     res = false;
     sc = 10;
+    carta = double(carta);
+%     clean0s = getNaipe(carta,tipo,px,py);
+    clean0s = getNaipe0(carta,tipo,px,py);
 
-    clean0s = getNaipe(carta,tipo,px,py);
+    if nnz(clean0s) == 0
+        fprintf("clean0s vazio")
+        meanC = -1;
+        res = false;
+        return
+    end
 
 
 %     naipe = bwmorph(naipe,'remove'); % usar so a border
@@ -531,5 +541,55 @@ function res = getNaipe(carta, tipo,px, py)
     % clean all zeros rows/cols
     res = res(:,any(res,1));
     res = res(any(res,2),:);
+end
+
+function res = getNaipe0(carta, tipo,px, py)
+
+    B = carta;
+    dx = round(px*size(B,1)); % 0.14
+    dy = round(py*size(B,2)); % 0.25??
+
+    if tipo == 1
+        CantoSup = rot90(B(1:dx,end-dy:end));
+    elseif tipo == 2
+        CantoSup = rot90(rot90(rot90(B(1:dx,1:dy))));
+    end
+
+    CSbin = autobin(imadjust(CantoSup));
+
+    dx2 = round(0.55*size(CSbin,1)); 
+    res = CSbin(dx2:end,:);
+
+    [~,Nb] = bwlabel(res);
+
+    ola = bwmorph(res,'shrink', inf);
+    ppi = filter2([1 1 1; 1 -8 1; 1 1 1], ola);
+%     marker = (abs(ppi)==8);
+%     acept = 7;
+%     while nnz(marker)==0
+%         marker = (abs(ppi)>acept);
+%         acept = acept - 1;
+%     end
+    marker = (abs(ppi)>5);
+    indexes = find(marker);
+    prev = logical(res);
+    curArea = 0;
+
+    for i=1:length(indexes)
+        mk2 = false(size(marker));
+        mk2(indexes(i)) = true;
+        temp = imreconstruct(mk2, prev);
+        Ar = bwarea(temp);
+        if  Ar > curArea
+            curArea = Ar;
+            res = temp;
+        end
+    end
+    
+
+    % clean all zeros rows/cols
+    res = res(:,any(res,1));
+    res = res(any(res,2),:);
+
 end
 
