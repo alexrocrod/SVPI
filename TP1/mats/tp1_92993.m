@@ -14,18 +14,18 @@ function NumMec = tp1_92993()
     NumMec = 92993;
 %     NumSeq = 0;
 %     NumImg = 0;
-    tDom = 0;
-    tDice = 0;
-    tCard = 0;
-    RDO = 0;
-    RFO = 0;
+%     tDom = 0;
+%     tDice = 0;
+%     tCard = 0;
+%     RDO = 0;
+%     RFO = 0;
 %     tDuplas = 0;
 %     PntDom = 0;
 %     PntDad = 0;
 %     CopOuros = 0;
 %     EspPaus = 0;
 %     Ouros = 0;
-    StringPT = "";
+%     StringPT = "";
 
 
     %% Open Image
@@ -44,9 +44,9 @@ function NumMec = tp1_92993()
         tDuplas = 0;
         PntDom = 0;
         PntDad = 0;
-        CopOuros = 0;
-        EspPaus = 0;
-        Ouros = 0;
+%         CopOuros = 0;
+%         EspPaus = 0;
+%         Ouros = 0;
 
         imName = listaF(idxImg).name;
         NumSeq = str2double(imName(18:20));
@@ -83,17 +83,25 @@ function NumMec = tp1_92993()
         numDomsRoted = 0;
         cartas1k = [];
         cartas2k = [];
+
         px = 0.15; % 0.14
         py = 0.25; % 0.25
-        perc = 0.15; % 0.15 
+%         perc = 0.15; % 0.15 
         perc0 = 0.1; % 0.1
+
+        acept=5; % acept as center points for marker in getNaipe0
 
         copa = getCopaMatrix();
         ouro = strel('diamond',250).Neighborhood;
-        tolOuros = 0.12; 
-        tolCopas = 0.12;
+        espada = rot90(rot90(copa));
+
+        tolOuros = 0.20; % 0.12 0.2
+        tolCopas = 0.20; % 0.12 0.2
+        tolEspadas = 0.20; % 0.12 0.2
+
         means = -ones(N,1);
         meansCopa = -ones(N,1);
+        meansEspadas = -ones(N,1);
         str = "";
 
 
@@ -105,8 +113,9 @@ function NumMec = tp1_92993()
             if showplot
                 subplot( SS, SS, k);
             end
-%             regions{k} = medfilt2(filter2(fspecial('average',3),regionsOrig{k}));
+            regions{k} = medfilt2(filter2(fspecial('average',3),regionsOrig{k}));
 %             regions{k} = wiener2(regionsOrig{k},[5 5]);
+%             regions{k} = medfilt2(regionsOrig{k});
             
             cut = 5; 
             B = autobin(imadjust(regions{k}(cut:end-cut,cut:end-cut)));
@@ -145,7 +154,7 @@ function NumMec = tp1_92993()
                 area = round(perc*sy*sx);
 
                 centerB = B(:,round(sy*t1):round(sy*t2));
-                [gx,gy] = imgradientxy(centerB);
+                [gx,~] = imgradientxy(centerB);
                 vertlines = gx>0;
 
                 
@@ -214,7 +223,7 @@ function NumMec = tp1_92993()
                     B = edging(B);
 
                     [L,Nb] = bwlabel(B);
-                    if false %(Nb>9 || Nb==0) 
+                    if (Nb>9 || Nb==0) 
                         noiseKs = [noiseKs k];
                         B = ones(size(B));
                     else
@@ -244,17 +253,19 @@ function NumMec = tp1_92993()
                         restipo = res;
 
                         if tipo ~=0
-                            [res,means(k)] = classNaipe(D,tipo,ouro,px,py,tolOuros);
+                            [res,means(k)] = classNaipe(D,tipo,ouro,px,py,tolOuros,acept);
+                            [~,meansEspadas(k)] = classNaipe(D,tipo,espada,px,py,tolEspadas,acept);
                             if res
                                 ourosk = [ourosk k];
-                                str = sprintf("T%d,O:%.2f,C:%.2f\nOuros tp%d",tipo,means(k),meansCopa(k),restipo);
+                                [~,meansCopa(k)] = classNaipe(D,tipo,copa,px,py,tolCopas,acept);
+                                str = sprintf("T%d,O:%.2f,C:%.2f,E:%.2f\nOuros tp%d",tipo,means(k),meansCopa(k),meansEspadas(k),restipo);
                             else
-                                [res,meansCopa(k)] = classNaipe(D,tipo,copa,px,py,tolCopas);
+                                [res,meansCopa(k)] = classNaipe(D,tipo,copa,px,py,tolCopas,acept);
                                 if res
                                     copask = [copask k];
-                                    str =sprintf("T%d,O:%.2f,C:%.2f\nCopas tp%d",tipo,means(k),meansCopa(k),restipo);
+                                    str =sprintf("T%d,O:%.2f,C:%.2f,E:%.2f\nCopas tp%d",tipo,means(k),meansCopa(k),meansEspadas(k),restipo);
                                 else
-                                    str = sprintf("T%d,O:%.2f,C:%.2f tp%d",tipo,means(k),meansCopa(k),restipo);
+                                    str = sprintf("T%d,O:%.2f,C:%.2f,E:%.2f tp%d",tipo,means(k),meansCopa(k),meansEspadas(k),restipo);
                                 end
                             end
                         end
@@ -330,8 +341,8 @@ function NumMec = tp1_92993()
                 
 %                 B = edging(B);
 
-                [L,Nb] = bwlabel(B);
-                if false %(Nb>6 || Nb==0) % NOISE
+                [~,Nb] = bwlabel(B);
+                if (Nb>6 || Nb==0) % NOISE
                     noiseKs = [noiseKs k];
                     if ismember(k,rodados)
                         rodados(rodados==k) = [];
@@ -400,10 +411,9 @@ function NumMec = tp1_92993()
             writetable(T,'tp1_92993.txt', 'WriteVariableNames',false, 'WriteMode','append')
 %         end
 
-%         pause(2)
 %     end
 
-        save
+%         save
 
 
 end
@@ -420,6 +430,7 @@ function B = edging(A)
 %     B = bwareaopen(B,round(0.2*size(B,1)));
 end
 function Ibin= autobin(I) 
+
     Ibin = double(imbinarize(I));
     
     if nnz(Ibin)>0.5*(size(Ibin,1)*size(Ibin,2))
@@ -473,15 +484,15 @@ function copa = getCopaMatrix()
     copa = copa(:,any(copa,1));
 end
 
-function [res,meanC] = classNaipe(carta, tipo,naipe,px,py,tol)
+function [res,meanC] = classNaipe(carta, tipo,naipe,px,py,tol,acept)
     res = false;
     sc = 10;
     carta = double(carta);
 %     clean0s = getNaipe(carta,tipo,px,py);
-    clean0s = getNaipe0(carta,tipo,px,py);
+    clean0s = getNaipe0(carta,tipo,px,py,acept);
 
     if nnz(clean0s) == 0
-        fprintf("clean0s vazio")
+        fprintf("clean0s vazio\n")
         meanC = -1;
         res = false;
         return
@@ -506,44 +517,8 @@ function [res,meanC] = classNaipe(carta, tipo,naipe,px,py,tol)
 
 end
 
-function res = getNaipe(carta, tipo,px, py)
 
-    B = carta;
-    dx = round(px*size(B,1)); % 0.14
-    dy = round(py*size(B,2)); % 0.25??
-    
-    if tipo == 1
-        CantoSup = rot90(B(1:dx,end-dy:end));
-    elseif tipo == 2
-        CantoSup = rot90(rot90(rot90(B(1:dx,1:dy))));
-    end
-
-    CSbin = autobin(imadjust(CantoSup));
-
-    dx2 = round(0.55*size(CSbin,1)); 
-    res = CSbin(dx2:end,:);
-
-    % clean rows/cols with only one nnz
-%     res = res(:,(sum(res,1)-1)>0);
-%     res = res((sum(res,2)-1)>0,:);
-
-    res = bwareaopen(res,3);
-
-    % clean corner noise
-%     sx = round(0.1*size(res,1));
-%     sy = round(0.1*size(res,2));
-%     res(1:sx,1:sy) = 0;
-%     res(1:sx,end-sy:end) = 0;
-%     res(end-sx:end,end-sy:end) = 0;
-%     res(end-sx:end,1:sy) = 0;
-    
-
-    % clean all zeros rows/cols
-    res = res(:,any(res,1));
-    res = res(any(res,2),:);
-end
-
-function res = getNaipe0(carta, tipo,px, py)
+function res = getNaipe0(carta, tipo,px, py,acept)
 
     B = carta;
     dx = round(px*size(B,1)); % 0.14
@@ -570,7 +545,7 @@ function res = getNaipe0(carta, tipo,px, py)
 %         marker = (abs(ppi)>acept);
 %         acept = acept - 1;
 %     end
-    marker = (abs(ppi)>5);
+    marker = (abs(ppi)>acept);
     indexes = find(marker);
     prev = logical(res);
     curArea = 0;

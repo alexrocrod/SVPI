@@ -21,3 +21,9 @@ B530 = B(41:end,:);
 Diff160 = table2array(B160)-table2array(A_exact160);
 
 Diff530 = table2array(B530)-table2array(A_exact530);
+
+Erro160 = Diff160./table2array(A_exact160)*100;
+
+Erro530 = Diff530./table2array(A_exact530)*100;
+
+save comparison.mat

@@ -2,11 +2,11 @@ close all
 clear all
 
 
-addpath('../sequencias/Seq160')
-listaF=dir('../sequencias/Seq160/svpi2022_TP1_img_*.png');
+% addpath('../sequencias/Seq160')
+% listaF=dir('../sequencias/Seq160/svpi2022_TP1_img_*.png');
 
-% addpath('../sequencias/Seq530')
-% listaF=dir('../sequencias/Seq530/svpi2022_TP1_img_*.png');
+addpath('../sequencias/Seq530')
+listaF=dir('../sequencias/Seq530/svpi2022_TP1_img_*.png');
 
 
 idxImg = 1;
@@ -21,7 +21,8 @@ N=numel(regions);
 SS=ceil(sqrt(N));
 
 for k=1:N 
-    regions2{k} = medfilt2(filter2(fspecial('average',3),regions{k}));
+%     regions2{k} = medfilt2(filter2(fspecial('average',3),regions{k}));
+    regions2{k} = medfilt2(regions{k});
 end
 
 
