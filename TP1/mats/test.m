@@ -1,6 +1,12 @@
 close all
 clear all
 
+% Fiso =[-1 -1 -1; -1 8 -1; -1 -1 -1];
+% temp = filter2(Fiso,B);
+% C = (temp>4);
+% D = B;
+% D(C) = 0;
+
 
 % addpath('../sequencias/Seq160')
 % listaF=dir('../sequencias/Seq160/svpi2022_TP1_img_*.png');
@@ -20,26 +26,29 @@ regions2=vs_getsubimages(A); %working
 N=numel(regions);
 SS=ceil(sqrt(N));
 
+cut = 2;
 for k=1:N 
-%     regions2{k} = medfilt2(filter2(fspecial('average',3),regions{k}));
-    regions2{k} = medfilt2(regions{k});
+%     regions2{k} = medfilt2(filter2(fspecial('average',3),regions{k}(cut:end-cut,cut:end-cut)));
+    regions2{k} = medfilt2(regions{k}(cut:end-cut,cut:end-cut));   
+%     regions2{k} = wiener2(regions{k}(cut:end-cut,cut:end-cut));
 end
 
 
 figure(3)
 cartas1k = [];
 cartas2k = [];
-perc = 0.15; % 0.15 
-perc0 = 0.1; % 0.1
+perc = 0.10; % 0.15 
+perc0 = 0.05; % 0.1
 px = 0.15; % 0.14
 py = 0.25; % 0.25
 
 
 for k=1:N 
     subplot( SS, SS, k);
-    cut = 2; % 5
+%     cut = 2; % 5
 %     B = autobin(imadjust(regions{k}(cut:end-cut,cut:end-cut)));
-    B = autobin(imadjust(regions2{k}(cut:end-cut,cut:end-cut)));
+%     B = autobin(imadjust(regions2{k}(cut:end-cut,cut:end-cut)));
+    B = autobin(imadjust(regions2{k}));
 %     B = edging(B);
     
     sx = size(B,1);
@@ -47,9 +56,11 @@ for k=1:N
 
     % Test Noise
     C = bwmorph(B,'erode',2);
+%     C=B;
     if nnz(C) < 0.01*nnz(B)
         fprintf("nnz=%d, m= %d, noise: %d\n",nnz(C),0.01*nnz(B) ,k)
-        imshow(B)
+        imshow(regions{k})
+%         imshow(B)
         xlabel("noise")
     
 
@@ -58,106 +69,125 @@ for k=1:N
             B = rot90(B);
             regions{k} = rot90(regions{k});
         end
-
-%         if k==37
-%             figure(100)
-%             imshow(B)
-%             pause(10)
-%         end
         
         [res,B] = sepCartas(B,perc,perc0,px,py);
         if res == 0
-            imshow(B)
+%             imshow(B)
+            imshow(regions{k})
             xlabel("carta NA")
         elseif res ==1
-            imshow(B)
+%             imshow(B)
+            imshow(regions{k})
             xlabel("carta tipo1")
             cartas1k = [cartas1k k];
         elseif res == 2
-            imshow(B)
+%             imshow(B)
+            imshow(regions{k})
             xlabel("carta tipo2")
             cartas2k = [cartas2k k];
         end
     
     else
-        imshow(B)
+%         imshow(B)
+        imshow(regions{k})
     end
 
     regions2{k} = double(B);
 
 end
 
-% cartas = [cartas1k cartas2k];
-% 
-% 
-% cut = 2; % 5
-% nrows = 3;
-% 
-% copa = getCopaMatrix();
-% ouro = strel('diamond',250).Neighborhood;
-% tolOuros = 0.12;
-% tolCopas = 0.12;
-% 
-% 
-% figure(4)
-% means = zeros(length(cartas),1);
-% meansCopa = zeros(length(cartas),1);
-% 
-% idx = 1;
-% for k=cartas
-%     
-%     B = regions{k}(cut:end-cut,cut:end-cut);
-% 
-%     dx = round(px*size(B,1)); 
-%     dy = round(py*size(B,2));
-% 
-%     if ismember(k,cartas1k)
-%         tipo=1;
-%         CantoSup = rot90(B(1:dx,end-dy:end));
-%     else
-%         tipo=2;
-%         CantoSup = rot90(rot90(rot90(B(1:dx,1:dy))));
-%     end
-% 
-%     subplot(nrows,length(cartas),idx)
-%     imshow(CantoSup)
-% 
-%     Naipe0 = getNaipe0(B,tipo,px,py);
-% 
-% 
+cartas = [cartas1k cartas2k];
+
+
+cut = 2; % 5
+nrows = 3;
+
+copa = getCopaMatrix();
+ouro = strel('diamond',250).Neighborhood;
+espada = getEspadaMatrix();
+tolOuros = 0.2;
+tolCopas = 0.2;
+tolEspadas = 0.2;
+
+
+figure(4)
+means = zeros(length(cartas),1);
+meansCopa = zeros(length(cartas),1);
+meansEspadas = zeros(length(cartas),1);
+
+strRes = ["Ouros","Espadas","Copas"];
+
+acept = 5;
+
+idx = 1;
+for k=cartas
+    
+%     B = regions2{k}(cut:end-cut,cut:end-cut);
+%     B = regions2{k};
+    B = regions{k}(cut:end-cut,cut:end-cut);
+
+    dx = round(px*size(B,1)); 
+    dy = round(py*size(B,2));
+
+    if ismember(k,cartas1k)
+        tipo=1;
+        CantoSup = rot90(B(1:dx,end-dy:end));
+    elseif ismember(k,cartas2k)
+        tipo=2;
+        CantoSup = rot90(rot90(rot90(B(1:dx,1:dy))));
+    else
+        tipo=0;
+    end
+
+    subplot(nrows,length(cartas),idx)
+    imshow(CantoSup)
+
+    Naipe0 = getNaipe0(B,tipo,px,py,acept);
+
+
 %     subplot(nrows,length(cartas),idx + length(cartas))
 % %     imshow(getNaipe(B,tipo,px,py))
 %     imshow(Naipe0)
-% 
-% %     per = bwperim(Naipe0);
-% %     Ar = bwarea(Naipe0);
-% 
-% %     subplot(nrows,length(cartas),idx + length(cartas)*2)
-% %     imshow(per)
-% 
-% %     P = nnz(per);
-% 
-% %     T = size(Naipe0,1)*size(Naipe0,2);
-% 
-% %     [L,Nb] = bwlabel(Naipe0);
-% 
-% %     xlabel(sprintf("T%d,P:%.2f,A:%.2f \n P/A:%.2f,Nb:%d\nP/T:%.2f,A/T:%.2f",tipo,P,Ar,P/Ar,Nb,P/T,Ar/T))
+%     per = bwperim(Naipe0);
+%     Ar = bwarea(Naipe0);
+%     subplot(nrows,length(cartas),idx + length(cartas)*2)
+%     imshow(per)
+%     P = nnz(per);
+%     T = size(Naipe0,1)*size(Naipe0,2);
+%     [L,Nb] = bwlabel(Naipe0);
+%     xlabel(sprintf("T%d,P:%.2f,A:%.2f \n P/A:%.2f,Nb:%d\nP/T:%.2f,A/T:%.2f",tipo,P,Ar,P/Ar,Nb,P/T,Ar/T))
 %     
-%     [res,means(idx)] = classNaipe(B,tipo,ouro,px,py,tolOuros);
-%     if res
-%         xlabel(sprintf("T%d,O:%.2f,C:%.2f\nOuros",tipo,means(idx),meansCopa(idx)))
-%     else
-%         [res,meansCopa(idx)] = classNaipe(B,tipo,copa,px,py,tolCopas);
-%         if res
-%             xlabel(sprintf("T%d,O:%.2f,C:%.2f\nCopas",tipo,means(idx),meansCopa(idx)))
-%         else
-%             xlabel(sprintf("T%d,O:%.2f,C:%.2f",tipo,means(idx),meansCopa(idx)))
-%         end
-%     end
-% 
-%     idx = idx + 1;
-% 
-% end
+
+
+    [resO,means(k)] = classNaipe(B,tipo,ouro,px,py,tolOuros,acept);
+    [resE,meansEspadas(k)] = classNaipe(B,tipo,espada,px,py,tolEspadas,acept);
+    [resC,meansCopa(k)] = classNaipe(B,tipo,copa,px,py,tolCopas,acept);
+    meansx = [means(k), meansEspadas(k), meansCopa(k)];
+    resx = [resO,resE,resC];
+    
+    [~,sortedI] = sort(meansx);
+    str = sprintf("T%d,O:%.2f,C:%.2f,E:%.2f\n%s",tipo,means(k),meansCopa(k),meansEspadas(k),"Desc.");
+    for idxI=sortedI
+        if resx(idxI)
+            str = sprintf("T%d,O:%.2f,C:%.2f,E:%.2f\n%s",tipo,means(k),meansCopa(k),meansEspadas(k),strRes(idxI));
+%             if idx==1
+%                 ourosk = [ourosk k];
+%             elseif idx==3
+%                 copask = [copask k];
+%             else
+%             end
+            break
+        end
+    end
+
+    subplot(nrows,length(cartas),idx + length(cartas))
+    imshow(Naipe0)
+    xlabel(str)
+
+
+    idx = idx + 1;
+
+end
 
 
 % deck = ["♠","♥","♦","♣"] + ["A"; (2:10)';'J';'Q';'K'];
@@ -177,7 +207,18 @@ function B = edging(A)
 end
 
 function Ibin= autobin(I) 
-    Ibin = double(imbinarize(I));
+    warning ('off','all');
+    [ts,met] = multithresh(I,2);
+    warning ('on','all');
+    if met==0
+        Ibin = double(imbinarize(I));
+    else
+        T = (ts(1)+ts(2))/2;
+        Ibin = double(imbinarize(I,T));
+    end
+%     T = ts(2);
+%     Ibin = double(imbinarize(I,T));
+%     Ibin = double(imbinarize(I));
     
     if nnz(Ibin)>0.5*(size(Ibin,1)*size(Ibin,2))
         Ibin = not(Ibin);
@@ -196,15 +237,15 @@ function [res,B] = sepCartas(B,perc,perc0,px,py)
 
     if (nnzInfEsq > perc*area && nnzSupDir > perc*area  && ...
             nnzInfDir < perc0*area && nnzSupEsq < perc0*area)
-%         B(1:dx,1:dy) = 0;
-%         B(end-dx:end,end-dy:end) = 0;
+        B(1:dx,1:dy) = 0;
+        B(end-dx:end,end-dy:end) = 0;
 
         res=1;
         
     elseif (nnzInfDir > perc*area && nnzSupEsq > perc*area && ...
             nnzInfEsq < perc0*area && nnzSupDir < perc0*area)
-%         B(end-dx:end,1:dy) = 0;
-%         B(1:dx,end-dy:end) = 0;
+        B(end-dx:end,1:dy) = 0;
+        B(1:dx,end-dy:end) = 0;
         
         res = 2;
     else
@@ -230,12 +271,16 @@ function copa = getCopaMatrix()
     copa = copa(:,any(copa,1));
 end
 
-function [res,meanC] = classNaipe(carta, tipo,naipe,px,py,tol)
+function [res,meanC] = classNaipe(carta, tipo,naipe,px,py,tol,acept)
     res = false;
     sc = 10;
 
+    if tipo==0
+        fprintf("Carta tipo 0\n")
+        tipo=1;
+    end
 %     clean0s = getNaipe(carta,tipo,px,py);
-    clean0s = getNaipe0(carta,tipo,px,py);
+    clean0s = getNaipe0(carta,tipo,px,py,acept);
 
 
 %     naipe = bwmorph(naipe,'remove'); % usar so a border
@@ -246,9 +291,10 @@ function [res,meanC] = classNaipe(carta, tipo,naipe,px,py,tol)
 %     meanC = mean(clean0s~=imresize(naipe,size(clean0s)),'all');
 
 
-
-
-    meanC = mean(imresize(clean0s,sc)~=imresize(naipe,sc*size(clean0s)),'all');
+    
+%     meanC = mean(clean0s~=imresize(naipe,size(clean0s)),'all');
+%     meanC = mean(imresize(clean0s,sc)~=imresize(naipe,sc*size(clean0s)),'all');
+    meanC = mean(imresize(clean0s,sc,'nearest')~=imresize(naipe,sc*size(clean0s),'nearest'),'all');
 
     if meanC < tol
         res = true;
@@ -293,24 +339,71 @@ function res = getNaipe(carta, tipo,px, py)
     res = res(any(res,2),:);
 end
 
-function res = getNaipe0(carta, tipo,px, py)
+function res = getNaipe0(carta, tipo,px, py,acept)
+
+    B = double(carta);
+    dx = round(px*size(B,1)); % 0.14
+    dy = round(py*size(B,2)); % 0.25??
+    dx2 = round(0.55*dy);
+
+    if tipo == 1
+        NaipeSup = rot90(B(1:dx,end-dy:end-dx2));
+    elseif tipo == 2
+        NaipeSup = rot90(rot90(rot90(B(1:dx,dx2:dy))));
+    end
+
+    res = double(autobin(imadjust(NaipeSup)));
+
+%     [~,Nb] = bwlabel(res);
+
+    ola = bwmorph(res,'shrink', inf);
+    ppi = filter2([1 1 1; 1 -8 1; 1 1 1], ola);
+%     marker = (abs(ppi)==8);
+%     acept = 7;
+%     while nnz(marker)==0
+%         marker = (abs(ppi)>acept);
+%         acept = acept - 1;
+%     end
+    marker = (abs(ppi)>acept);
+    indexes = find(marker);
+    prev = res;
+    curArea = 0;
+
+    for i=1:length(indexes)
+        mk2 = zeros(size(marker));
+        mk2(indexes(i)) = true;
+        temp = imreconstruct(mk2, prev);
+        Ar = bwarea(temp);
+        if  Ar > curArea
+            curArea = Ar;
+            res = temp;
+        end
+    end
+    
+
+    % clean all zeros rows/cols
+    res = res(:,any(res,1));
+    res = res(any(res,2),:);
+
+end
+
+function res = getAllNaipes(carta, tipo,px, py)
 
     B = carta;
     dx = round(px*size(B,1)); % 0.14
     dy = round(py*size(B,2)); % 0.25??
+    dx2 = round(0.55*dy);
 
     if tipo == 1
-        CantoSup = rot90(B(1:dx,end-dy:end));
+        NaipeSup = rot90(B(1:dx,end-dy:end-dx2));
     elseif tipo == 2
-        CantoSup = rot90(rot90(rot90(B(1:dx,1:dy))));
+        NaipeSup = rot90(rot90(rot90(B(1:dx,dx2:dy))));
     end
 
-    CSbin = autobin(imadjust(CantoSup));
+    res = autobin(imadjust(NaipeSup));
 
-    dx2 = round(0.55*size(CSbin,1)); 
-    res = CSbin(dx2:end,:);
 
-    [~,Nb] = bwlabel(res);
+%     [~,Nb] = bwlabel(res);
 
     ola = bwmorph(res,'shrink', inf);
     ppi = filter2([1 1 1; 1 -8 1; 1 1 1], ola);
@@ -341,6 +434,61 @@ function res = getNaipe0(carta, tipo,px, py)
     res = res(:,any(res,1));
     res = res(any(res,2),:);
 
+end
+
+function A = getEspadaMatrix()
+    A=[0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1 1 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
+         0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1 1 1 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
+         0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1 1 1 1 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
+         0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1 1 1 1 1 1 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
+         0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1 1 1 1 1 1 1 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
+         0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1 1 1 1 1 1 1 1 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
+         0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1 1 1 1 1 1 1 1 1 1 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
+         0 0 0 0 0 0 0 0 0 0 0 0 0 0 1 1 1 1 1 1 1 1 1 1 1 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
+         0 0 0 0 0 0 0 0 0 0 0 0 0 0 1 1 1 1 1 1 1 1 1 1 1 1 0 0 0 0 0 0 0 0 0 0 0 0 0 0
+         0 0 0 0 0 0 0 0 0 0 0 0 0 1 1 1 1 1 1 1 1 1 1 1 1 1 1 0 0 0 0 0 0 0 0 0 0 0 0 0
+         0 0 0 0 0 0 0 0 0 0 0 0 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 0 0 0 0 0 0 0 0 0 0 0 0 0
+         0 0 0 0 0 0 0 0 0 0 0 0 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 0 0 0 0 0 0 0 0 0 0 0 0
+         0 0 0 0 0 0 0 0 0 0 0 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 0 0 0 0 0 0 0 0 0 0 0
+         0 0 0 0 0 0 0 0 0 0 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 0 0 0 0 0 0 0 0 0 0
+         0 0 0 0 0 0 0 0 0 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 0 0 0 0 0 0 0 0 0 0
+         0 0 0 0 0 0 0 0 0 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 0 0 0 0 0 0 0 0 0
+         0 0 0 0 0 0 0 0 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 0 0 0 0 0 0 0 0
+         0 0 0 0 0 0 0 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 0 0 0 0 0 0 0
+         0 0 0 0 0 0 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 0 0 0 0 0 0 0
+         0 0 0 0 0 0 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 0 0 0 0 0 0
+         0 0 0 0 0 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 0 0 0 0 0
+         0 0 0 0 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 0 0 0 0
+         0 0 0 0 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 0 0 0 0
+         0 0 0 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 0 0 0
+         0 0 0 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 0 0 0
+         0 0 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 0 0
+         0 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 0 0
+         0 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 0
+         0 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 0
+         1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1
+         1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1
+         1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1
+         1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1
+         1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1
+         1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1
+         0 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 0
+         0 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 0
+         0 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 0
+         0 0 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 0 0
+         0 0 0 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 0 0 0
+         0 0 0 0 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 0 0 0 0
+         0 0 0 0 0 0 1 1 1 1 1 1 1 1 0 1 1 1 1 1 1 1 1 1 1 0 1 1 1 1 1 1 1 1 0 0 0 0 0 0
+         0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1 1 1 1 1 1 1 1 1 1 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
+         0 0 0 0 0 0 0 0 0 0 0 0 0 0 1 1 1 1 1 1 1 1 1 1 1 1 0 0 0 0 0 0 0 0 0 0 0 0 0 0
+         0 0 0 0 0 0 0 0 0 0 0 0 0 0 1 1 1 1 1 1 1 1 1 1 1 1 0 0 0 0 0 0 0 0 0 0 0 0 0 0
+         0 0 0 0 0 0 0 0 0 0 0 0 0 1 1 1 1 1 1 1 1 1 1 1 1 1 1 0 0 0 0 0 0 0 0 0 0 0 0 0
+         0 0 0 0 0 0 0 0 0 0 0 0 0 1 1 1 1 1 1 1 1 1 1 1 1 1 1 0 0 0 0 0 0 0 0 0 0 0 0 0
+         0 0 0 0 0 0 0 0 0 0 0 0 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 0 0 0 0 0 0 0 0 0 0 0 0
+         0 0 0 0 0 0 0 0 0 0 0 0 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 0 0 0 0 0 0 0 0 0 0 0 0
+         0 0 0 0 0 0 0 0 0 0 0 0 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 0 0 0 0 0 0 0 0 0 0 0 0];
+    
+    
 end
 
  
