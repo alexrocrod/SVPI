@@ -32,8 +32,7 @@ rot = true;
 extend = false;
 
 tic
-% [regionsRotated,masksRotated,fmaskRot] = getSubImages(A,rot,minSize,cutx,cuty,relSizes,minWidth,extend,zeros(size(A)),reductRoted);
-[regionsRotated,fmaskRot] = getSubImages(A,rot,minSize,cutx,cuty,relSizes,minWidth,extend,zeros(size(A)),reductRoted);
+[regionsRotated,masksRotated,fmaskRot] = getSubImages(A,rot,minSize,cutx,cuty,relSizes,minWidth,extend,zeros(size(A)),reductRoted);
 toc
 
 
@@ -42,11 +41,10 @@ cuty = -1; % 2
 extend = true;
 rot = false;
 tic
-% [regionsNormal,masksNormal,fmaskNorm] = getSubImages(A,rot,minSize,cutx,cuty,relSizes,minWidth,extend,fmaskRot,reductRoted);
-[regionsNormal,fmaskNorm] = getSubImages(A,rot,minSize,cutx,cuty,relSizes,minWidth,extend,fmaskRot,reductRoted);
+[regionsNormal,masksNormal,fmaskNorm] = getSubImages(A,rot,minSize,cutx,cuty,relSizes,minWidth,extend,fmaskRot,reductRoted);
 toc
 
-fprintf("Roted:%d,Normal:%d,Sum:%d,Exact:%d\n",numel(regionsRotated),numel(regionsNormal),numel(regionsNormal)+numel(regionsRotated),numel(regionsSor))
+fprintf("Roted:%d,Normal.%d")
 
 
 N=numel(regionsNormal);
@@ -67,12 +65,16 @@ for k=1:N
     xlabel(k)
 end
 
-% figure(4)
-% imshow(fmaskNorm)
-% 
 % figure(5)
-% imshow(fmaskRot)
-
+% imshow(zeros(size(A)))
+% temp = zeros(size(A));
+% hold on
+% for k=2:N 
+%     temp = temp | masks{k};
+%     imshow(temp)
+% %     drawnow
+% %     pause(0.2)
+% end
 
 N=numel(regionsSor);
 SS=ceil(sqrt(N));
@@ -99,8 +101,7 @@ function B2 = maskNormal(B)
 end
 
 
-% function [regions,masks,fullMask] = getSubImages(A,rot,minSize,cutx,cuty,relSizes,minWidth,extend,fmaskPrev,reductRoted)
-function [regions,fullMask] = getSubImages(A,rot,minSize,cutx,cuty,relSizes,minWidth,extend,fmaskPrev,reductRoted)
+function [regions,mask,fullMask] = getSubImages(A,rot,minSize,cutx,cuty,relSizes,minWidth,extend,fmaskPrev,reductRoted)
     if rot
         B = maskRotated(A);
     else
@@ -163,7 +164,7 @@ function [regions,fullMask] = getSubImages(A,rot,minSize,cutx,cuty,relSizes,minW
             selected = A.*mask;
         end
 
-%         masks{count} = mask;
+        masks{count} = mask;
         fullMask = fullMask | mask;
         
         % guardar regiao
