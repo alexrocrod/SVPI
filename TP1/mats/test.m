@@ -1,14 +1,14 @@
 close all
 clear all
 
-% addpath('../sequencias/Seq160')
-% listaF=dir('../sequencias/Seq160/svpi2022_TP1_img_*.png');
+addpath('../sequencias/Seq160')
+listaF=dir('../sequencias/Seq160/svpi2022_TP1_img_*.png');
 
-addpath('../sequencias/Seq530')
-listaF=dir('../sequencias/Seq530/svpi2022_TP1_img_*.png');
+% addpath('../sequencias/Seq530')
+% listaF=dir('../sequencias/Seq530/svpi2022_TP1_img_*.png');
 
 
-idxImg = 1;
+idxImg = 40;
 imName = listaF(idxImg).name;
 
 
@@ -21,13 +21,13 @@ toc
 figure(1)
 imshow(A)
 
-minSize = 50;
-relSizes = 4;
-minWidth = 30;
+minSize = 60; % 50
+relSizes = 4; % 4
+minWidth = 30; % 30
 
-cutx = -3; % 1
-cuty = -3; % 2
-reductRoted = 2;
+cutx = -3; % -3
+cuty = -3; % -3
+reductRoted = 2; % 2
 rot = true;
 extend = false;
 
@@ -37,8 +37,8 @@ tic
 toc
 
 
-cutx = -1; % 1
-cuty = -1; % 2
+cutx = -1; % -1
+cuty = -1; % -1
 extend = true;
 rot = false;
 tic
@@ -67,11 +67,11 @@ for k=1:N
     xlabel(k)
 end
 
-% figure(4)
-% imshow(fmaskNorm)
-% 
-% figure(5)
-% imshow(fmaskRot)
+figure(4)
+imshow(fmaskNorm)
+
+figure(5)
+imshow(fmaskRot)
 
 
 N=numel(regionsSor);
@@ -121,7 +121,7 @@ function [regions,fullMask] = getSubImages(A,rot,minSize,cutx,cuty,relSizes,minW
         if (nnz(C) < minSize), continue, end
         mask = poly2mask(boundary(:,2), boundary(:,1),sx,sy);
 
-        if any(mask.*fmaskPrev,'all')
+        if nnz(mask.*fmaskPrev) || nnz(mask.*fullMask)
             fprintf("exclui\n")
             continue
         end
