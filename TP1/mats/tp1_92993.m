@@ -3,6 +3,17 @@
 % Abril 2022
 % Trabalho Pratico 1
 
+%% A FAZER
+% Verificar semelhanca dos naipes so no interior do esperado
+% Edge diferente no rotate dice
+% poly2mask em mais sitios
+
+
+
+%% 
+
+
+
 function NumMec = tp1_92993()
     %% 
 
