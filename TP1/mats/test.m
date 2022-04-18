@@ -6,9 +6,9 @@ listaF=dir('../sequencias/Seq160/svpi2022_TP1_img_*.png');
 
 % addpath('../sequencias/Seq530')
 % listaF=dir('../sequencias/Seq530/svpi2022_TP1_img_*.png');
+% 
 
-
-idxImg = 40;
+idxImg = 8;
 imName = listaF(idxImg).name;
 
 
@@ -68,10 +68,18 @@ for k=1:N
 end
 
 figure(4)
+
+subplot(1,4,1)
 imshow(fmaskNorm)
 
-figure(5)
+subplot(1,4,2)
 imshow(fmaskRot)
+
+subplot(1,4,3)
+imshow(fmaskNorm | fmaskRot)
+
+subplot(1,4,4)
+imshow(fmaskNorm .* fmaskRot)
 
 
 N=numel(regionsSor);
@@ -115,33 +123,27 @@ function [regions,fullMask] = getSubImages(A,rot,minSize,cutx,cuty,relSizes,minW
     sy = size(B,2);
     
     count = 1;
+
     for k=Nb+1:length(Bx)
         boundary = Bx{k};
         C = (L==k);
         if (nnz(C) < minSize), continue, end
         mask = poly2mask(boundary(:,2), boundary(:,1),sx,sy);
-
-        if nnz(mask.*fmaskPrev) || nnz(mask.*fullMask)
-            fprintf("exclui\n")
+        
+        if nnz(mask.*fmaskPrev)
             continue
         end
-
-        
         mask0s = mask(:,any(mask,1));
         mask0s = mask0s(any(mask0s,2),:);
 
         % remove weird shapes
-        temp = mask0s;
-        sizesT = sort(size(temp));
-        if sizesT(1) > relSizes * sizesT(2) || sizesT(1) < minWidth 
+        sizesT = sort(size(mask0s));
+        if sizesT(2) > relSizes * sizesT(1) || sizesT(1) < minWidth 
             continue
         end
 
         % estender a quadrilateros
-%         if mean(mask0s,"all")>0.99
-%         if mean(autobin(mask.*A),"all")>0.7
-%             disp(k)
-        if extend
+        if extend 
             idxs = find(max(mask,[],2));
             minx = max(idxs(1)+cutx,1);
             maxx = min(idxs(end)-cutx,sx);
@@ -150,21 +152,31 @@ function [regions,fullMask] = getSubImages(A,rot,minSize,cutx,cuty,relSizes,minW
             maxy = min(idxs(end)-cuty,sy);
             mask = zeros(size(A));
             mask(minx:maxx,miny:maxy) = 1;
+        end
 
-            selected = A.*mask;
+        % remove weird shapes
+        sizesT = sort(size(mask));
+        if sizesT(2) > relSizes * sizesT(1) || sizesT(1) < minWidth 
+            continue
+        end
+    
+        % remove already found
+        if nnz(mask.*fmaskPrev)
+            continue
+        end
 
-        elseif rot
-            selected = A.*mask;
+        selected = A.*mask;
+
+        if rot && ~extend
             selected = selected(:,any(selected,1));
             selected = selected(any(selected,2),:);
 
             selected = rotateDice(selected,reductRoted);
-        else
-            selected = A.*mask;
         end
 
 %         masks{count} = mask;
         fullMask = fullMask | mask;
+        fmaskPrev = fmaskPrev | mask;
         
         % guardar regiao
         selected = selected(:,any(selected,1));
@@ -173,58 +185,6 @@ function [regions,fullMask] = getSubImages(A,rot,minSize,cutx,cuty,relSizes,minW
         
     end
 
-
-%     figure(2)
-%     imshow(B)
-%     hold on
-%     for k=1:length(Bx)
-%         boundary = Bx{k};
-%         C = (L==k);
-%         if (nnz(C) < minSize), continue, end
-%         if(k > Nb)
-% %             plot(boundary(:,2), boundary(:,1), 'g','LineWidth',2);
-%             mask = poly2mask(boundary(:,2), boundary(:,1),sx,sy);
-%     
-%             mask0s = mask(:,any(mask,1));
-%             mask0s = mask0s(any(mask0s,2),:);
-%     
-%             % remove weird shapes
-%             temp = mask0s;
-%             sizesT = sort(size(temp));
-% %             fprintf("k=%d,s1=%d,s2=%d\n",count+1,sizesT(1),sizesT(2))
-%             if sizesT(1) > relSizes * sizesT(2) || sizesT(1) < minWidth   % 4, 30
-%                 continue
-%             end
-%     
-%             % estender a quadrilateros
-%     %         if mean(mask0s,"all")>0.99
-%     %         if mean(autobin(mask.*A),"all")>0.7
-%     %             disp(k)
-%                 idxsx = find(max(mask));
-%                 minx = idxsx(1);
-%                 maxx = idxsx(end);
-%                 idxsy = find(max(mask,[],2));
-%                 miny = idxsy(1);
-%                 maxy = idxsy(end);
-%                 mask = zeros(size(A));
-%                 mask(miny:maxy,minx:maxx) = 1;
-%     %         end
-%     
-%             masks{count} = mask;
-%             
-%             % guardar regiao
-%             selected = A.*mask;
-%             selected = selected(:,any(selected,1));
-%             selected = selected(any(selected,2),:);
-%             regions{count} = selected(cutx+1:end-cutx,cuty+1:end-cuty);
-%             count = count + 1;
-%             
-%     
-%         else
-% %             plot(boundary(:,2), boundary(:,1), 'r','LineWidth',2);  
-%         end
-%            pause(0.01)
-%     end
 end
 
 function B = rotateDice(unaltered, reductRoted)
