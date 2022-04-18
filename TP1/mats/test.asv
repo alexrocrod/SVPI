@@ -6,9 +6,9 @@ listaF=dir('../sequencias/Seq160/svpi2022_TP1_img_*.png');
 
 % addpath('../sequencias/Seq530')
 % listaF=dir('../sequencias/Seq530/svpi2022_TP1_img_*.png');
+% 
 
-
-idxImg = 17;
+idxImg = 8;
 imName = listaF(idxImg).name;
 
 
@@ -68,15 +68,17 @@ for k=1:N
 end
 
 figure(4)
+
+subplot(1,4,1)
 imshow(fmaskNorm)
 
-figure(5)
+subplot(1,4,2)
 imshow(fmaskRot)
 
-figure(6)
+subplot(1,4,3)
 imshow(fmaskNorm | fmaskRot)
 
-figure()
+subplot(1,4,4)
 imshow(fmaskNorm .* fmaskRot)
 
 
@@ -91,8 +93,13 @@ end
 
 
 function B2 = maskRotated(B)
-    B2 = edge(B,'sobel','horizontal');
+%     B2 = edge(B,'sobel','horizontal');
+%     B2 = bwmorph(B2,'bridge');
+%     B2 = bwareaopen(B2,round(0.2*size(B2,1)));
+
+    B2 = edge(B,'sobel','vertical');
     B2 = bwmorph(B2,'bridge');
+    B2 = bwmorph(B2,'close');
     B2 = bwareaopen(B2,round(0.2*size(B2,1)));
 end
 
@@ -121,6 +128,30 @@ function [regions,fullMask] = getSubImages(A,rot,minSize,cutx,cuty,relSizes,minW
     sy = size(B,2);
     
     count = 1;
+
+    figure(20)
+    imshow(B)
+    hold on
+    for k=1:Nb
+        boundary = Bx{k};
+        C = (L==k);
+        if (nnz(C) < minSize), continue, end
+        mask = poly2mask(boundary(:,2), boundary(:,1),sx,sy);
+        if rot
+            SE = [0 0 0
+                  0 1 0
+                  1 0 1];
+            
+            minx = max(idxs(1)+cutx,1);
+            maxx = min(idxs(end)-cutx,sx);
+            idxs = find(max(mask));
+            miny = max(idxs(1)+cuty,1);
+            maxy = min(idxs(end)-cuty,sy);
+            mask = zeros(size(A));
+            mask(minx:maxx,miny:maxy) = 1; 
+        end
+    end
+
     figure(20)
     imshow(B)
     hold on
@@ -128,20 +159,19 @@ function [regions,fullMask] = getSubImages(A,rot,minSize,cutx,cuty,relSizes,minW
     for k=Nb+1:length(Bx)
         boundary = Bx{k};
         C = (L==k);
-        plot(boundary(:,2), boundary(:,1), 'g','LineWidth',2);
-        text(boundary(1,2), boundary(1,1),num2str(k));
-        pa
         if (nnz(C) < minSize), continue, end
         mask = poly2mask(boundary(:,2), boundary(:,1),sx,sy);
-        
-        subplot(SS,SS,k-Nb-1)
-        imshow(mask)
-        if nnz(mask.*fmaskPrev)
-            fprintf("exclui %d\n",k)
-            continue
-        end
+
         
 
+
+        plot(boundary(:,2), boundary(:,1), 'g','LineWidth',2);
+%         text(boundary(1,2), boundary(1,1),num2str(k),'Color','r');
+        pause(0.1)
+        
+        if nnz(mask.*fmaskPrev)
+            continue
+        end
         mask0s = mask(:,any(mask,1));
         mask0s = mask0s(any(mask0s,2),:);
 
@@ -150,13 +180,9 @@ function [regions,fullMask] = getSubImages(A,rot,minSize,cutx,cuty,relSizes,minW
         if sizesT(2) > relSizes * sizesT(1) || sizesT(1) < minWidth 
             continue
         end
-        fprintf("passou %d\n",k)
 
         % estender a quadrilateros
-%         if mean(mask0s,"all")>0.99
-%         if mean(autobin(mask.*A),"all")>0.7
-%             disp(k)
-        if extend
+        if extend 
             idxs = find(max(mask,[],2));
             minx = max(idxs(1)+cutx,1);
             maxx = min(idxs(end)-cutx,sx);
@@ -165,6 +191,17 @@ function [regions,fullMask] = getSubImages(A,rot,minSize,cutx,cuty,relSizes,minW
             maxy = min(idxs(end)-cuty,sy);
             mask = zeros(size(A));
             mask(minx:maxx,miny:maxy) = 1;
+        end
+
+        % remove weird shapes
+        sizesT = sort(size(mask));
+        if sizesT(2) > relSizes * sizesT(1) || sizesT(1) < minWidth 
+            continue
+        end
+    
+        % remove already found
+        if nnz(mask.*fmaskPrev)
+            continue
         end
 
         selected = A.*mask;
