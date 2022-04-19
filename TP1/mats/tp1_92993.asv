@@ -28,19 +28,17 @@ NumMec = 92993;
 
 %     addpath('../')
 %     listaF=dir('../svpi2022_TP1_img_*.png');
-% % 
-%     addpath('../sequencias/Seq160')
-%     listaF=dir('../sequencias/Seq160/svpi2022_TP1_img_*.png');
+% 
+    addpath('../sequencias/Seq160')
+    listaF=dir('../sequencias/Seq160/svpi2022_TP1_img_*.png');
 
-    addpath('../sequencias/Seq530')
-    listaF=dir('../sequencias/Seq530/svpi2022_TP1_img_*.png');
+%     addpath('../sequencias/Seq530')
+%     listaF=dir('../sequencias/Seq530/svpi2022_TP1_img_*.png');
 
 MaxImg = size(listaF,1);
 showplot = false;
-
-    for idxImg = 1:MaxImg
-
-%     idxImg = 13; showplot = true;
+%     for idxImg = 1:MaxImg
+    idxImg = 5; showplot = true;
     fprintf("idxImg=%d\n",idxImg);
     
     tDuplas = 0;
@@ -108,7 +106,7 @@ showplot = false;
     %         cartas2k = [];
     
     % definem parte da imagem que é o naipe e numero
-    pxNN = 0.14; % 0.14
+    pxNN = 0.15; % 0.14
     pyNN = 0.25; % 0.25
     pxCutCenter = 0.13;
     
@@ -137,11 +135,11 @@ showplot = false;
     strRes = ["Ouros","Espadas","Copas"];
     
     % Dices
-    percRotate = 0.2; % pecentage of area (border zone) -> rodado
-    posDia = 2; % larger outside diamond
-    negDia = -1; % inner diamond
-    edgeGrad = 1; % gradient that defines an edge
-    reductRoted = 6; % reduction in the image to get the final diamond
+    % percRotate = 0.2; % pecentage of area (border zone) -> rodado
+    % posDia = 2; % larger outside diamond
+    % negDia = -1; % inner diamond
+    % edgeGrad = 1; % gradient that defines an edge
+    % reductRoted = 6; % reduction in the image to get the final diamond
 %     gradVertLine = 0;
     percCenterDom = 0.06;
     perAreaWhiteLine = 0.2;
@@ -368,14 +366,15 @@ showplot = false;
             end
         else
             % Perceber se estao a 45º
-            dado1 = autobin(imadjust(regions{k}),true);
-            [res,B2] = rotateDiceIf(dado1,regions{k},percRotate,posDia,negDia,edgeGrad, reductRoted);
-            if res
-                fprintf("Rodado %d\n",k)
-                B = B2;
-                rodados = [rodados k];
-            end
-
+                c2=2;
+                dado1 = autobin(imadjust(regionsOrig{k}(c2+1:end-c2,c2+1:end-c2))); 
+                
+                [res,B2] = rotateDice(dado1,regions{k},percRotate,posDia,negDia,edgeGrad, reductRoted);
+                if res
+                    B = B2;
+                    rodados = [rodados k];
+                end
+                
             B = bwareaopen(B,round(0.5*size(B,1)));
             B = bwmorph(B,'remove');
     
@@ -457,11 +456,9 @@ showplot = false;
     writetable(T,'tp1_92993.txt', 'WriteVariableNames',false, 'WriteMode','append')
     %         end
     
-    end
-    
-    if showplot
+%     end
+
         save
-    end
 
 
 end
@@ -486,11 +483,8 @@ function [res,B] = rotateDiceIf(dado1,unaltered,percRotate,posDia,negDia,edgeGra
     area = nnz(zona);
 
     % edges
-%     [Gmag,~] = imgradient(dado1);
-%     edges = Gmag>edgeGrad;
-%     
-
-    edges = maskRotated(dado1);
+    [Gmag,~] = imgradient(dado1);
+    edges = Gmag>edgeGrad;
     B = dado1;
 
     if nnz(edges(zona(1:size(edges,1),1:size(edges,1)))) > percRotate * area %.2
@@ -508,7 +502,7 @@ function [res,B] = rotateDiceIf(dado1,unaltered,percRotate,posDia,negDia,edgeGra
         deltal = round(l/2)-reductRoted; % 6
 
 
-        B = autobin(imadjust(double(A(xmeio-deltal:xmeio+deltal,xmeio-deltal:xmeio+deltal))),true);
+        B = autobin(imadjust(double(A(xmeio-deltal:xmeio+deltal,xmeio-deltal:xmeio+deltal))));
 
     end
 
