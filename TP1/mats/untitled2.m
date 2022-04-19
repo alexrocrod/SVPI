@@ -44,7 +44,6 @@ ans =
 
        92993
 
-
 idxImg=1
 idxImg=2
 idxImg=3
@@ -86,5 +85,52 @@ ans =
 
        92993
 
+
+       idxImg=1
+idxImg=2
+idxImg=3
+Carta NA, k=18
+Carta NA, k=32
+idxImg=4
+IdxImg:4,Removeu rodado 3, Nb:7
+Remove Carta:Nb=0
+Carta NA, k=32
+idxImg=5
+Carta NA, k=7
+idxImg=6
+Remove Carta:Nb=0
+Remove Carta:Nb=0
+idxImg=7
+Remove Carta:Nb=0
+idxImg=8
+Remove Carta:Nb=0
+idxImg=9
+IdxImg:9,Removeu rodado 6, Nb:7
+idxImg=10
+Remove Carta:Nb=0
+idxImg=11
+Remove Carta:Nb=0
+idxImg=12
+idxImg=13
+IdxImg:13,Removeu rodado 3, Nb:9
+Carta NA, k=14
+idxImg=14
+Carta NA, k=19
+idxImg=15
+idxImg=16
+Carta NA, k=29
+Remove Carta:Nb=0
+idxImg=17
+Remove Carta:Nb=0
+idxImg=18
+Carta NA, k=9
+Remove Carta:Nb=0
+Carta NA, k=23
+idxImg=19
+idxImg=20
+
+ans =
+
+       92993
 
 

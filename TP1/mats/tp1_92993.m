@@ -37,10 +37,11 @@ NumMec = 92993;
 
 MaxImg = size(listaF,1);
 showplot = false;
+% idxImg = 3; showplot = true;
 
     for idxImg = 1:MaxImg
 
-%     idxImg = 13; showplot = true;
+    
     fprintf("idxImg=%d\n",idxImg);
     
     tDuplas = 0;
@@ -104,8 +105,6 @@ showplot = false;
     ourosk = [];
     copask = [];
     numDomsRoted = 0;
-    %         cartas1k = [];
-    %         cartas2k = [];
     
     % definem parte da imagem que é o naipe e numero
     pxNN = 0.14; % 0.14
@@ -177,7 +176,6 @@ showplot = false;
         if showplot
             subplot(SS,SS,k);
             imshow(B)
-            
             xlabel(str);
         end
     
@@ -224,12 +222,7 @@ showplot = false;
 %             [gx,~] = imgradientxy(B(:,t1:t2));
 %             vertlines = gx>0;
             Bold = B;
-            B = regions{k};
-            B = medfilt2(B);
-            B = imadjust(B);
-            B = autobin(B,false);
-            B = bwareaopen(B,30);
-            B = bwmorph(B,'remove');
+            B = edgeDice(regions{k});
 
             if sx>sy
                 B = rot90(B);
@@ -252,6 +245,8 @@ showplot = false;
                 bd = Bound{1};
                 vertlines = poly2mask(bd(:,2), bd(:,1),sx,t2-t1);
                 vertlines = bwmorph(vertlines,"fatten");
+                vertlines = imdilate(vertlines,ones(3,1));
+
             end
                 
     
@@ -260,13 +255,11 @@ showplot = false;
                 B(:,t1:t2) = 0; % remove line
     
                 % clean borders
-%                 if false
-                    perc = 2/100;
-                    B(1:round(sy*perc),:)= 0;
-                    B(end-round(sy*perc):end,:)= 0;
-                    B(:,1:round(sx*perc))= 0;
-                    B(:,end-round(sx*perc*2):end)= 0;
-%                 end
+                perc = 2/100;
+                B(1:round(sy*perc),:)= 0;
+                B(end-round(sy*perc):end,:)= 0;
+                B(:,1:round(sx*perc))= 0;
+                B(:,end-round(sx*perc*2):end)= 0;
     
     
                 % Detect Pintas
@@ -283,7 +276,7 @@ showplot = false;
     
                 if (Nb1>6 || Nb2>6 || Nb==0) % invalid number of pintas
                     fprintf("Remove Domino: %d,%d->%d\n",Nb1,Nb2,Nb);
-                    str = sprintf("Dom.%d,Remove Domino: %d,%d->%d\n",k,Nb1,Nb2,Nb);
+                    str = sprintf("Dom.%d,Removido,%d,%d->%d\n",k,Nb1,Nb2,Nb);
                     noiseKs = [noiseKs k];
                     B = ones(size(B));
                 else
@@ -329,15 +322,10 @@ showplot = false;
     
                     D = autobin(imadjust(regions{k}),false); % previous normal
     
-                    [res,D] = sepCartas(D,percWhiteCorner,percBlackCorner,pxNN,pyNN);
-                    tipo = res;
-                    if res == 0
+                    [tipo,D] = sepCartas(D,percWhiteCorner,percBlackCorner,pxNN,pyNN);
+                    if tipo == 0
                         fprintf("Carta NA, k=%d\n",k)
-                        tipo = 0; %%%%%% <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< SAO DOMINO
-                    end
-                    restipo = res;
-    
-                    if tipo ~=0
+                    else
                         PntCartas = [PntCartas Nb];
                         cardKs = [cardKs k];
     
@@ -348,10 +336,10 @@ showplot = false;
     
     
                         [~,sortedI] = sort(meansx);
-                        str = sprintf("T%d,O:%.2f,C:%.2f,E:%.2f\n%s tp%d,Nb=%d",tipo,meansOuros(k),meansCopa(k),meansEspadas(k),"Desc.",restipo,Nb);
+                        str = sprintf("T%d,O:%.2f,C:%.2f,E:%.2f\n%s,Nb=%d",tipo,meansOuros(k),meansCopa(k),meansEspadas(k),"Desc.",Nb);
                         for idx=sortedI
                             if resx(idx)
-                                str = sprintf("T%d,O:%.2f,C:%.2f,E:%.2f\n%s tp%d,Nb=%d",tipo,meansOuros(k),meansCopa(k),meansEspadas(k),strRes(idx),restipo,Nb);
+                                str = sprintf("T%d,O:%.2f,C:%.2f,E:%.2f\n%s,Nb=%d",tipo,meansOuros(k),meansCopa(k),meansEspadas(k),strRes(idx),Nb);
                                 if idx==1
                                     ourosk = [ourosk k];
                                 elseif idx==3
@@ -368,16 +356,17 @@ showplot = false;
             end
         else
             % Perceber se estao a 45º
-            dado1 = autobin(imadjust(regions{k}),true);
+            dado1 = autobin(imadjust(regions{k}),false);
             [res,B2] = rotateDiceIf(dado1,regions{k},percRotate,posDia,negDia,edgeGrad, reductRoted);
             if res
                 fprintf("Rodado %d\n",k)
                 B = B2;
                 rodados = [rodados k];
             end
-
-            B = bwareaopen(B,round(0.5*size(B,1)));
-            B = bwmorph(B,'remove');
+    
+%             B = bwareaopen(B,round(0.5*size(B,1)));
+%             B = bwmorph(B,'remove');
+%             B = bwareaopen(B,round(0.3*size(B,1)));
     
     
             [~,Nb] = bwlabel(B);
@@ -387,7 +376,7 @@ showplot = false;
                     rodados(rodados==k) = [];
                     fprintf("Removeu rodado %d, Nb:%d\n",k,Nb)
                 end
-                B = ones(size(B));
+%                 B = ones(size(B));
             else
                 diceKs = [diceKs k];
                 PntDad = PntDad + Nb;
@@ -402,7 +391,7 @@ showplot = false;
         if showplot
             SS = ceil(sqrt(N));
             subplot(SS,SS,k);
-            %                   imshow(regions{k})
+            % imshow(regions{k})
             imshow(B)
             xlabel(str)
         end
@@ -514,13 +503,17 @@ function [res,B] = rotateDiceIf(dado1,unaltered,percRotate,posDia,negDia,edgeGra
 
 end
 
+function B = edgeDice(ori)
+    B =  medfilt2(ori);
+    B = imadjust(B);
+    B = autobin(B,false);
+    B = bwareaopen(B,30);
+    B = bwmorph(B,'remove');
+end
+
 function [B,Nb] = edgeRotDice(original)
 
-        B =  medfilt2(original);
-        B = imadjust(B);
-        B = autobin(B,false);
-        B = bwareaopen(B,30);
-        B = bwmorph(B,'remove');
+        B = edgeDice(original);
     
         if nnz(medfilt2(B))>10
             B = original;

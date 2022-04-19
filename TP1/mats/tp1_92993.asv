@@ -28,17 +28,19 @@ NumMec = 92993;
 
 %     addpath('../')
 %     listaF=dir('../svpi2022_TP1_img_*.png');
-% 
-    addpath('../sequencias/Seq160')
-    listaF=dir('../sequencias/Seq160/svpi2022_TP1_img_*.png');
+% % 
+%     addpath('../sequencias/Seq160')
+%     listaF=dir('../sequencias/Seq160/svpi2022_TP1_img_*.png');
 
-%     addpath('../sequencias/Seq530')
-%     listaF=dir('../sequencias/Seq530/svpi2022_TP1_img_*.png');
+    addpath('../sequencias/Seq530')
+    listaF=dir('../sequencias/Seq530/svpi2022_TP1_img_*.png');
 
 MaxImg = size(listaF,1);
 showplot = false;
+
 %     for idxImg = 1:MaxImg
-    idxImg = 5; showplot = true;
+
+    idxImg = 19; showplot = true;
     fprintf("idxImg=%d\n",idxImg);
     
     tDuplas = 0;
@@ -102,11 +104,9 @@ showplot = false;
     ourosk = [];
     copask = [];
     numDomsRoted = 0;
-    %         cartas1k = [];
-    %         cartas2k = [];
     
     % definem parte da imagem que é o naipe e numero
-    pxNN = 0.15; % 0.14
+    pxNN = 0.14; % 0.14
     pyNN = 0.25; % 0.25
     pxCutCenter = 0.13;
     
@@ -135,11 +135,11 @@ showplot = false;
     strRes = ["Ouros","Espadas","Copas"];
     
     % Dices
-    % percRotate = 0.2; % pecentage of area (border zone) -> rodado
-    % posDia = 2; % larger outside diamond
-    % negDia = -1; % inner diamond
-    % edgeGrad = 1; % gradient that defines an edge
-    % reductRoted = 6; % reduction in the image to get the final diamond
+    percRotate = 0.2; % pecentage of area (border zone) -> rodado
+    posDia = 2; % larger outside diamond
+    negDia = -1; % inner diamond
+    edgeGrad = 1; % gradient that defines an edge
+    reductRoted = 6; % reduction in the image to get the final diamond
 %     gradVertLine = 0;
     percCenterDom = 0.06;
     perAreaWhiteLine = 0.2;
@@ -175,7 +175,6 @@ showplot = false;
         if showplot
             subplot(SS,SS,k);
             imshow(B)
-            
             xlabel(str);
         end
     
@@ -222,12 +221,7 @@ showplot = false;
 %             [gx,~] = imgradientxy(B(:,t1:t2));
 %             vertlines = gx>0;
             Bold = B;
-            B = regions{k};
-            B = medfilt2(B);
-            B = imadjust(B);
-            B = autobin(B,false);
-            B = bwareaopen(B,30);
-            B = bwmorph(B,'remove');
+            B = edgeDice(regions{k});
 
             if sx>sy
                 B = rot90(B);
@@ -258,13 +252,11 @@ showplot = false;
                 B(:,t1:t2) = 0; % remove line
     
                 % clean borders
-%                 if false
-                    perc = 2/100;
-                    B(1:round(sy*perc),:)= 0;
-                    B(end-round(sy*perc):end,:)= 0;
-                    B(:,1:round(sx*perc))= 0;
-                    B(:,end-round(sx*perc*2):end)= 0;
-%                 end
+                perc = 2/100;
+                B(1:round(sy*perc),:)= 0;
+                B(end-round(sy*perc):end,:)= 0;
+                B(:,1:round(sx*perc))= 0;
+                B(:,end-round(sx*perc*2):end)= 0;
     
     
                 % Detect Pintas
@@ -281,7 +273,7 @@ showplot = false;
     
                 if (Nb1>6 || Nb2>6 || Nb==0) % invalid number of pintas
                     fprintf("Remove Domino: %d,%d->%d\n",Nb1,Nb2,Nb);
-                    str = sprintf("Dom.%d,Remove Domino: %d,%d->%d\n",k,Nb1,Nb2,Nb);
+                    str = sprintf("Dom.%d,Removido,%d,%d->%d\n",k,Nb1,Nb2,Nb);
                     noiseKs = [noiseKs k];
                     B = ones(size(B));
                 else
@@ -327,15 +319,10 @@ showplot = false;
     
                     D = autobin(imadjust(regions{k}),false); % previous normal
     
-                    [res,D] = sepCartas(D,percWhiteCorner,percBlackCorner,pxNN,pyNN);
-                    tipo = res;
-                    if res == 0
+                    [tipo,D] = sepCartas(D,percWhiteCorner,percBlackCorner,pxNN,pyNN);
+                    if tipo == 0
                         fprintf("Carta NA, k=%d\n",k)
-                        tipo = 0; %%%%%% <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< SAO DOMINO
-                    end
-                    restipo = res;
-    
-                    if tipo ~=0
+                    else
                         PntCartas = [PntCartas Nb];
                         cardKs = [cardKs k];
     
@@ -346,10 +333,10 @@ showplot = false;
     
     
                         [~,sortedI] = sort(meansx);
-                        str = sprintf("T%d,O:%.2f,C:%.2f,E:%.2f\n%s tp%d,Nb=%d",tipo,meansOuros(k),meansCopa(k),meansEspadas(k),"Desc.",restipo,Nb);
+                        str = sprintf("T%d,O:%.2f,C:%.2f,E:%.2f\n%s,Nb=%d",tipo,meansOuros(k),meansCopa(k),meansEspadas(k),"Desc.",Nb);
                         for idx=sortedI
                             if resx(idx)
-                                str = sprintf("T%d,O:%.2f,C:%.2f,E:%.2f\n%s tp%d,Nb=%d",tipo,meansOuros(k),meansCopa(k),meansEspadas(k),strRes(idx),restipo,Nb);
+                                str = sprintf("T%d,O:%.2f,C:%.2f,E:%.2f\n%s,Nb=%d",tipo,meansOuros(k),meansCopa(k),meansEspadas(k),strRes(idx),Nb);
                                 if idx==1
                                     ourosk = [ourosk k];
                                 elseif idx==3
@@ -366,15 +353,14 @@ showplot = false;
             end
         else
             % Perceber se estao a 45º
-                c2=2;
-                dado1 = autobin(imadjust(regionsOrig{k}(c2+1:end-c2,c2+1:end-c2))); 
-                
-                [res,B2] = rotateDice(dado1,regions{k},percRotate,posDia,negDia,edgeGrad, reductRoted);
-                if res
-                    B = B2;
-                    rodados = [rodados k];
-                end
-                
+            dado1 = autobin(imadjust(regions{k}),true);
+            [res,B2] = rotateDiceIf(dado1,regions{k},percRotate,posDia,negDia,edgeGrad, reductRoted);
+            if res
+                fprintf("Rodado %d\n",k)
+                B = B2;
+                rodados = [rodados k];
+            end
+
             B = bwareaopen(B,round(0.5*size(B,1)));
             B = bwmorph(B,'remove');
     
@@ -401,7 +387,7 @@ showplot = false;
         if showplot
             SS = ceil(sqrt(N));
             subplot(SS,SS,k);
-            %                   imshow(regions{k})
+            % imshow(regions{k})
             imshow(B)
             xlabel(str)
         end
@@ -457,8 +443,10 @@ showplot = false;
     %         end
     
 %     end
-
+    
+    if showplot
         save
+    end
 
 
 end
@@ -483,9 +471,13 @@ function [res,B] = rotateDiceIf(dado1,unaltered,percRotate,posDia,negDia,edgeGra
     area = nnz(zona);
 
     % edges
-    [Gmag,~] = imgradient(dado1);
-    edges = Gmag>edgeGrad;
+%     [Gmag,~] = imgradient(dado1);
+%     edges = Gmag>edgeGrad;
+%     
+
+    edges = maskRotated(dado1);
     B = dado1;
+    imshow(edges)
 
     if nnz(edges(zona(1:size(edges,1),1:size(edges,1)))) > percRotate * area %.2
 
@@ -502,19 +494,23 @@ function [res,B] = rotateDiceIf(dado1,unaltered,percRotate,posDia,negDia,edgeGra
         deltal = round(l/2)-reductRoted; % 6
 
 
-        B = autobin(imadjust(double(A(xmeio-deltal:xmeio+deltal,xmeio-deltal:xmeio+deltal))));
+        B = autobin(imadjust(double(A(xmeio-deltal:xmeio+deltal,xmeio-deltal:xmeio+deltal))),true);
 
     end
 
 end
 
+function B = edgeDice(ori)
+    B =  medfilt2(ori);
+    B = imadjust(B);
+    B = autobin(B,false);
+    B = bwareaopen(B,30);
+    B = bwmorph(B,'remove');
+end
+
 function [B,Nb] = edgeRotDice(original)
 
-        B =  medfilt2(original);
-        B = imadjust(B);
-        B = autobin(B,false);
-        B = bwareaopen(B,30);
-        B = bwmorph(B,'remove');
+        B = edgeDice(original);
     
         if nnz(medfilt2(B))>10
             B = original;
