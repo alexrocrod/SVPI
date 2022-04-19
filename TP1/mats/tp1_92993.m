@@ -38,7 +38,7 @@ NumMec = 92993;
 MaxImg = size(listaF,1);
 showplot = false;
     for idxImg = 1:MaxImg
-    % idxImg = 2; showplot = true;
+%     idxImg = 13; showplot = true;
     fprintf("idxImg=%d\n",idxImg);
     
     tDuplas = 0;
@@ -70,16 +70,6 @@ showplot = false;
     N=numel(regionsRotated);
     RDO = N;
     
-    if showplot
-        SS=ceil(sqrt(N));
-        figure(1)
-        for k=1:N
-            subplot( SS, SS, k);
-            imshow(regionsRotated{k})
-            xlabel(k)
-        end
-    end
-    
     cutx = -1; % -1
     cuty = -1; % -1
     extend = true;
@@ -88,14 +78,16 @@ showplot = false;
     tic
     [regionsNormal,~] = getSubImages(A,rot,minSize,cutx,cuty,relSizes,minWidth,extend,fmaskRot,reductRoted);
     toc
+
+    regions = [regionsRotated, regionsNormal];
+    N=numel(regions);
+    SS = ceil(sqrt(N));
     
     if showplot
-        N=numel(regionsNormal);
-        SS=ceil(sqrt(N));
         figure(1)
         for k=1:N
             subplot( SS, SS, k);
-            imshow(regionsNormal{k})
+            imshow(regions{k})
             xlabel(k)
         end
     end
@@ -116,7 +108,7 @@ showplot = false;
     % definem parte da imagem que é o naipe e numero
     pxNN = 0.15; % 0.14
     pyNN = 0.25; % 0.25
-    pxCutCenter = 0.12;
+    pxCutCenter = 0.13;
     
     % definem percentagem de nnz para separar tipos de cartas
     percWhiteCorner = 0.10; % 0.10    0.15
@@ -148,14 +140,17 @@ showplot = false;
     % negDia = -1; % inner diamond
     % edgeGrad = 1; % gradient that defines an edge
     % reductRoted = 6; % reduction in the image to get the final diamond
+%     gradVertLine = 0;
+    percCenterDom = 0.06;
+    perAreaWhiteLine = 0.2;
     
     %% Rotated Dices
     
     if showplot
-        figure(3)
-    end
+        figure(2)
+    end  
     
-    regions = [regionsRotated, regionsNormal];
+
     for k=1:RDO
     
         rodados = [rodados k];
@@ -164,73 +159,46 @@ showplot = false;
     
         sx = size(B,1);
         sy = size(B,2);
-    
-        B =  medfilt2(B);
-        B = imadjust(B);
-        B = autobin(B,false);
-        B = bwareaopen(B,30);
-        B = bwmorph(B,'remove');
-    
-    
-    
-        if nnz(medfilt2(B))>10
-            disp(k)
-            B = regionsRotated{k};
-            B =  medfilt2(B);
-            B = imadjust(B);
-            B = autobin(B,true);
-    
-            B =  medfilt2(B);
-            B = bwmorph(B,'remove');
-            B = bwmorph(B,'close');
-            B = bwareaopen(B,round(0.5*size(B,1)));
-    
-            [~,Nb] = bwlabel(B);
-            while nnz(B)>100*Nb
-                B =  medfilt2(B);
-                B = bwmorph(B,'remove');
-                B = bwareaopen(B,round(0.5*size(B,1)));
-                [~,Nb] = bwlabel(B);
-            end
-        end
-    
-        [~,Nb] = bwlabel(B);
+
+        [B,Nb] = edgeRotDice(B);    
+        
     
         if (Nb>6 || Nb==0) % NOISE
             noiseKs = [noiseKs k];
             rodados(rodados==k) = [];
             fprintf("IdxImg:%d,Removeu rodado %d, Nb:%d\n",idxImg,k,Nb)
+            str = sprintf('DR.%d é NOISE?',k);
             B = ones(size(B));
         else
             diceKs = [diceKs k];
             PntDad = PntDad + Nb;
+            str = sprintf('DR.%d,N=%d',k,Nb);
         end
     
         if showplot
-            SS = ceil(sqrt(RDO));
             subplot(SS,SS,k);
             imshow(B)
-            str = sprintf('DR.%d,N=%d',k,Nb);
+            
             xlabel(str);
         end
     
         %             regions{k} = double(B);
-    
-    
+       
     end
     
     %% Normal
-    
-    N=numel(regions);
+%     
+%     if showplot
+%         figure(2)
+%     end
+
     for k=RDO+1:N
     
         B = medfilt2(regions{k});
         B = imadjust(B);
-        %             B = autobin(B,false);
         B = autobin(B,true);
         B = bwareaopen(B,round(0.5*size(B,1)));
     
-        %             B = autobin(imadjust(regions{k}));
     
         sx = size(B,1);
         sy = size(B,2);
@@ -242,7 +210,7 @@ showplot = false;
         if nnz(C) < minNNZ + 1
             noiseKs = [noiseKs k];
             if showplot
-                SS = ceil(sqrt(N));
+                
                 subplot(SS,SS,k);
                 fprintf("nnz=%d, m= %d, noise: %d\n",nnz(C),minNNZ ,k)
                 imshow(B)
@@ -256,8 +224,21 @@ showplot = false;
         if sx ~= sy
             rotated = false;
             % rotate to horizontal
+            
+    
+%             [gx,~] = imgradientxy(B(:,t1:t2));
+%             vertlines = gx>0;
+            Bold = B;
+            B = regions{k};
+            B = medfilt2(B);
+            B = imadjust(B);
+            B = autobin(B,false);
+            B = bwareaopen(B,30);
+            B = bwmorph(B,'remove');
+
             if sx>sy
                 B = rot90(B);
+                Bold = rot90(Bold);
                 regions{k} = rot90(regions{k});
                 rotated = true;
                 sy = size(B,2);
@@ -265,27 +246,33 @@ showplot = false;
             end
     
             % Check Central Vertical Line
-            perc = 4/100;
-            t1 = 0.5-perc/2;
-            t2 = 0.5+perc/2;
-            area = round(perc*sy*sx);
+            t1 = round(sy*(0.5-percCenterDom/2));
+            t2 = round(sy*(0.5+percCenterDom/2));
+            area = round(percCenterDom*sy*sx);
+
+            Bound = bwboundaries(B(:,t1:t2),'noholes');
+            if numel(Bound) == 0
+                vertlines = zeros(size(B(:,t1:t2)));
+            else
+                bd = Bound{1};
+                vertlines = poly2mask(bd(:,2), bd(:,1),sx,t2-t1);
+                vertlines = bwmorph(vertlines,"fatten");
+            end
+                
     
-            [gx,~] = imgradientxy(B(:,round(sy*t1):round(sy*t2)));
-            vertlines = gx>0;
-    
-    
-            if nnz(vertlines) > 0.3 * area % Dominos
-                B(:,round(sy*t1):round(sy*t2)) = 0; % remove line
+            if nnz(vertlines) > perAreaWhiteLine * area % Dominos
+                B = Bold;
+                B(:,t1:t2) = 0; % remove line
     
                 % clean borders
-                if false
+%                 if false
                     perc = 2/100;
                     B(1:round(sy*perc),:)= 0;
                     B(end-round(sy*perc):end,:)= 0;
                     B(:,1:round(sx*perc))= 0;
-                    %                     B(:,1:round(sx*perc*2))= 0;
+                    %  B(:,1:round(sx*perc*2))= 0;
                     B(:,end-round(sx*perc*2):end)= 0;
-                end
+%                 end
     
     
                 % Detect Pintas
@@ -302,6 +289,7 @@ showplot = false;
     
                 if (Nb1>6 || Nb2>6 || Nb==0) % invalid number of pintas
                     fprintf("Remove Domino: %d,%d->%d\n",Nb1,Nb2,Nb);
+                    str = sprintf("Dom.%d,Remove Domino: %d,%d->%d\n",k,Nb1,Nb2,Nb);
                     noiseKs = [noiseKs k];
                     B = ones(size(B));
                 else
@@ -309,6 +297,7 @@ showplot = false;
                         numDomsRoted = numDomsRoted + 1;
                     end
                     domKs = [domKs k];
+                    str = sprintf('Dom.%d,N1=%d,N2=%d',k,Nb1,Nb2);
                     if Nb1+Nb2 ~= Nb
                         fprintf("Erro Domino: %d + %d != %d\n",Nb1,Nb2,Nb);
                     end
@@ -319,10 +308,8 @@ showplot = false;
                 end
     
                 if showplot
-                    SS = ceil(sqrt(N));
                     subplot(SS,SS,k);
                     imshow(B)
-                    str = sprintf('Dom.%d,N1=%d,N2=%d',k,Nb1,Nb2);
                     xlabel(str);
                 end
     
@@ -341,6 +328,7 @@ showplot = false;
                 [~,Nb] = bwlabel(B);
                 if (Nb>9 || Nb==0)
                     fprintf("Remove Carta:Nb=%d\n",Nb);
+                    str = sprintf("Remove Carta:Nb=%d\n",Nb);
                     noiseKs = [noiseKs k];
                     B = ones(size(B));
                 else
@@ -351,7 +339,7 @@ showplot = false;
                     tipo = res;
                     if res == 0
                         fprintf("Carta NA, k=%d\n",k)
-                        tipo = 1; %%%%%% <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+                        tipo = 0; %%%%%% <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< SAO DOMINO
                     end
                     restipo = res;
     
@@ -379,10 +367,7 @@ showplot = false;
                                 break
                             end
                         end
-    
                     end
-    
-    
     
                 end
     
@@ -520,6 +505,37 @@ end
 %     end
 %
 % end
+
+function [B,Nb] = edgeRotDice(original)
+
+        B =  medfilt2(original);
+        B = imadjust(B);
+        B = autobin(B,false);
+        B = bwareaopen(B,30);
+        B = bwmorph(B,'remove');
+    
+        if nnz(medfilt2(B))>10
+            B = original;
+            B =  medfilt2(B);
+            B = imadjust(B);
+            B = autobin(B,true);
+    
+            B =  medfilt2(B);
+            B = bwmorph(B,'remove');
+            B = bwmorph(B,'close');
+            B = bwareaopen(B,round(0.5*size(B,1)));
+    
+            [~,Nb] = bwlabel(B);
+            while nnz(B)>100*Nb
+                B =  medfilt2(B);
+                B = bwmorph(B,'remove');
+                B = bwareaopen(B,round(0.5*size(B,1)));
+                [~,Nb] = bwlabel(B);
+            end
+        end
+    
+        [~,Nb] = bwlabel(B);
+end
 
 function B = edging(A)
 B = A;
@@ -855,11 +871,13 @@ for k=Nb+1:length(Bx)
 
     selected = A.*mask;
 
+    
     if rot && ~extend
         selected = selected(:,any(selected,1));
         selected = selected(any(selected,2),:);
 
         selected = rotateDice(selected,reductRoted);
+
     end
 
     %         masks{count} = mask;
@@ -868,7 +886,14 @@ for k=Nb+1:length(Bx)
 
     % guardar regiao
     selected = selected(:,any(selected,1));
-    regions{count} = selected(any(selected,2),:);
+    selected = selected(any(selected,2),:);
+
+    sizesT = sort(size(selected));
+    if sizesT(2) < 1.05 * sizesT(1) 
+        selected = selected(1:sizesT(1),1:sizesT(1));
+    end
+
+    regions{count} = selected;
     count = count + 1;
 
 end
