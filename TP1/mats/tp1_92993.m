@@ -28,7 +28,7 @@ NumMec = 92993;
 
 %     addpath('../')
 %     listaF=dir('../svpi2022_TP1_img_*.png');
-% % 
+% 
 %     addpath('../sequencias/Seq160')
 %     listaF=dir('../sequencias/Seq160/svpi2022_TP1_img_*.png');
 
@@ -37,7 +37,7 @@ NumMec = 92993;
 
 MaxImg = size(listaF,1);
 showplot = false;
-% idxImg = 3; showplot = true;
+% idxImg = 6; showplot = true;
 
     for idxImg = 1:MaxImg
 
@@ -53,7 +53,10 @@ showplot = false;
     NumImg = str2double(imName(22:23));
     
     A = im2double(imread(imName));
-    %         imshow(A)
+    if showplot
+        figure(10)
+        imshow(A)
+    end
     
     %% SubImages
     
@@ -86,11 +89,18 @@ showplot = false;
     N=numel(regions);
     SS = ceil(sqrt(N));
     
+    cut = 0;% 3;
     if showplot
         figure(1)
         for k=1:N
             subplot( SS, SS, k);
             imshow(regions{k})
+%             ola = imadjust(regions{k});
+%             if std(std(ola)) < 0.1
+%                 cut = 3;
+%                 regions{k} = regions{k}(cut+1:end-cut,cut+1:end-cut);
+%             end
+%             imshow(autobin(imadjust(regions{k}),true))
             xlabel(k)
         end
     end
@@ -142,8 +152,10 @@ showplot = false;
     edgeGrad = 1; % gradient that defines an edge
     reductRoted = 6; % reduction in the image to get the final diamond
 %     gradVertLine = 0;
-    percCenterDom = 0.06;
-    perAreaWhiteLine = 0.2;
+
+    %Domino
+    percCenterDom = 0.04;
+    perAreaWhiteLine = 0.1;
     
     %% Rotated Dices
     
@@ -187,10 +199,17 @@ showplot = false;
 
     for k=RDO+1:N
     
-        B = medfilt2(regions{k});
+%         B = medfilt2(regions{k});
+%         B = imadjust(B);
+%         B = autobin(B,true);
+%         B = bwareaopen(B,round(0.5*size(B,1)));
+
+        B = imadjust(regions{k});
+        B = medfilt2(B);
         B = imadjust(B);
         B = autobin(B,true);
-        B = bwareaopen(B,round(0.5*size(B,1)));
+        B = bwmorph(B,'close',inf);
+%         B = bwareaopen(B,round(0.5*size(B,1)));
     
     
         sx = size(B,1);
@@ -203,7 +222,6 @@ showplot = false;
         if nnz(C) < minNNZ
             noiseKs = [noiseKs k];
             if showplot
-                
                 subplot(SS,SS,k);
                 fprintf("nnz=%d, m= %.2f, noise: %d\n",nnz(C),minNNZ ,k)
                 imshow(B)
@@ -303,9 +321,13 @@ showplot = false;
             else % cards
     
                 % remove borders (with naipe and number)
-                B = regions{k};
-                cut = round(pxCutCenter*size(B,1));
-                B = B(cut+1:end-cut,:);
+                B = double(regions{k});
+%                 cut = round(pxCutCenter*size(B,1));
+%                 B = B(cut+1:end-cut,:);
+                
+                B = autobin(imadjust(B),false);
+
+                B = double(cleanCorner(B,pxNN,pyNN));
                 B = autobin(imadjust(B),false);
     
                 B = edge(B,'roberts');
@@ -366,7 +388,7 @@ showplot = false;
     
 %             B = bwareaopen(B,round(0.5*size(B,1)));
 %             B = bwmorph(B,'remove');
-%             B = bwareaopen(B,round(0.3*size(B,1)));
+            B = bwareaopen(B,round(0.3*size(B,1)));
     
     
             [~,Nb] = bwlabel(B);
@@ -497,7 +519,8 @@ function [res,B] = rotateDiceIf(dado1,unaltered,percRotate,posDia,negDia,edgeGra
         deltal = round(l/2)-reductRoted; % 6
 
 
-        B = autobin(imadjust(double(A(xmeio-deltal:xmeio+deltal,xmeio-deltal:xmeio+deltal))),true);
+%         B = autobin(imadjust(double(A(xmeio-deltal:xmeio+deltal,xmeio-deltal:xmeio+deltal))),true);
+        B = edgeDice(double(A(xmeio-deltal:xmeio+deltal,xmeio-deltal:xmeio+deltal)));
 
     end
 
@@ -507,8 +530,11 @@ function B = edgeDice(ori)
     B =  medfilt2(ori);
     B = imadjust(B);
     B = autobin(B,false);
-    B = bwareaopen(B,30);
+%     B = bwareaopen(B,30);
+%     B = bwmorph(B,'remove');
+    B = bwareaopen(B,round(0.3*size(B,1)));
     B = bwmorph(B,'remove');
+    B = bwareaopen(B,round(0.3*size(B,1)));
 end
 
 function [B,Nb] = edgeRotDice(original)
@@ -563,6 +589,28 @@ if v2
         %         T = ts(2);
         Ibin = double(imbinarize(I,T));
     end
+%     warning ('off','all');
+%     [ts,met] = multithresh(I,3);
+%     warning ('on','all');
+% 
+%     if met==0 % invalid 3rd threshold
+%         warning ('off','all');
+%         [ts,met] = multithresh(I,2);
+%         warning ('on','all');
+%     
+%         if met==0 % invalid 2nd threshold
+%             Ibin = double(imbinarize(I));
+%         else
+%             T = (ts(1)+ts(2))/2;
+%             %         T = ts(2);
+%             Ibin = double(imbinarize(I,T));
+%         end
+%     else
+% %         T = (ts(2)+ts(3))/2;
+%         T = ts(2);
+%         Ibin = double(imbinarize(I,T));
+%     end
+    
 else
     Ibin = double(imbinarize(I));
 end
@@ -570,6 +618,16 @@ end
 if mean(Ibin,'all') > 0.5 % always more black
     Ibin = not(Ibin);
 end
+end
+
+
+function B = cleanCorner(B,px,py)
+    dx = round(px*size(B,1));
+    dy = round(py*size(B,2));
+    B(1:dx,end-dy:end) = 0;
+    B(end-dx:end,end-dy:end) = 0;
+    B(1:dx,1:dy) = 0;
+    B(end-dx:end,1:dy) = 0;
 end
 
 function [res,B] = sepCartas(B,perc,perc0,px,py)
