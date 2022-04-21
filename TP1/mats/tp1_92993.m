@@ -4,21 +4,27 @@
 % Trabalho Pratico 1
 
 %% A FAZER
+%%% NAIPES
 % Verificar semelhanca dos naipes só no interior do esperado
+% Mudar resize naipes? scale e method
+%%% DICES
 % Edge diferente no rotate dice
+%%% GERAL
 % poly2mask em mais sitios
-% Mudar resize naipes?
 % ver bounding boxes 
-% ....
+% separar com hit dos cantos
 
 % adaptar para entrega
 
 
+%% To FIX
+% 530-4 não encontra 2 dados pequenos -> sobreposicao masks
+% 530-5 domino com noise pq mau imadjust
+% 530-6 Dominos 5 e 12
+% Outros 530....
+
 
 %%
-
-
-
 function NumMec = tp1_92993()
     %%
     
@@ -31,37 +37,37 @@ function NumMec = tp1_92993()
     
     %% Open Image
     
-    %     addpath('../')
-    %     listaF=dir('../svpi2022_TP1_img_*.png');
-    % 
-    %     addpath('../sequencias/Seq160')
-    %     listaF=dir('../sequencias/Seq160/svpi2022_TP1_img_*.png');
-%         A_exact = readtable("tp1_seq_160_results.txt");
-%         fileExact = fopen("tp1_seq_530_results.txt","r");
-    
-        addpath('../sequencias/Seq530')
-        listaF=dir('../sequencias/Seq530/svpi2022_TP1_img_*.png');
-        fileExact = fopen("tp1_seq_530_results.txt","r");
+%     addpath('../')
+%     listaF=dir('../svpi2022_TP1_img_*.png');
+ 
+%     addpath('../sequencias/Seq160')
+%     listaF=dir('../sequencias/Seq160/svpi2022_TP1_img_*.png');
+%     fileExact = fopen("tp1_seq_530_results.txt","r");
+
+    addpath('../sequencias/Seq530')
+    listaF=dir('../sequencias/Seq530/svpi2022_TP1_img_*.png');
+    fileExact = fopen("tp1_seq_530_results.txt","r");
 
 
-        nLineExact = 0;
+    nLineExact = 0;
     
     MaxImg = size(listaF,1);
     showplot = false;
-    idxImg = 6; showplot = true;
-    
-%     for idxImg = 1:MaxImg
-    
-        
-        fprintf("\t idxImg=%d\n",idxImg);
+
+%     idxImg = 4; showplot = true;
+%     imName = listaF(idxImg).name;
+%     
+    for idxImg = 1:MaxImg
+        imName = listaF(idxImg).name;
         
         tDuplas = 0;
         PntDom = 0;
         PntDad = 0;
         
-        imName = listaF(idxImg).name;
+        
         NumSeq = str2double(imName(18:20));
         NumImg = str2double(imName(22:23));
+        fprintf("\t idxImg=%d\n",idxImg);
         
         A = im2double(imread(imName));
         if showplot
@@ -295,6 +301,12 @@ function NumMec = tp1_92993()
                     B = bwmorph(B,'close');
                     B = bwareaopen(B,round(0.5*size(B,1)));
                     [~,Nb] = bwlabel(B);
+
+%                     B = edge(B,'roberts');
+%                     B = bwmorph(B,'bridge',inf);
+%                     B = bwmorph(B,'close');
+%                     B = bwareaopen(B,round(0.5*size(B,1)));
+%                     [~,Nb] = bwlabel(B);
         
                     % Pintas de cada lado
                     B1 = B(:,1:round(size(B,2)/2));
@@ -332,8 +344,9 @@ function NumMec = tp1_92993()
         
                     % remove borders (with naipe and number)
                     B = double(regions{k});
-    %                 cut = round(pxCutCenter*size(B,1));
-    %                 B = B(cut+1:end-cut,:);
+%                     cut = round(pxCutCenter*size(B,1));
+%                     cut = round(0.01*size(B,1));
+%                     B = B(cut+1:end-cut,:);
                     
                     B = autobin(imadjust(B),false);
     
@@ -386,7 +399,7 @@ function NumMec = tp1_92993()
                     end
         
                 end
-            else
+            else % DADOS
                 % Perceber se estao a 45º
                 dado1 = autobin(imadjust(regions{k}),false);
                 [res,B2] = rotateDiceIf(dado1,regions{k},percRotate,posDia,negDia, reductRoted);
@@ -487,7 +500,7 @@ function NumMec = tp1_92993()
         writetable(T,'tp1_92993.txt', 'WriteVariableNames',false, 'WriteMode','append')
         %         end
         
-%     end
+    end
     
     if showplot
         save
@@ -840,6 +853,8 @@ function B2 = maskRotated(B)
     %     B2 = bwmorph(B2,'bridge',inf);
     B2 = imclose(B2,SE1);
     B2 = imclose(B2,SE2);
+
+    B2 = bwmorph(B2,'bridge',2);
 end
 
 

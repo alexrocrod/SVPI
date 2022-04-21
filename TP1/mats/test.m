@@ -8,7 +8,7 @@ addpath('../sequencias/Seq530')
 listaF=dir('../sequencias/Seq530/svpi2022_TP1_img_*.png');
 
 
-idxImg = 13;
+idxImg = 4;
 imName = listaF(idxImg).name;
 
 A = im2double(imread(imName));
@@ -17,8 +17,8 @@ tic
 regionsSor = vs_getsubimages(A);
 toc
 
-% figure(1)
-% imshow(A)
+figure(1)
+imshow(A)
 
 minSize = 0.2; % 60 -> 0.08, 152-> 0.2
 minWidth = 0.04; % 30 -> 0.04
@@ -33,7 +33,9 @@ tic
 [regionsRotated,fmaskRot] = getSubImages(A,rot,minSize,cutx,cuty,relSizes,minWidth,extend,zeros(size(A)),reductRoted);
 toc
 
-
+minSize = 0.2; % 60 -> 0.08, 152-> 0.2
+minWidth = 0.04; % 30 -> 0.04
+pause(10)
 cutx = -1; % -1
 cuty = -1; % -1
 extend = true;
@@ -46,125 +48,87 @@ toc
 fprintf("Img:%d,Roted:%d,Normal:%d,Sum:%d,Exact:%d\n",idxImg,numel(regionsRotated),numel(regionsNormal),numel(regionsNormal)+numel(regionsRotated),numel(regionsSor))
 
 
-% N=numel(regionsNormal);
-% SS=ceil(sqrt(N));
-% figure(2)
-% for k=1:N 
-%     subplot(SS,SS,k);
-%     imshow(regionsNormal{k})
-%     xlabel(k)
-% end
+N=numel(regionsNormal);
+SS=ceil(sqrt(N));
+figure(2)
+for k=1:N 
+    subplot(SS,SS,k);
+    imshow(regionsNormal{k})
+    xlabel(k)
+end
 
 N=numel(regionsRotated);
 SS=ceil(sqrt(N));
-figure(2)
+figure(3)
 for k=1:N 
     subplot(SS,SS,k);
     imshow(regionsRotated{k})
     xlabel(k)
 end
 
-figure(3)
-for k=1:N 
-    subplot(SS,SS,k);
-%     regionsRotated{k} =  medfilt2(filter2(fspecial('average',3),regionsRotated{k}));
-% %     regionsRotated{k} =  medfilt2(regionsRotated{k});
-% %     regionsRotated{k} = wiener2(regionsRotated{k},[5 5]);
-%     regionsRotated{k} = imadjust(regionsRotated{k});
-%     regionsRotated{k} = autobin(regionsRotated{k},true);
-%     regionsRotated{k} = bwareaopen(regionsRotated{k},30);
-% %     regionsRotated{k} = bwareafilt(regionsRotated{k},[30 300]);
-
-%     regionsRotated{k} =  medfilt2(regionsRotated{k});
-%     regionsRotated{k} = imadjust(regionsRotated{k});
-%     regionsRotated{k} = autobin(regionsRotated{k},false);
-%     regionsRotated{k} = bwareaopen(regionsRotated{k},30);
 
 
-
-    imshow(regionsRotated{k})
-    xlabel(nnz(regionsRotated{k}))
-end
-
-figure(20)
-for k=1:N 
-    subplot(SS,SS,k);
-    B = regionsRotated{k};
-    B =  medfilt2(B);
-    B = imadjust(B);
-    B = autobin(B,false);
-    B = bwareaopen(B,30);
-
-%     B = bwmorph(B,'bridge',inf);
-%     B = edge(B,'roberts');
-% %     B = edge(B,'sobel','horizontal');
-% %     B = bwmorph(B,'bridge',inf);
-% %     B = bwareaopen(B,round(0.5*size(B,1)));
-
-%     B = edge(B,'roberts');
-%     B = bwmorph(B,'close');
-%     B = bwareaopen(B,round(0.5*size(B,1)));
-
-    B = bwmorph(B,'remove');
-
-    if nnz(medfilt2(B))>10
-        disp(k)
-        B = regionsRotated{k};
-        B =  medfilt2(B);
-        B = imadjust(B);
-        B = autobin(B,true);
-
-        B =  medfilt2(B);
-        B = bwmorph(B,'remove');
-        B = bwmorph(B,'close');
-        B = bwareaopen(B,round(0.5*size(B,1)));
-
-        [~,Nb] = bwlabel(B);
-%         while Nb>6
+% figure(20)
+% for k=1:N 
+%     subplot(SS,SS,k);
+%     B = regionsRotated{k};
+%     B =  medfilt2(B);
+%     B = imadjust(B);
+%     B = autobin(B,false);
+%     B = bwareaopen(B,30);
+% 
+%     B = bwmorph(B,'remove');
+% 
+%     if nnz(medfilt2(B))>10
+%         disp(k)
+%         B = regionsRotated{k};
+%         B =  medfilt2(B);
+%         B = imadjust(B);
+%         B = autobin(B,true);
+% 
+%         B =  medfilt2(B);
+%         B = bwmorph(B,'remove');
+%         B = bwmorph(B,'close');
+%         B = bwareaopen(B,round(0.5*size(B,1)));
+% 
+%         [~,Nb] = bwlabel(B);
+%         while nnz(B)>100*Nb
 %             B =  medfilt2(B);
+%             B = bwmorph(B,'remove');
+%             B = bwareaopen(B,round(0.5*size(B,1)));
 %             [~,Nb] = bwlabel(B);
 %         end
-%         fprintf("0nnz=%d,100Nb=%d\n",nnz(B),100*Nb);
-        while nnz(B)>100*Nb
-%             fprintf("nnz=%d,100Nb=%d\n",nnz(B),100*Nb);
-            B =  medfilt2(B);
-            B = bwmorph(B,'remove');
-            B = bwareaopen(B,round(0.5*size(B,1)));
-            [~,Nb] = bwlabel(B);
-        end
-%         B = edge(B,'sobel');
-%         B = bwmorph(B,'close');
-    end
-
-        
-    [~,Nb] = bwlabel(B);
-    imshow(B)
-    xlabel(sprintf("k=%d,Nb=%d\n nnz/Nb=%.2f",k,Nb,nnz(B)/Nb))
-end
-
-% figure(4)
+%     end
 % 
-% subplot(1,4,1)
-% imshow(fmaskNorm)
-% 
-% subplot(1,4,2)
-% imshow(fmaskRot)
-% 
-% subplot(1,4,3)
-% imshow(fmaskNorm | fmaskRot)
-% 
-% subplot(1,4,4)
-% imshow(fmaskNorm .* fmaskRot)
-
-
-% N=numel(regionsSor);
-% SS=ceil(sqrt(N));
-% figure(10)
-% for k=1:N 
-%     subplot( SS, SS, k);
-%     imshow(regionsSor{k})
-%     xlabel(k)
+%         
+%     [~,Nb] = bwlabel(B);
+%     imshow(B)
+%     xlabel(sprintf("k=%d,Nb=%d\n nnz/Nb=%.2f",k,Nb,nnz(B)/Nb))
 % end
+
+figure(4)
+
+subplot(1,4,1)
+imshow(fmaskNorm)
+
+subplot(1,4,2)
+imshow(fmaskRot)
+
+subplot(1,4,3)
+imshow(fmaskNorm | fmaskRot)
+
+subplot(1,4,4)
+imshow(fmaskNorm .* fmaskRot)
+
+
+N=numel(regionsSor);
+SS=ceil(sqrt(N));
+figure(10)
+for k=1:N 
+    subplot( SS, SS, k);
+    imshow(regionsSor{k})
+    xlabel(k)
+end
 
 
 
@@ -206,6 +170,32 @@ function B2 = maskRotated(B)
 %     B2 = bwmorph(B2,'bridge',inf);
     B2 = imclose(B2,SE1);
     B2 = imclose(B2,SE2);
+
+
+    % ADD bridge
+    B2 = bwmorph(B2,'bridge',2);
+
+
+
+    % OU ADD:
+%     SE1 = [0 0 0
+%            0 1 0
+%            1 0 1];
+%     SE2 = [1 0 1
+%            0 1 0
+%            0 0 0];
+%     B2 = imclose(B2,SE1);
+%     B2 = imclose(B2,SE2);
+% 
+%     SE1 = [1 0 0
+%            0 1 0
+%            1 0 0];
+%     SE2 = [0 0 1
+%            0 1 0
+%            0 0 1];
+%     B2 = imclose(B2,SE1);
+    B2 = imclose(B2,SE2);
+    
 end
 
 
@@ -247,21 +237,24 @@ function [regions,fullMask] = getSubImages(A,rot,minSize,cutx,cuty,relSizes,minW
     count = 1;
 
 
-%     figure(20)
-%     imshow(B)
-%     hold on
+    figure(20)
+    imshow(B)
+    hold on
 
     for k=Nb+1:length(Bx)
         boundary = Bx{k};
         
         mask = poly2mask(boundary(:,2), boundary(:,1),sx,sy);
         if (nnz(mask) < minSize*sx), continue, end
-%         fprintf("pass1\n")
+        fprintf("pass1\n")
+        plot(boundary(:,2), boundary(:,1), 'r','LineWidth',2);
+        text(boundary(1,2), boundary(1,1),num2str(k),'Color','r');
+        pause(1)
 
         if nnz(mask.*fmaskPrev)
             continue
         end
-%         fprintf("pass2\n")
+        fprintf("pass2\n")
         mask0s = mask(:,any(mask,1));
         mask0s = mask0s(any(mask0s,2),:);
 
@@ -270,13 +263,13 @@ function [regions,fullMask] = getSubImages(A,rot,minSize,cutx,cuty,relSizes,minW
         if sizesT(2) > relSizes * sizesT(1) || sizesT(1) < minWidth*sx
             continue
         end
-%         fprintf("pass3\n")
+        fprintf("pass3\n")
 
          % remove already found
         if nnz(mask.*fmaskPrev)
             continue
         end
-%         fprintf("pass4\n")
+        fprintf("pass4\n")
 
         % estender a quadrilateros
         if extend 
@@ -298,11 +291,11 @@ function [regions,fullMask] = getSubImages(A,rot,minSize,cutx,cuty,relSizes,minW
         if sizesT(2) > relSizes * sizesT(1) || sizesT(1) < minWidth*sx
             continue
         end
-%         fprintf("pass5\n")
+        fprintf("pass5\n")
 
-%         plot(boundary(:,2), boundary(:,1), 'g','LineWidth',2);
-% %         text(boundary(1,2), boundary(1,1),num2str(k),'Color','r');
-%         pause(0.1)
+        plot(boundary(:,2), boundary(:,1), 'g','LineWidth',2);
+        text(boundary(1,2), boundary(1,1),num2str(k),'Color','r');
+        pause(1)
 
         selected = A.*mask;
 
