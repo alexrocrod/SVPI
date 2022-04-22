@@ -18,7 +18,7 @@
 
 
 %% To FIX
-% 530-4 não encontra 2 dados pequenos -> sobreposicao masks
+% 530-4 contagem pintas mal nalguns mas final esta certo
 % 530-5 domino com noise pq mau imadjust
 % 530-6 Dominos 5 e 12
 % Outros 530....
@@ -42,22 +42,22 @@ function NumMec = tp1_92993()
  
 %     addpath('../sequencias/Seq160')
 %     listaF=dir('../sequencias/Seq160/svpi2022_TP1_img_*.png');
-%     fileExact = fopen("tp1_seq_530_results.txt","r");
+%     fileExact = fopen("tp1_seq_530_results.txt","r"); nLineExact = 0;
 
     addpath('../sequencias/Seq530')
     listaF=dir('../sequencias/Seq530/svpi2022_TP1_img_*.png');
-    fileExact = fopen("tp1_seq_530_results.txt","r");
+%     fileExact = fopen("tp1_seq_530_results.txt","r"); nLineExact = 0;
 
 
-    nLineExact = 0;
+    
     
     MaxImg = size(listaF,1);
     showplot = false;
 
-%     idxImg = 4; showplot = true;
-%     imName = listaF(idxImg).name;
-%     
+%     idxImg = 5; showplot = true;
+   
     for idxImg = 1:MaxImg
+
         imName = listaF(idxImg).name;
         
         tDuplas = 0;
@@ -178,7 +178,6 @@ function NumMec = tp1_92993()
         if showplot
             figure(2)
         end  
-        
     
         for k=1:RDO
             B = regions{k};
@@ -236,14 +235,24 @@ function NumMec = tp1_92993()
             minNNZ =  0.01 * nnz(B) +1;
     
             if nnz(C) < minNNZ
-                noiseKs = [noiseKs k];
-                if showplot
-                    subplot(SS,SS,k);
-                    fprintf("Noise k: %d, nnz=%d, m= %.2f\n",k,nnz(C),minNNZ)
-                    imshow(B)
-                    xlabel("noise")
-                end
-                continue
+%                 Bold = B;
+%                 % Detect Pintas
+%                 B = edge(B,'roberts');
+%                 B = bwmorph(B,'bridge',2); %inf
+%                 B = bwmorph(B,'close');
+%                 B = bwareaopen(B,round(0.5*size(B,1)));
+%                 [~,Nb] = bwlabel(B);
+%                 if (Nb>12 || Nb==0)
+                    noiseKs = [noiseKs k];
+                    if showplot
+                        subplot(SS,SS,k);
+                        fprintf("Noise k: %d, nnz=%d, m= %.2f\n",k,nnz(C),minNNZ)
+                        imshow(B)
+                        xlabel("noise")
+                    end
+                    continue
+%                 end
+%                 B = Bold;
             end
         
         
@@ -257,6 +266,12 @@ function NumMec = tp1_92993()
     %             vertlines = gx>0;
                 Bold = B;
                 B = edgeDice(regions{k});
+
+%                 B =  medfilt2(regions{k});
+%                 B = imadjust(B);
+%                 B = autobin(B,false);
+%                 B = edge(B,'roberts');
+%                 B = bwmorph(B,'bridge');
     
                 if sx>sy
                     B = rot90(B);
@@ -282,7 +297,9 @@ function NumMec = tp1_92993()
                     vertlines = imdilate(vertlines,ones(3,1));
     
                 end
-                    
+                if showplot
+                    fprintf("k=%d,nnzVert=%d,min=%d,numelB=%d\n",k,nnz(vertlines), perAreaWhiteLine * area,numel(Bound))
+                end   
         
                 if nnz(vertlines) > perAreaWhiteLine * area % Dominos
                     B = Bold;
@@ -298,15 +315,10 @@ function NumMec = tp1_92993()
         
                     % Detect Pintas
                     B = edge(B,'roberts');
+                    B = bwmorph(B,'bridge',2);
                     B = bwmorph(B,'close');
                     B = bwareaopen(B,round(0.5*size(B,1)));
                     [~,Nb] = bwlabel(B);
-
-%                     B = edge(B,'roberts');
-%                     B = bwmorph(B,'bridge',inf);
-%                     B = bwmorph(B,'close');
-%                     B = bwareaopen(B,round(0.5*size(B,1)));
-%                     [~,Nb] = bwlabel(B);
         
                     % Pintas de cada lado
                     B1 = B(:,1:round(size(B,2)/2));
@@ -353,9 +365,14 @@ function NumMec = tp1_92993()
                     B = double(cleanCorner(B,pxNN,pyNN));
                     B = autobin(imadjust(B),false);
         
+%                     B = edge(B,'roberts');
+%                     B = bwmorph(B,'close');
+%                     B = bwareaopen(B,round(0.5*size(B,1)));
+
                     B = edge(B,'roberts');
-                    B = bwmorph(B,'close');
+                    B = bwmorph(B,'bridge');
                     B = bwareaopen(B,round(0.5*size(B,1)));
+        
         
                     [~,Nb] = bwlabel(B);
                     if (Nb>9 || Nb==0)
@@ -369,7 +386,8 @@ function NumMec = tp1_92993()
         
                         [tipo,D] = sepCartas(D,percWhiteCorner,percBlackCorner,pxNN,pyNN);
                         if tipo == 0
-                            fprintf("Carta NA, k=%d\n",k)
+                            fprintf("Carta NA, k=%d, Nb=%d\n",k,Nb)
+                            str = sprintf("Carta NA, k=%d, Nb=%d\n",k,Nb);
                         else
                             PntCartas = [PntCartas Nb];
                             cardKs = [cardKs k];
@@ -417,17 +435,20 @@ function NumMec = tp1_92993()
                 [~,Nb] = bwlabel(B);
                 if (Nb>6 || Nb==0) % NOISE
                     noiseKs = [noiseKs k];
+                    str = sprintf("Removeu dado %d, Nb:%d\n",k,Nb);
                     if ismember(k,rodados)
                         rodados(rodados==k) = [];
+                        str = sprintf("Removeu rodado %d, Nb:%d\n",k,Nb);
                         fprintf("Removeu rodado %d, Nb:%d\n",k,Nb)
                     end
     %                 B = ones(size(B));
                 else
                     diceKs = [diceKs k];
                     PntDad = PntDad + Nb;
-                end
-                if showplot
-                    str = sprintf('D.%d,N=%d',k,Nb);
+                
+                    if showplot
+                        str = sprintf('D.%d,N=%d',k,Nb);
+                    end
                 end
         
         
