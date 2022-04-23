@@ -10,11 +10,8 @@ function NumMec = tp1_92993()
     
     %% Open Image
     
-%     addpath('../')
-%     listaF=dir('../svpi2022_TP1_img_*.png');
-
-    addpath('../sequencias/Seq160')
-    listaF=dir('../sequencias/Seq160/svpi2022_TP1_img_*.png');
+    addpath('../')
+    listaF=dir('../svpi2022_TP1_img_*.png');
 
     MaxImg = size(listaF,1);
    
