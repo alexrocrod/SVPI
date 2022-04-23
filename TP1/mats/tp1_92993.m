@@ -13,8 +13,8 @@ function NumMec = tp1_92993()
 %     addpath('../')
 %     listaF=dir('../svpi2022_TP1_img_*.png');
 
-    addpath('../sequencias/Seq530')
-    listaF=dir('../sequencias/Seq530/svpi2022_TP1_img_*.png');
+    addpath('../sequencias/Seq160')
+    listaF=dir('../sequencias/Seq160/svpi2022_TP1_img_*.png');
 
     MaxImg = size(listaF,1);
    
@@ -586,7 +586,7 @@ function [resO,meanO,resC,meanC] = class1Naipe(B,ouro,copa,tolO,tolC,px,py,acept
 end
 
 function [resO,meanO,resC,meanC] = classAllNaipe(carta,ouro,copa,tolO,tolC,px,py,acept,tipo,scNaipe)
-    % classify all symbols except the one next to the number (tipo not relevant )
+    % classify all symbols except the one next to the number (tipo not relevant)
     
     meanC = 0;
     meanO = 0;
