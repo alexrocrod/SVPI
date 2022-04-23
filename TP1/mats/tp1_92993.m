@@ -22,10 +22,6 @@ function NumMec = tp1_92993()
 
         imName = listaF(idxImg).name;
         
-        tDuplas = 0;
-        PntDom = 0;
-        PntDad = 0;
-        
         NumSeq = str2double(imName(18:20));
         NumImg = str2double(imName(22:23));
         
@@ -72,6 +68,9 @@ function NumMec = tp1_92993()
         tCard = 0;
         Ouros = 0;
         Copas = 0;
+        tDuplas = 0;
+        PntDom = 0;
+        PntDad = 0;
         
         % definem parte da imagem que é o naipe e numero
         pxNN = 0.14; 
@@ -133,7 +132,6 @@ function NumMec = tp1_92993()
             B = imadjust(B);
             B = autobin2th(B);
             B = bwmorph(B,'close',inf);
-    %         B = bwareaopen(B,round(0.5*size(B,1)));
         
         
             sx = size(B,1);
@@ -144,8 +142,7 @@ function NumMec = tp1_92993()
             minNNZ =  0.01 * nnz(B) +1;
             if nnz(C) < minNNZ , continue, end 
             
-        
-        
+                
             % Rectangular (excludes dices)
             if sx ~= sy
                 rotated = false;
@@ -228,14 +225,15 @@ function NumMec = tp1_92993()
                     
                     PntCartas = [PntCartas Nb];
                     tCard = tCard + 1;
-
+                    
+                    % classify naipe from pintas
                     [resO,meansOuros(k),resC,meansCopa(k)] = classAllNaipe(D,ouro,copa,tolOuros,tolCopas,pxNN,pyNN,accept,tipo,scNaipe);
 
                     meansx = [meansOuros(k), meansCopa(k)];
                     resx = [resO,resC];
 
 
-                    [~,sortedI] = sort(meansx);
+                    [~,sortedI] = sort(meansx); % use most probable valid naipe
                     for idx = sortedI
                         if resx(idx)
                             if idx==1
@@ -257,7 +255,7 @@ function NumMec = tp1_92993()
 
                 [res,B2] = rotateDiceIf(dado1,regions{k},percRotate,posDia,negDia, reductRoted);
 
-                if res
+                if res % foi rodado
                     B = B2;
                 end
 
@@ -282,15 +280,12 @@ function NumMec = tp1_92993()
         %% Save Vars
                 
         PntCartas = sort(PntCartas);
-        
         StringPT = strjoin(string(PntCartas),'');
         
         RDO = tDom - numDomsRoted;
-        
         RFO = tDice - numDadosRoted;
         
         CopOuros = Ouros + Copas;
-        
         EspPaus = tCard - CopOuros;
        
         
@@ -331,7 +326,7 @@ function Nb = getHalfPintas(A,idx,perc,t1,t2)
     [L,Nprev] = bwlabel(B);
 
     Nb = 0;
-    for x =1:Nprev % select each boundary
+    for x = 1:Nprev % select each boundary
         D = (L==x);
         BB = bwboundaries(D,'noholes');
         boundary = BB{1};
@@ -377,9 +372,7 @@ function [res,B] = rotateDiceIf(dado1,unaltered,percRotate,posDia,negDia,reductR
     edges = maskRotated(dado1);
     B = dado1;
 
-    if nnz(edges(zona(1:size(edges,1),1:size(edges,1)))) > percRotate * area
-        % is rotated 45º
-
+    if nnz(edges(zona(1:size(edges,1),1:size(edges,1)))) > percRotate * area % is rotated 45º
         res = true;
         B = rotateDice(unaltered,reductRoted);
     end
@@ -461,6 +454,7 @@ end
 function B = cleanCorner(B,px,py)
     dx = round(px*size(B,1));
     dy = round(py*size(B,2));
+
     B(1:dx,end-dy:end) = 0;
     B(end-dx:end,end-dy:end) = 0;
     B(1:dx,1:dy) = 0;
@@ -518,9 +512,11 @@ function copa = getCopaMatrix() % Generate Matrix of Copa symbol
     % clean zero rows and cols
     copa = A(any(A,2),:);
     copa = copa(:,any(copa,1));
-    end
+end
     
 function [res,meanC] = classNaipe(carta,tipo,naipe,px,py,tol,acept,scNaipe)
+    % classify each naipe from 1 pinta
+
     carta = double(carta);
     clean0s = getNaipe(carta,tipo,px,py,acept);
     
@@ -557,8 +553,8 @@ function res = getNaipe(carta, tipo,px, py,acept)
     
     
     % centroid points of the relevant region
-    ola = bwmorph(res,'shrink', inf);
-    ppi = filter2([1 1 1; 1 -8 1; 1 1 1], ola);
+    temp = bwmorph(res,'shrink', inf);
+    ppi = filter2([1 1 1; 1 -8 1; 1 1 1], temp);
     marker = (abs(ppi)>acept);
     indexes = find(marker);
     prev = logical(res);
@@ -594,7 +590,6 @@ function [resO,meanO,resC,meanC] = classAllNaipe(carta,ouro,copa,tolO,tolC,px,py
     
     meanC = 0;
     meanO = 0;
-%     meanE = 0;
     
     B = carta; % working image
     dx = round(px*size(B,1)); % 0.14
@@ -605,6 +600,7 @@ function [resO,meanO,resC,meanC] = classAllNaipe(carta,ouro,copa,tolO,tolC,px,py
     
     B = double(rot90(B)); % vertical is better
     if tipo == 2
+        fprintf("usou\n")
         B = rot90(rot90(B)); % needed?? <<<<<<<<<<<<<<<<<<<<<<<
     end
     B = edging(B);
@@ -635,6 +631,7 @@ function [resO,meanO,resC,meanC] = classAllNaipe(carta,ouro,copa,tolO,tolC,px,py
         count = count + 1;
     
     
+        % diferences to symbol matrix
         meanO = meanO + mean(imresize(clean0s,scNaipe)~=imresize(ouro,scNaipe*size(clean0s)),'all');
         meanC = meanC + mean(imresize(clean0s,scNaipe)~=imresize(copa,scNaipe*size(clean0s)),'all');
     
@@ -656,7 +653,9 @@ function [resO,meanO,resC,meanC] = classAllNaipe(carta,ouro,copa,tolO,tolC,px,py
 end
 
 
-function B2 = maskRotated(B)    
+function B2 = maskRotated(B)  
+    % mask for rotated dices in main image
+
     SE1 = [0 0 1
         0 1 0
         1 0 0];
@@ -673,11 +672,15 @@ end
 
 
 function B = maskNormal(A)
+    % mask for all other subimages
+    
     B = edge(A,'roberts');
     B = bwmorph(B,'bridge');
 end
 
 function [regions,fullMask] = getSubImages(A,rot,minSize,cutx,cuty,relSizes,minWidth,extend,fmaskPrev,reductRoted)
+    % get all subimages(regions)
+
     if rot
         B = maskRotated(A);
     else
@@ -695,24 +698,23 @@ function [regions,fullMask] = getSubImages(A,rot,minSize,cutx,cuty,relSizes,minW
     
     count = 1;
     
-    for k=Nb+1:length(Bx)
+    for k = Nb+1:length(Bx) % use only interior boundaries
         boundary = Bx{k};
     
         mask = poly2mask(boundary(:,2), boundary(:,1),sx,sy);
         if (nnz(mask) < minSize*sx), continue, end
     
+        % remove already found
         if nnz(mask.*fmaskPrev), continue, end
     
+        % clean all zeros cols and rows
         mask0s = mask(:,any(mask,1));
         mask0s = mask0s(any(mask0s,2),:);
-        if (mean(mask0s,'all') < 0.4), continue, end
+        if (mean(mask0s,'all') < 0.4), continue, end % very sparse image
     
         % remove weird shapes
         sizesT = sort(size(mask0s));
         if sizesT(2) > relSizes * sizesT(1) || sizesT(1) < minWidth * sx, continue, end
-    
-        % remove already found
-        if nnz(mask.*fmaskPrev), continue, end
     
         % estender a quadrilateros
         if extend
@@ -724,24 +726,26 @@ function [regions,fullMask] = getSubImages(A,rot,minSize,cutx,cuty,relSizes,minW
             maxy = min(idxs(end)-cuty,sy);
             mask = zeros(size(A));
             mask(minx:maxx,miny:maxy) = 1;
+
+            % remove already found
+            if nnz(mask.*fmaskPrev), continue, end
+
+            % clean all zeros cols and rows
+            mask0s = mask(:,any(mask,1));
+            mask0s = mask0s(any(mask0s,2),:);
+
+            % remove weird shapes
+            sizesT = sort(size(mask0s));
+            if sizesT(2) > relSizes * sizesT(1) || sizesT(1) < minWidth * sx , continue, end
         end
-    
-        mask0s = mask(:,any(mask,1));
-        mask0s = mask0s(any(mask0s,2),:);
-    
-        % remove weird shapes
-        sizesT = sort(size(mask0s));
-        if sizesT(2) > relSizes * sizesT(1) || sizesT(1) < minWidth * sx , continue, end
-    
+        
         selected = A.*mask;
     
-        
-        if rot && ~extend
+        if rot && ~extend % rotate
             selected = selected(:,any(selected,1));
             selected = selected(any(selected,2),:);
     
             selected = rotateDice(selected,reductRoted);
-    
         end
     
         fullMask = fullMask | mask;
@@ -752,7 +756,7 @@ function [regions,fullMask] = getSubImages(A,rot,minSize,cutx,cuty,relSizes,minW
         selected = selected(any(selected,2),:);
     
         sizesT = sort(size(selected));
-        if sizesT(2) < 1.05 * sizesT(1) 
+        if sizesT(2) < 1.05 * sizesT(1) % guarantee that dices are squares
             selected = selected(1:sizesT(1),1:sizesT(1));
         end
     
