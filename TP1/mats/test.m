@@ -1,14 +1,14 @@
 close all
 clear all
 
-% addpath('../sequencias/Seq160')
-% listaF=dir('../sequencias/Seq160/svpi2022_TP1_img_*.png');
+addpath('../sequencias/Seq160')
+listaF=dir('../sequencias/Seq160/svpi2022_TP1_img_*.png');
 
-addpath('../sequencias/Seq530')
-listaF=dir('../sequencias/Seq530/svpi2022_TP1_img_*.png');
+% addpath('../sequencias/Seq530')
+% listaF=dir('../sequencias/Seq530/svpi2022_TP1_img_*.png');
 
 
-idxImg = 4;
+idxImg = 25;
 imName = listaF(idxImg).name;
 
 A = im2double(imread(imName));
@@ -246,10 +246,11 @@ function [regions,fullMask] = getSubImages(A,rot,minSize,cutx,cuty,relSizes,minW
         
         mask = poly2mask(boundary(:,2), boundary(:,1),sx,sy);
         if (nnz(mask) < minSize*sx), continue, end
+        
         fprintf("pass1\n")
         plot(boundary(:,2), boundary(:,1), 'r','LineWidth',2);
         text(boundary(1,2), boundary(1,1),num2str(k),'Color','r');
-        pause(1)
+        pause(0.01)
 
         if nnz(mask.*fmaskPrev)
             continue
@@ -257,6 +258,7 @@ function [regions,fullMask] = getSubImages(A,rot,minSize,cutx,cuty,relSizes,minW
         fprintf("pass2\n")
         mask0s = mask(:,any(mask,1));
         mask0s = mask0s(any(mask0s,2),:);
+        if (mean(mask0s,'all') < 0.4), continue, end
 
         % remove weird shapes
         sizesT = sort(size(mask0s));
@@ -295,7 +297,7 @@ function [regions,fullMask] = getSubImages(A,rot,minSize,cutx,cuty,relSizes,minW
 
         plot(boundary(:,2), boundary(:,1), 'g','LineWidth',2);
         text(boundary(1,2), boundary(1,1),num2str(k),'Color','r');
-        pause(1)
+        pause(0.01)
 
         selected = A.*mask;
 
