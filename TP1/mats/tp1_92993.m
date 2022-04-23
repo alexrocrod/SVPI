@@ -3,27 +3,8 @@
 % Abril 2022
 % Trabalho Pratico 1
 
-%% A FAZER
-% poly2mask em mais sitios
-% ver bounding boxes 
-% separar com hit dos cantos
-
-
-% adaptar para entrega
-
-
-%% To FIX
-
-
-
-%%
 function NumMec = tp1_92993()
-    %%
-    
-    close all
-    clear
-    clc
-    
+
     %% Init Vars
     NumMec = 92993;
     
@@ -31,22 +12,13 @@ function NumMec = tp1_92993()
     
 %     addpath('../')
 %     listaF=dir('../svpi2022_TP1_img_*.png');
- 
-%     addpath('../sequencias/Seq160')
-%     listaF=dir('../sequencias/Seq160/svpi2022_TP1_img_*.png');
-%     fileExact = fopen("tp1_seq_160_results.txt","r"); nLineExact = 0;
 
     addpath('../sequencias/Seq530')
     listaF=dir('../sequencias/Seq530/svpi2022_TP1_img_*.png');
-%     fileExact = fopen("tp1_seq_530_results.txt","r"); nLineExact = 0;
 
     MaxImg = size(listaF,1);
-    showplot = false;
-
-%     idxImg = 25; showplot = true;
    
     for idxImg = 1:MaxImg
-        tic
 
         imName = listaF(idxImg).name;
         
@@ -56,56 +28,40 @@ function NumMec = tp1_92993()
         
         NumSeq = str2double(imName(18:20));
         NumImg = str2double(imName(22:23));
-        fprintf("\t idxImg=%d\n",idxImg);
         
         A = im2double(imread(imName));
-        if showplot
-            figure(10)
-            imshow(A)
-        end
         
         %% SubImages
         
-        minSize = 0.2; % 60 -> 0.08, 152-> 0.2
-        minWidth = 0.04; % 30 -> 0.04
+        minSize = 0.2; % min nnz for aceptable boundary (percentage)
+        minWidth = 0.04; % min width of subimage (percentage)
         
-        cutx = -3; % -3
-        cuty = -3; % -3
-        reductRoted = 2; % 2
-        rot = true;
-        extend = false;
-        relSizes = 1.2; % 1.2
+
+        cutx = -3; % increase area of boundary
+        cuty = -3; % 
+        reductRoted = 2; % reduce after rotation
+        rot = true; % rotate
+        extend = false; % extend to rectangular subimage
+        relSizes = 1.2; % relative width to height
+
+        % Find rotated dices
         [regionsRotated,fmaskRot] = getSubImages(A,rot,minSize,cutx,cuty,relSizes,minWidth,extend,zeros(size(A)),reductRoted);
         
-        N=numel(regionsRotated);
-        RDO = N;
+        RDO = numel(regionsRotated);
         
-        cutx = -1; % -1
-        cuty = -1; % -1
+        cutx = -1; 
+        cuty = -1; 
         extend = true;
         rot = false;
-        relSizes = 3; % 3
-    %     tic
-        [regionsNormal,fmaskNormal] = getSubImages(A,rot,minSize,cutx,cuty,relSizes,minWidth,extend,fmaskRot,reductRoted);
-    %     toc
-    
-        regions = [regionsRotated, regionsNormal];
-        N=numel(regions);
-        SS = ceil(sqrt(N));
-        
-        if showplot
-            figure(1)
-            for k=1:N
-                subplot( SS, SS, k);
-                imshow(regions{k})
-                xlabel(k)
-            end
-        end
+        relSizes = 3; 
 
-        ola = nnz(fmaskRot.*fmaskNormal);
-        if ola
-            fprintf("Fail masks:%d\n",ola);
-        end
+        % Find other subimages
+        [regionsNormal,~] = getSubImages(A,rot,minSize,cutx,cuty,relSizes,minWidth,extend,fmaskRot,reductRoted);
+
+        % Merge all subimages
+        regions = [regionsRotated, regionsNormal]; 
+        N = numel(regions);
+        
         
         %% Vars
         domKs = [];
@@ -119,12 +75,12 @@ function NumMec = tp1_92993()
         numDomsRoted = 0;
         
         % definem parte da imagem que é o naipe e numero
-        pxNN = 0.14; % 0.14
-        pyNN = 0.25; % 0.25
+        pxNN = 0.14; 
+        pyNN = 0.25; 
         
         % definem percentagem de nnz para separar tipos de cartas
-        percWhiteCorner = 0.10; % 0.10    0.15
-        percBlackCorner = 0.05; % 0.05    0.10
+        percWhiteCorner = 0.10; 
+        percBlackCorner = 0.05; 
         
         accept = 5; % acept as center points for marker in getNaipe0
         
@@ -133,15 +89,13 @@ function NumMec = tp1_92993()
         ouro = strel('diamond',250).Neighborhood;
         
         % Tolerance to be a symbol (average different pixels)
-        tolOuros = 0.12; % 0.12     0.12 0.2
-        tolCopas = 0.20; % 0.2    0.12 0.2
+        tolOuros = 0.12; 
+        tolCopas = 0.20;
         
         % final value of average different pixels
         meansOuros = -ones(N,1);
         meansCopa = -ones(N,1);
         scNaipe = 10; % scaling for comparison
-        
-%         strRes = ["Ouros","Espadas","Copas"];
         strRes = ["Ouros","Copas"];
         
         % Dices
@@ -151,49 +105,31 @@ function NumMec = tp1_92993()
         reductRoted = 6; % reduction in the image to get the final diamond
       
         % Domino
-        percCenterDom = 0.04;
-        perAreaWhiteLine = 0.1;
-        percBordDom = 0.02;
+        percCenterDom = 0.04; % center vertical line percentage
+        perAreaWhiteLine = 0.1; % percentage of area to be acepted as a line in the center
+        percBordDom = 0.02; % cut borders of original domino subimage
         
         %% Rotated Dices
         
-        if showplot
-            figure(2)
-        end  
-    
-        for k=1:RDO
+        for k = 1:RDO
             B = regions{k};
-        
-            sx = size(B,1);
-            sy = size(B,2);
-    
-            [B,Nb] = edgeRotDice(B);    
             
+            [~,Nb] = edgeRotDice(B);    
         
             if (Nb>6 || Nb==0) % NOISE
                 noiseKs = [noiseKs k];
-                fprintf("Removeu rodado %d, Nb:%d\n",k,Nb)
-                str = sprintf('DR.%d é NOISE?',k);
-%                 B = ones(size(B));
-            else
-                diceKs = [diceKs k];
-                rodados = [rodados k];
-                PntDad = PntDad + Nb;
-                str = sprintf('DR.%d,N=%d',k,Nb);
+                continue
             end
         
-            if showplot
-                subplot(SS,SS,k);
-                imshow(B)
-                xlabel(str);
-            end
-        
+            diceKs = [diceKs k];
+            rodados = [rodados k];
+            PntDad = PntDad + Nb;
            
         end
         
         %% Normal
     
-        for k=RDO+1:N
+        for k = RDO+1:N
         
     %         B = medfilt2(regions{k});
     %         B = imadjust(B);
@@ -217,12 +153,6 @@ function NumMec = tp1_92993()
     
             if nnz(C) < minNNZ
                 noiseKs = [noiseKs k];
-                if showplot
-                    subplot(SS,SS,k);
-                    fprintf("Noise k: %d, nnz=%d, m= %.2f\n",k,nnz(C),minNNZ)
-                    imshow(B)
-                    xlabel("noise")
-                end
                 continue
             end
         
@@ -241,7 +171,7 @@ function NumMec = tp1_92993()
 %                 B = bwmorph(B,'bridge');
     
                 
-                if sx>sy % rotate to horizontal
+                if sx > sy % rotate to horizontal
                     B = rot90(B);
                     Bold = rot90(Bold);
                     regions{k} = rot90(regions{k});
@@ -265,10 +195,6 @@ function NumMec = tp1_92993()
                     vertlines = bwmorph(vertlines,"fatten");
                     vertlines = imdilate(vertlines,ones(3,1));
                 end
-
-                if showplot
-                    fprintf("k=%d,nnzVert=%d,min=%d,numelB=%d\n",k,nnz(vertlines), perAreaWhiteLine * area,numel(Bound))
-                end   
         
                 if nnz(vertlines) > perAreaWhiteLine * area % Dominos
                     B = Bold;
@@ -295,33 +221,26 @@ function NumMec = tp1_92993()
 
         
                     if (Nb1>6 || Nb2>6) % invalid number of pintas
-                        fprintf("Remove Domino: %d,%d->%d\n",Nb1,Nb2,Nb);
-                        str = sprintf("Dom.%d,Removido,%d,%d->%d\n",k,Nb1,Nb2,Nb);
                         noiseKs = [noiseKs k];
-                    else
-                        if (rotated)
-                            numDomsRoted = numDomsRoted + 1;
-                        end
-                        domKs = [domKs k];
-                        str = sprintf('Dom.%d,N1=%d,N2=%d',k,Nb1,Nb2);
-                        if Nb1 + Nb2 ~= Nb % && showplot
-                            fprintf("Erro Domino k:%d   %d + %d != %d\n",k,Nb1,Nb2,Nb);
-                        end
-                        PntDom = PntDom + Nb1 + Nb2;
-                        if Nb1==Nb2
-                            tDuplas = tDuplas + 1;
-                        end
+                        continue
+                    end
+                    
+                    if (rotated)
+                        numDomsRoted = numDomsRoted + 1;
+                    end
+
+                    domKs = [domKs k];
+
+                    
+                    PntDom = PntDom + Nb1 + Nb2;
+
+                    if Nb1==Nb2
+                        tDuplas = tDuplas + 1;
                     end
         
-                    if showplot
-                        subplot(SS,SS,k);
-                        imshow(B)
-                        xlabel(str);
-                    end
         
                 else % cards
         
-                    
                     B = double(regions{k});
                     
                     B = autobin(imadjust(B),false);
@@ -336,90 +255,44 @@ function NumMec = tp1_92993()
                     [~,Nb] = bwlabel(B);
 
                     if (Nb>9 || Nb==0)
-                        fprintf("Remove Carta:k=%d,Nb=%d\n",k,Nb);
-                        str = sprintf("Remove Carta:k=%d,Nb=%d\n",k,Nb);
                         noiseKs = [noiseKs k];
-                        B = ones(size(B));
-                    else
+                        continue
+                    end
         
-                        D = autobin(imadjust(regions{k}),false);
+                    
+                    D = autobin(imadjust(regions{k}),false);
 
-                        [tipo,D] = sepCartas(D,percWhiteCorner,percBlackCorner,pxNN,pyNN); % classify orientation of a card
+                    [tipo,D] = sepCartas(D,percWhiteCorner,percBlackCorner,pxNN,pyNN); % classify orientation of a card
 
-                        if tipo == 0 % invalid card (does nothing)
-                            fprintf("Carta NA, k=%d, Nb=%d\n",k,Nb)
-%                             str = sprintf("Carta NA, k=%d, Nb=%d\n",k,Nb);
-                            
-                            B = Bold;
-                            B(:,t1:t2) = 0; % remove line
-                            % clean borders
-                            B(1:round(sy*percBordDom ),:)= 0;
-                            B(end-round(sy*percBordDom ):end,:)= 0;
-                            B(:,1:round(sx*percBordDom ))= 0;
-                            B(:,end-round(sx*percBordDom * 2):end)= 0; % <<<<<
-        
-                
-                            % Detect Pintas
-                            B = edge(B,'roberts');
-                            B = bwmorph(B,'bridge',2);
-                            B = bwmorph(B,'close');
-                            B = bwareaopen(B,round(0.5*size(B,1)));
-                            [~,Nb] = bwlabel(B);
-                
-                            % Pintas de cada lado
-                            Nb1 = getHalfPintas(regions{k},1,perc,t1,t2);
-        
-                            Nb2 = getHalfPintas(regions{k},2,perc,t2,t2);
-        
-                
-                            if (Nb1>6 || Nb2>6) % invalid number of pintas
-                                fprintf("Remove Domino: %d,%d->%d\n",Nb1,Nb2,Nb);
-                                str = sprintf("Dom.%d,Removido,%d,%d->%d\n",k,Nb1,Nb2,Nb);
-                                noiseKs = [noiseKs k];
-                            else
-                                if (rotated)
-                                    numDomsRoted = numDomsRoted + 1;
-                                end
-                                domKs = [domKs k];
-                                str = sprintf('Dom.%d,N1=%d,N2=%d',k,Nb1,Nb2);
-                                if Nb1 + Nb2 ~= Nb % && showplot
-                                    fprintf("Erro Domino k:%d   %d + %d != %d\n",k,Nb1,Nb2,Nb);
-                                end
-                                PntDom = PntDom + Nb1 + Nb2;
-                                if Nb1==Nb2
-                                    tDuplas = tDuplas + 1;
-                                end
-                            end
-                            
-                        else 
-                            PntCartas = [PntCartas Nb];
-                            cardKs = [cardKs k];
-        
-                            [resO,meansOuros(k),resC,meansCopa(k)] = classAllNaipe(D,ouro,copa,tolOuros,tolCopas,pxNN,pyNN,accept,tipo,scNaipe);
+                    if tipo == 0 % invalid card (does nothing)
+                        noiseKs = [noiseKs k];
+                    else 
+                        PntCartas = [PntCartas Nb];
+                        cardKs = [cardKs k];
+    
+                        [resO,meansOuros(k),resC,meansCopa(k)] = classAllNaipe(D,ouro,copa,tolOuros,tolCopas,pxNN,pyNN,accept,tipo,scNaipe);
 
-                            meansx = [meansOuros(k), meansCopa(k)];
-                            resx = [resO,resC];
-        
-        
-                            [~,sortedI] = sort(meansx);
-                            str = sprintf("T%d,O:%.2f,C:%.2f\n%s,Nb=%d",tipo,meansOuros(k),meansCopa(k),"Desc.",Nb);
-                            for idx=sortedI
-                                if resx(idx)
-                                    str = sprintf("T%d,O:%.2f,C:%.2f\n%s,Nb=%d",tipo,meansOuros(k),meansCopa(k),strRes(idx),Nb);
-                                    if idx==1
-                                        ourosk = [ourosk k];
-                                    else
-                                        copask = [copask k];
-                                    end
-                                    break
+                        meansx = [meansOuros(k), meansCopa(k)];
+                        resx = [resO,resC];
+    
+    
+                        [~,sortedI] = sort(meansx);
+                        for idx = sortedI
+                            if resx(idx)
+                                if idx==1
+                                    ourosk = [ourosk k];
+                                else
+                                    copask = [copask k];
                                 end
+                                break
                             end
                         end
-        
                     end
+        
         
                 end
             else % DADOS
+                
                 % Perceber se estao a 45º
                 dado1 = autobin(imadjust(regions{k}),false);
 
@@ -430,6 +303,8 @@ function NumMec = tp1_92993()
                     B = B2;
                     rodados = [rodados k];
                 end
+
+                % Determinar pintas
         
     %             B = bwareaopen(B,round(0.5*size(B,1)));
     %             B = bwmorph(B,'remove');
@@ -439,29 +314,16 @@ function NumMec = tp1_92993()
                 [~,Nb] = bwlabel(B);
                 if (Nb>6 || Nb==0) % NOISE
                     noiseKs = [noiseKs k];
-                    str = sprintf("Removeu dado %d, Nb:%d\n",k,Nb);
                     if ismember(k,rodados)
                         rodados(rodados==k) = [];
-                        str = sprintf("Removeu rodado %d, Nb:%d\n",k,Nb);
-                        fprintf("Removeu rodado %d, Nb:%d\n",k,Nb)
                     end
-                else
-                    diceKs = [diceKs k];
-                    PntDad = PntDad + Nb;
-                
-                    if showplot
-                        str = sprintf('D.%d,N=%d',k,Nb);
-                    end
+                    continue
                 end
+
+                diceKs = [diceKs k];
+                PntDad = PntDad + Nb;
         
         
-            end
-        
-            if showplot
-                SS = ceil(sqrt(N));
-                subplot(SS,SS,k);
-                imshow(B)
-                xlabel(str)
             end
         
         end
@@ -486,27 +348,7 @@ function NumMec = tp1_92993()
         CopOuros = Ouros + Copas;
         
         EspPaus = tCard - CopOuros;
-        
-        if showplot
-            noiseKs
-            domKs
-            diceKs
-            rodados
-            cardKs
-            ourosk
-            copask
-            fprintf("Total=%d, Dominos=%d, Dados=%d, Cartas=%d\n",N,tDom,tDice,tCard)
-            fprintf("%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%s\n", ...
-                NumMec, NumSeq, NumImg, tDom, tDice, tCard, RDO, ...
-                RFO, tDuplas, PntDom, PntDad, CopOuros, EspPaus, Ouros, StringPT)
-            fprintf("Esperado:\n");
-            while nLineExact < idxImg
-                strExact = fgets(fileExact);
-                nLineExact = nLineExact + 1;
-            end
-            fprintf("%s\n",strExact(2:end));            
-        end
-        
+       
         
         %% Write Table Entry
         T = table(NumMec, NumSeq, NumImg, tDom, tDice, tCard, RDO, ...
@@ -514,13 +356,8 @@ function NumMec = tp1_92993()
 
         writetable(T,'tp1_92993.txt', 'WriteVariableNames',false, 'WriteMode','append')
 
-        toc
     end
     
-    if showplot
-        save
-    end
-
 
 end
 

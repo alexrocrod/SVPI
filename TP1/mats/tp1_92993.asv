@@ -3,27 +3,8 @@
 % Abril 2022
 % Trabalho Pratico 1
 
-%% A FAZER
-% poly2mask em mais sitios
-% ver bounding boxes 
-% separar com hit dos cantos
-
-
-% adaptar para entrega
-
-
-%% To FIX
-
-
-
-%%
 function NumMec = tp1_92993()
-    %%
-    
-    close all
-    clear
-    clc
-    
+
     %% Init Vars
     NumMec = 92993;
     
@@ -31,22 +12,13 @@ function NumMec = tp1_92993()
     
 %     addpath('../')
 %     listaF=dir('../svpi2022_TP1_img_*.png');
- 
-    addpath('../sequencias/Seq160')
-    listaF=dir('../sequencias/Seq160/svpi2022_TP1_img_*.png');
-%     fileExact = fopen("tp1_seq_160_results.txt","r"); nLineExact = 0;
 
-%     addpath('../sequencias/Seq530')
-%     listaF=dir('../sequencias/Seq530/svpi2022_TP1_img_*.png');
-%     fileExact = fopen("tp1_seq_530_results.txt","r"); nLineExact = 0;
+    addpath('../sequencias/Seq530')
+    listaF=dir('../sequencias/Seq530/svpi2022_TP1_img_*.png');
 
     MaxImg = size(listaF,1);
-    showplot = false;
-
-%     idxImg = 25; showplot = true;
    
     for idxImg = 1:MaxImg
-        tic
 
         imName = listaF(idxImg).name;
         
@@ -56,56 +28,40 @@ function NumMec = tp1_92993()
         
         NumSeq = str2double(imName(18:20));
         NumImg = str2double(imName(22:23));
-        fprintf("\t idxImg=%d\n",idxImg);
         
         A = im2double(imread(imName));
-        if showplot
-            figure(10)
-            imshow(A)
-        end
         
         %% SubImages
         
-        minSize = 0.2; % 60 -> 0.08, 152-> 0.2
-        minWidth = 0.04; % 30 -> 0.04
+        minSize = 0.2; % min nnz for aceptable boundary (percentage)
+        minWidth = 0.04; % min width of subimage (percentage)
         
-        cutx = -3; % -3
-        cuty = -3; % -3
-        reductRoted = 2; % 2
-        rot = true;
-        extend = false;
-        relSizes = 1.2; % 1.2
+
+        cutx = -3; % increase area of boundary
+        cuty = -3; % 
+        reductRoted = 2; % reduce after rotation
+        rot = true; % rotate
+        extend = false; % extend to rectangular subimage
+        relSizes = 1.2; % relative width to height
+
+        % Find rotated dices
         [regionsRotated,fmaskRot] = getSubImages(A,rot,minSize,cutx,cuty,relSizes,minWidth,extend,zeros(size(A)),reductRoted);
         
-        N=numel(regionsRotated);
-        RDO = N;
+        RDO = numel(regionsRotated);
         
-        cutx = -1; % -1
-        cuty = -1; % -1
+        cutx = -1; 
+        cuty = -1; 
         extend = true;
         rot = false;
-        relSizes = 3; % 3
-    %     tic
-        [regionsNormal,fmaskNormal] = getSubImages(A,rot,minSize,cutx,cuty,relSizes,minWidth,extend,fmaskRot,reductRoted);
-    %     toc
-    
-        regions = [regionsRotated, regionsNormal];
-        N=numel(regions);
-        SS = ceil(sqrt(N));
-        
-        if showplot
-            figure(1)
-            for k=1:N
-                subplot( SS, SS, k);
-                imshow(regions{k})
-                xlabel(k)
-            end
-        end
+        relSizes = 3; 
 
-        ola = nnz(fmaskRot.*fmaskNormal);
-        if ola
-            fprintf("Fail masks:%d\n",ola);
-        end
+        % Find other subimages
+        [regionsNormal,~] = getSubImages(A,rot,minSize,cutx,cuty,relSizes,minWidth,extend,fmaskRot,reductRoted);
+
+        % Merge all subimages
+        regions = [regionsRotated, regionsNormal]; 
+        N = numel(regions);
+        
         
         %% Vars
         domKs = [];
@@ -289,9 +245,9 @@ function NumMec = tp1_92993()
                     [~,Nb] = bwlabel(B);
         
                     % Pintas de cada lado
-                    Nb1 = getHalfPintas(regions{k},1,perc,t1,t2);
+                    Nb1 = getHalfPintas(regions{k},1,percBordDom,t1,t2);
 
-                    Nb2 = getHalfPintas(regions{k},2,perc,t2,t2);
+                    Nb2 = getHalfPintas(regions{k},2,percBordDom,t2,t2);
 
         
                     if (Nb1>6 || Nb2>6) % invalid number of pintas
@@ -321,12 +277,11 @@ function NumMec = tp1_92993()
         
                 else % cards
         
-                    % remove borders (with naipe and number)
+                    
                     B = double(regions{k});
                     
                     B = autobin(imadjust(B),false);
-    
-                    B = double(cleanCorner(B,pxNN,pyNN));
+                    B = double(cleanCorner(B,pxNN,pyNN)); % remove borders (with naipe and number)
                     B = autobin(imadjust(B),false);
                     
                     B = edge(B,'roberts');
@@ -335,6 +290,7 @@ function NumMec = tp1_92993()
         
         
                     [~,Nb] = bwlabel(B);
+
                     if (Nb>9 || Nb==0)
                         fprintf("Remove Carta:k=%d,Nb=%d\n",k,Nb);
                         str = sprintf("Remove Carta:k=%d,Nb=%d\n",k,Nb);
@@ -342,13 +298,56 @@ function NumMec = tp1_92993()
                         B = ones(size(B));
                     else
         
-                        D = autobin(imadjust(regions{k}),false); % previous normal
+                        D = autobin(imadjust(regions{k}),false);
 
-                        [tipo,D] = sepCartas(D,percWhiteCorner,percBlackCorner,pxNN,pyNN);
-                        if tipo == 0
+                        [tipo,D] = sepCartas(D,percWhiteCorner,percBlackCorner,pxNN,pyNN); % classify orientation of a card
+
+                        if tipo == 0 % invalid card (does nothing)
                             fprintf("Carta NA, k=%d, Nb=%d\n",k,Nb)
-                            str = sprintf("Carta NA, k=%d, Nb=%d\n",k,Nb);
-                        else
+%                             str = sprintf("Carta NA, k=%d, Nb=%d\n",k,Nb);
+                            
+                            B = Bold;
+                            B(:,t1:t2) = 0; % remove line
+                            % clean borders
+                            B(1:round(sy*percBordDom ),:)= 0;
+                            B(end-round(sy*percBordDom ):end,:)= 0;
+                            B(:,1:round(sx*percBordDom ))= 0;
+                            B(:,end-round(sx*percBordDom * 2):end)= 0; % <<<<<
+        
+                
+                            % Detect Pintas
+                            B = edge(B,'roberts');
+                            B = bwmorph(B,'bridge',2);
+                            B = bwmorph(B,'close');
+                            B = bwareaopen(B,round(0.5*size(B,1)));
+                            [~,Nb] = bwlabel(B);
+                
+                            % Pintas de cada lado
+                            Nb1 = getHalfPintas(regions{k},1,perc,t1,t2);
+        
+                            Nb2 = getHalfPintas(regions{k},2,perc,t2,t2);
+        
+                
+                            if (Nb1>6 || Nb2>6) % invalid number of pintas
+                                fprintf("Remove Domino: %d,%d->%d\n",Nb1,Nb2,Nb);
+                                str = sprintf("Dom.%d,Removido,%d,%d->%d\n",k,Nb1,Nb2,Nb);
+                                noiseKs = [noiseKs k];
+                            else
+                                if (rotated)
+                                    numDomsRoted = numDomsRoted + 1;
+                                end
+                                domKs = [domKs k];
+                                str = sprintf('Dom.%d,N1=%d,N2=%d',k,Nb1,Nb2);
+                                if Nb1 + Nb2 ~= Nb % && showplot
+                                    fprintf("Erro Domino k:%d   %d + %d != %d\n",k,Nb1,Nb2,Nb);
+                                end
+                                PntDom = PntDom + Nb1 + Nb2;
+                                if Nb1==Nb2
+                                    tDuplas = tDuplas + 1;
+                                end
+                            end
+                            
+                        else 
                             PntCartas = [PntCartas Nb];
                             cardKs = [cardKs k];
         
