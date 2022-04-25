@@ -3,7 +3,29 @@
 % Maio 2022
 % Trabalho Pratico 2
 
+%% 
+
+% • Criar uma base dos objetos de referência (a partir das imagens de referência fornecidas).
+% • Identificar e estabelecer os descritores relevantes para distinguir os diversos objetos.
+% • Nas imagens a processar separar os objetos do fundo (binarização, deteção de contornos, ou
+% outros, são técnicas esperadas para o fazer).
+% • Eliminar os objetos em contacto com o bordo da imagem.
+% • Identificar e eliminar os objetos partidos.
+% • Obter os descritores dos objetos restantes (na representação em máscara binária e/ou na
+% representação completa a cores).
+% • Classificar os objetos por comparação de descritores com os objetos de referência mediante
+% critérios de distância, ou outros.
+% • Contar as ocorrências de cada classe/tipo de objetos e atualizar o ficheiro de resultados.
+
+
+%% 
+
+
 function NumMec = tp2_92993()
+
+    close all
+    clear all
+    clc
 
     %% Init Vars
     NumMec = 92993;
@@ -31,7 +53,7 @@ function NumMec = tp2_92993()
 
 %     showplot = false;
 
-    idxImg = 5; showplot = true;
+    idxImg = 1; showplot = true;
    
 %     for idxImg = 1:MaxImg
 
@@ -42,50 +64,21 @@ function NumMec = tp2_92993()
         
         A0 = im2double(imread(imName));
 
-        if showplot
-            figure(1)
-            imshow(A0)
-        end
-
         A = im2double(rgb2gray(imread(imName)));
 
         if showplot
+            figure(1)
+            imshow(A0)
             figure(2)
             imshow(A)
         end
-        
-        %% SubImages
-        
-        minSize = 0.1; % 0.2  min nnz for aceptable boundary (percentage)
-        minWidth = 0.01; % 0.04 min width of subimage (percentage)
 
-        fmaskRot = zeros(size(A));
-        cutx = -1; 
-        cuty = -1; 
-        extend = false; %true;
-        relSizes = 5; %3
-
-        % Find other subimages
-        [regionsNormal,~] = getSubImages(A,minSize,cutx,cuty,relSizes,minWidth,extend,fmaskRot);
-
-        regions = regionsNormal;
-        N = numel(regions);
-        SS = ceil(sqrt(N));
-
-        if showplot
-            figure(3)
-            for k=1:N
-                subplot(SS, SS, k);
-                imshow(regions{k})
-                xlabel(k)
-            end
-        end
-        
-        
         %% Vars
-        ObjBord = 0;
-        ObjPart = 0;
-        ObjOK = 0;
+        ObjBord = 0; % numero de objs a tocar o bordo (nao para classificar)
+        ObjPart = 0; % numero de objs partidos (nao para classificar)
+        ObjOK = 0; % numero de objs para classificar (migalhas nao contam (0.05% do obj inicial))
+        
+        % Bolachas;
         beurre = 0;
         choco = 0;
         confit = 0;
@@ -100,59 +93,174 @@ function NumMec = tp2_92993()
         sugar = 0;
         wafer = 0;
         zebra = 0;
+
+        %% 
+
+        B = imadjust(imclearborder(A));
+        D = imadjust(A.*not(B));
+
+        minTh = 0.01;
+
+        E = (A>minTh);
+%         E = bwmorph(E,"close",inf);
+%         E = bwareaopen(E,50);
+
+        E = double(E);
+
+%         F = (B>minTh);
+%         F = bwmorph(F,"close",inf);
+%         F = bwareaopen(F,100);
+%         F = bwmorph(F,"fill",100);
+
+%         F = imadjust(imclearborder(E));
+        F = imclearborder(E);
+
+        [Bx,L,Nb,~] = bwboundaries(F,'noholes');
+
+%         figure(100)
+%         imshow(label2rgb(L, @jet, [.5 .5 .5]))
+%         hold on
+
+        ObjOK = 0;
+        sx = size(A,1);
+        sy = size(A,2);
+
+        for k = 1:Nb
+            boundary = Bx{k};
+            mask = poly2mask(boundary(:,2), boundary(:,1),sx,sy);
+            if nnz(mask) < 200, continue, end 
+            
+            ObjOK = ObjOK + 1;
+
+%             plot(boundary(:,2), boundary(:,1), 'w', 'LineWidth', 2)
+%             pause(1)
+        end
+
+%         G = (D>minTh);
+%         G = bwmorph(G,"close",inf);
+%         G = bwareaopen(G,50);
+%         G = bwmorph(G,"close",inf);
+        G = imadjust(E.*not(F));
+
+%         [~,Nb] = bwlabel(G);
+        [Bx,L,Nb,~] = bwboundaries(G,'noholes');
+
+%         figure(100)
+%         imshow(label2rgb(L, @jet, [.5 .5 .5]))
+%         hold on
+
+        ObjBord = 0;
+        sx = size(A,1);
+        sy = size(A,2);
+
+        for k = 1:Nb
+            boundary = Bx{k};
+            mask = poly2mask(boundary(:,2), boundary(:,1),sx,sy);
+            if nnz(mask) < 100, continue, end 
+            
+            ObjBord = ObjBord + 1;
+
+%             plot(boundary(:,2), boundary(:,1), 'w', 'LineWidth', 2)
+%             pause(1)
+        end
+
+        if showplot
+            figure(11)
+            subplot(1,3,1)
+            imshow(E)
+
+            subplot(1,3,2)
+            imshow(F)
+            xlabel(ObjOK)
+            
+            subplot(1,3,3)
+            imshow(G)
+            xlabel(ObjBord)
+        end
+        
+        
+        
+        
+        %% SubImages
+        
+%         minSize = 0.1; % 0.2  min nnz for aceptable boundary (percentage)
+%         minWidth = 0.01; % 0.04 min width of subimage (percentage)
+% 
+%         fmaskRot = zeros(size(A));
+%         cutx = -1; 
+%         cuty = -1; 
+%         extend = false; %true;
+%         relSizes = 5; %3
+% 
+%         % Find other subimages
+%         [regionsNormal,~] = getSubImages(A,minSize,cutx,cuty,relSizes,minWidth,extend,fmaskRot);
+% 
+%         regions = regionsNormal;
+%         N = numel(regions);
+%         SS = ceil(sqrt(N));
+% 
+%         if showplot
+%             figure(3)
+%             for k=1:N
+%                 subplot(SS, SS, k);
+%                 imshow(regions{k})
+%                 xlabel(k)
+%             end
+%         end
+        
         
         %% Normal
     
-        for k = 1:N
-            
-            B = imadjust(regions{k});
-            B = medfilt2(B);
-            B = imadjust(B);
-            B = autobin2th(B);
-            B = bwmorph(B,'close',inf);
-        
-        
-            sx = size(B,1);
-            sy = size(B,2);
-        
-            % Test Noise
-            C = bwmorph(B,'erode',2);
-            minNNZ =  0.01 * nnz(B) +1;
-            if nnz(C) < minNNZ 
-                str = "noise";
-            else
-                if sx > sy % rotate to horizontal
-                    regions{k} = rot90(regions{k});
-                end
-        
-        
-                B = double(regions{k});
-                
-                B = autobin(imadjust(B));
-                
-                B = edge(B,'roberts');
-                B = bwmorph(B,'bridge');
-                B = bwareaopen(B,round(0.5*size(B,1)));
-    
-    
-                [~,Nb] = bwlabel(B);
-    
-                if (Nb>9 || Nb==0)
-                    fprintf("Remove Carta:k=%d,Nb=%d\n",k,Nb);
-                    str = sprintf("Remove Carta:k=%d,Nb=%d\n",k,Nb);
-                else
-                
-                    str = sprintf("k=%d\n Desc.,Nb=%d",k,Nb);
-                end
-            end 
-
-            if showplot
-                subplot(SS,SS,k);
-                imshow(B)
-                xlabel(str);
-            end
-        
-        end
+%         for k = 1:N
+%             
+%             B = imadjust(regions{k});
+%             B = medfilt2(B);
+%             B = imadjust(B);
+%             B = autobin2th(B);
+%             B = bwmorph(B,'close',inf);
+%         
+%         
+%             sx = size(B,1);
+%             sy = size(B,2);
+%         
+%             % Test Noise
+%             C = bwmorph(B,'erode',2);
+%             minNNZ =  0.01 * nnz(B) +1;
+%             if nnz(C) < minNNZ 
+%                 str = "noise";
+%             else
+%                 if sx > sy % rotate to horizontal
+%                     regions{k} = rot90(regions{k});
+%                 end
+%         
+%         
+%                 B = double(regions{k});
+%                 
+%                 B = autobin(imadjust(B));
+%                 
+%                 B = edge(B,'roberts');
+%                 B = bwmorph(B,'bridge');
+%                 B = bwareaopen(B,round(0.5*size(B,1)));
+%     
+%     
+%                 [~,Nb] = bwlabel(B);
+%     
+%                 if (Nb>9 || Nb==0)
+%                     fprintf("Remove Carta:k=%d,Nb=%d\n",k,Nb);
+%                     str = sprintf("Remove Carta:k=%d,Nb=%d\n",k,Nb);
+%                 else
+%                 
+%                     str = sprintf("k=%d\n Desc.,Nb=%d",k,Nb);
+%                 end
+%             end 
+% 
+%             if showplot
+%                 subplot(SS,SS,k);
+%                 imshow(B)
+%                 xlabel(str);
+%             end
+%         
+%         end
   
         
         %% Save Vars
