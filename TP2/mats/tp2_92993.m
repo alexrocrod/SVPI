@@ -43,6 +43,9 @@ function NumMec = tp2_92993()
     listaF=dir('../Seq29x/svpi2022_TP2_img_*.png');
     fileExact = fopen("svpi2022_tp2_seq_ALL.txt","r"); nLineExact = 0;
 
+    imgRef1 = im2double(imread("../svpi2022_TP2_img_001_01.png"));
+    imgRef2 = im2double(imread("../svpi2022_TP2_img_002_01.png"));
+
 %     lista1=dir('../Seq29x/svpi2022_TP2_img_*1_*.png');
 %     fileExact1 = fopen("svpi2022_tp2_seq_291.txt","r"); nLineExact = 0;
 % 
