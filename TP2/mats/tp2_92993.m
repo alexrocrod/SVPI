@@ -5,7 +5,7 @@
 
 %% 
 
-% • Criar uma base dos objetos de referência (a partir das imagens de referência fornecidas).
+% • Criar uma base dos objetos de referência (a partir das imagens de referência fornecidas). 
 % • Identificar e estabelecer os descritores relevantes para distinguir os diversos objetos.
 % • Nas imagens a processar separar os objetos do fundo (binarização, deteção de contornos, ou
 % outros, são técnicas esperadas para o fazer).
@@ -33,22 +33,17 @@ function NumMec = tp2_92993()
     %% Open Image
     
 %     addpath('../')
-%     listaF=dir('../svpi2022_TP2_img_*.png');
-%     lista1=dir('../svpi2022_TP2_img_*1_*.png');
-%     lista2=dir('../svpi2022_TP2_img_*2_*.png');
-
 
     addpath('../Seq29x')
 
     listaF=dir('../Seq29x/svpi2022_TP2_img_*.png');
     fileExact = fopen("svpi2022_tp2_seq_ALL.txt","r"); nLineExact = 0;
 
-    imgRef1 = im2double(imread("../svpi2022_TP2_img_001_01.png"));
-    imgRef2 = im2double(imread("../svpi2022_TP2_img_002_01.png"));
-
+%     imgRef1 = im2double(imread("../svpi2022_TP2_img_001_01.png"));
 %     lista1=dir('../Seq29x/svpi2022_TP2_img_*1_*.png');
 %     fileExact1 = fopen("svpi2022_tp2_seq_291.txt","r"); nLineExact = 0;
-% 
+
+%     imgRef2 = im2double(imread("../svpi2022_TP2_img_002_01.png"));
 %     lista2=dir('../Seq29x/svpi2022_TP2_img_*2_*.png');
 %     fileExact2 = fopen("svpi2022_tp2_seq_292.txt","r"); nLineExact = 0;
 
@@ -80,6 +75,29 @@ function NumMec = tp2_92993()
 
         [regionsRef,regionsRGBRef] = getRefImages(1);
 
+        N = numel(regionsRef);
+        SS = ceil(sqrt(N));
+        
+        invMRef = zeros(7,N);
+        if showplot
+            figure(20)
+            for k=1:N
+                subplot(SS,SS,k)
+                imshow(regionsRef{k})
+                invMRef(:,k) = invmoments(regionsRef{k});
+                xlabel(k)
+            end
+        end
+        
+        if showplot
+            figure(21)
+            for k=1:N
+                subplot(SS,SS,k)
+                imshow(regionsRGBRef{k})
+                xlabel(k)
+            end
+        end
+
         %% Vars
         ObjBord = 0; % numero de objs a tocar o bordo (nao para classificar)
         ObjPart = 0; % numero de objs partidos (nao para classificar)
@@ -101,10 +119,10 @@ function NumMec = tp2_92993()
         wafer = 0;
         zebra = 0;
 
-        %% 
+        %% Binarizar imagem
 
-        B = imadjust(imclearborder(A));
-        D = imadjust(A.*not(B));
+%         B = imadjust(imclearborder(A));
+%         D = imadjust(A.*not(B));
 
         minTh = 0.01;
 
@@ -122,7 +140,7 @@ function NumMec = tp2_92993()
 %         F = imadjust(imclearborder(E));
         F = imclearborder(E);
 
-        [Bx,L,Nb,~] = bwboundaries(F,'noholes');
+        [Bx,~,Nb,~] = bwboundaries(F,'noholes');
 
 %         figure(100)
 %         imshow(label2rgb(L, @jet, [.5 .5 .5]))
@@ -150,7 +168,7 @@ function NumMec = tp2_92993()
         G = imadjust(E.*not(F));
 
 %         [~,Nb] = bwlabel(G);
-        [Bx,L,Nb,~] = bwboundaries(G,'noholes');
+        [Bx,~,Nb,~] = bwboundaries(G,'noholes');
 
 %         figure(100)
 %         imshow(label2rgb(L, @jet, [.5 .5 .5]))
@@ -190,86 +208,172 @@ function NumMec = tp2_92993()
         
         %% SubImages
         
-%         minSize = 0.1; % 0.2  min nnz for aceptable boundary (percentage)
-%         minWidth = 0.01; % 0.04 min width of subimage (percentage)
-% 
-%         fmaskRot = zeros(size(A));
-%         cutx = -1; 
-%         cuty = -1; 
-%         extend = false; %true;
-%         relSizes = 5; %3
-% 
-%         % Find other subimages
-%         [regionsNormal,~] = getSubImages(A,minSize,cutx,cuty,relSizes,minWidth,extend,fmaskRot);
-% 
-%         regions = regionsNormal;
-%         N = numel(regions);
-%         SS = ceil(sqrt(N));
-% 
-%         if showplot
-%             figure(3)
-%             for k=1:N
-%                 subplot(SS, SS, k);
-%                 imshow(regions{k})
-%                 xlabel(k)
-%             end
-%         end
-        
-        
-        %% Normal
+        A = F;
+        minSize = 0.1; % 0.2  min nnz for aceptable boundary (percentage)
+        minWidth = 0.01; % 0.04 min width of subimage (percentage)
+
+        fmaskRot = zeros(size(A));
+        cutx = -1; 
+        cuty = -1; 
+        extend = false; %true;
+        relSizes = 5; %3
+
+        % Find other subimages
+        [regions,regionsRGB] = getSubImages(A,minSize,cutx,cuty,relSizes,minWidth,extend,fmaskRot,A0,false);
     
-%         for k = 1:N
-%             
-%             B = imadjust(regions{k});
-%             B = medfilt2(B);
-%             B = imadjust(B);
-%             B = autobin2th(B);
-%             B = bwmorph(B,'close',inf);
-%         
-%         
-%             sx = size(B,1);
-%             sy = size(B,2);
-%         
-%             % Test Noise
-%             C = bwmorph(B,'erode',2);
-%             minNNZ =  0.01 * nnz(B) +1;
-%             if nnz(C) < minNNZ 
-%                 str = "noise";
-%             else
-%                 if sx > sy % rotate to horizontal
-%                     regions{k} = rot90(regions{k});
-%                 end
-%         
-%         
-%                 B = double(regions{k});
-%                 
-%                 B = autobin(imadjust(B));
-%                 
-%                 B = edge(B,'roberts');
-%                 B = bwmorph(B,'bridge');
-%                 B = bwareaopen(B,round(0.5*size(B,1)));
-%     
-%     
-%                 [~,Nb] = bwlabel(B);
-%     
-%                 if (Nb>9 || Nb==0)
-%                     fprintf("Remove Carta:k=%d,Nb=%d\n",k,Nb);
-%                     str = sprintf("Remove Carta:k=%d,Nb=%d\n",k,Nb);
-%                 else
-%                 
-%                     str = sprintf("k=%d\n Desc.,Nb=%d",k,Nb);
-%                 end
-%             end 
-% 
-%             if showplot
-%                 subplot(SS,SS,k);
-%                 imshow(B)
-%                 xlabel(str);
-%             end
-%         
-%         end
-  
+        N = numel(regions);
+        SS = ceil(sqrt(N));
+
+        ObjPart = 0;
+        ObjOK = 0;
         
+        count = 1;
+        for k=1:N
+            rBin = regions{k} > 0;
+            if mean(rBin) < 0.95  % Detetar Partidas <<< MUDAR
+                str{k} = sprintf("partida,k:%d\n",k);
+                fprintf(str{k})
+                ObjPart = ObjPart + 1;
+            else
+                str{k} = sprintf("OK,k:%d\n",k);
+                ObjOK = ObjOK + 1;
+                regionsOK{count} = regions{k};
+                regionsOKRGB{count} = regionsRGB{k};
+                count = count + 1;
+            end
+        end
+
+        invM = zeros(7,N);
+        if showplot
+            figure(31)
+            for k=1:N
+                subplot(SS, SS, k);
+                imshow(regions{k})
+                invM(:,k) = invmoments(regions{k});
+                xlabel(str{k})
+            end
+        end
+
+        if showplot
+            figure(32)
+            for k=1:N
+                subplot(SS, SS, k);
+                imshow(regionsRGB{k})
+                xlabel(str{k})
+            end
+        end
+
+        %% Classificar bolachas inteiras
+
+        N = numel(regions);
+        SS = ceil(sqrt(N));
+
+        if showplot
+            figure(41)
+            for k=1:N
+                subplot(SS, SS, k);
+                imshow(regions{k})
+                xlabel(k)
+            end
+        end
+
+        if showplot
+            figure(42)
+            for k=1:N
+                subplot(SS, SS, k);
+                imshow(regionsRGB{k})
+                xlabel(k)
+            end
+        end
+
+        %% Compare
+
+        matchs = zeros(k,1);
+        resx = zeros(k,1);
+        for k=1:N
+            [kRef,res] = getBestMatch(invM(:,k),invMRef);
+            if showplot
+                figure(100)
+                subplot(1,2,1)
+                imshow(regionsRGB{k})
+                xlabel(k)
+    
+                subplot(1,2,2)
+                imshow(regionsRef{kRef})
+                xlabel(sprintf("Kref:%d,res:%f",kRef,res))
+
+                pause(0.01)
+            end
+
+            matchs(k) = kRef;
+            resx(k) = kRef;
+        end
+
+        for k=1:N
+            if matchs(k) < 3
+                beurre = beurre + 1;
+            elseif matchs(k) < 5
+                choco = choco + 1;
+            elseif matchs(k) < 7
+                confit = confit + 1;
+            elseif matchs(k) < 9
+                craker = craker + 1;
+            elseif matchs(k) < 11
+                fan = fan + 1;
+            elseif matchs(k) < 13
+                ginger = ginger + 1;
+            elseif matchs(k) < 15
+                lotus = lotus + 1;
+            elseif matchs(k) < 17
+                maria = maria + 1;
+            elseif matchs(k) < 19
+                oreo = oreo + 1;
+            elseif matchs(k) < 21
+                palmier = palmier + 1;
+            elseif matchs(k) < 23
+                parijse = parijse + 1;
+            elseif matchs(k) < 25
+                sugar = sugar + 1;
+            elseif matchs(k) < 27
+                wafer = wafer + 1;
+            else
+                zebra = zebra + 1;
+            end
+
+
+%             if matchs(k) == 1
+%                 beurre = beurre + 1;
+%             elseif matchs(k) == 2
+%                 choco = choco + 1;
+%             elseif matchs(k) == 3
+%                 confit = confit + 1;
+%             elseif matchs(k) == 4
+%                 craker = craker + 1;
+%             elseif matchs(k) == 5
+%                 fan = fan + 1;
+%             elseif matchs(k) == 6
+%                 ginger = ginger + 1;
+%             elseif matchs(k) == 7
+%                 lotus = lotus + 1;
+%             elseif matchs(k) == 8
+%                 maria = maria + 1;
+%             elseif matchs(k) == 9
+%                 oreo = oreo + 1;
+%             elseif matchs(k) == 10
+%                 palmier = palmier + 1;
+%             elseif matchs(k) == 11
+%                 parijse = parijse + 1;
+%             elseif matchs(k) == 12
+%                 sugar = sugar + 1;
+%             elseif matchs(k) == 13
+%                 wafer = wafer + 1;
+%             else
+%                 zebra = zebra + 1;
+%             end
+
+        end
+        
+                
         %% Save Vars
                 
         %
@@ -332,6 +436,24 @@ function Ibin = autobin2th(I) % autobin but for 2 thresholds
     end
 end
 
+function [kRef,res] = getBestMatch(invM,invMRef)
+
+    refSize = size(invMRef,2);
+
+    minres = inf;
+    for ii = 1:refSize
+
+        elem = invMRef(:,ii);
+
+        res = sum(abs(elem-invM)./elem);
+        
+        if res < minres 
+            minres = res;
+            kRef = ii;
+        end
+        
+    end
+end
 
 function [regions,regionsRGB] = getRefImages(classe)
 
@@ -367,7 +489,6 @@ end
 
 function [regions,regionsRGB,fullMask] = getSubImages(A,minSize,cutx,cuty,relSizes,minWidth,extend,fmaskPrev,imgRef,fromRef)
 
-    
     % get all subimages(regions)
 
     B = maskNormal(A);
