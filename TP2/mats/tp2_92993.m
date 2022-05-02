@@ -38,20 +38,23 @@ function NumMec = tp2_92993()
 
     listaF=dir('../Seq29x/svpi2022_TP2_img_*.png');
     fileExact = fopen("svpi2022_tp2_seq_ALL.txt","r"); nLineExact = 0;
+    classe = 1;
 
 %     imgRef1 = im2double(imread("../svpi2022_TP2_img_001_01.png"));
 %     lista1=dir('../Seq29x/svpi2022_TP2_img_*1_*.png');
 %     fileExact1 = fopen("svpi2022_tp2_seq_291.txt","r"); nLineExact = 0;
+%     classe = 1;
 
 %     imgRef2 = im2double(imread("../svpi2022_TP2_img_002_01.png"));
-%     lista2=dir('../Seq29x/svpi2022_TP2_img_*2_*.png');
-%     fileExact2 = fopen("svpi2022_tp2_seq_292.txt","r"); nLineExact = 0;
+%     listaF=dir('../Seq29x/svpi2022_TP2_img_*2_*.png');
+%     fileExact = fopen("svpi2022_tp2_seq_292.txt","r"); nLineExact = 0;
+%     classe = 2;
 
     MaxImg = size(listaF,1);
 
 %     showplot = false;
 
-    idxImg = 1; showplot = true;
+    idxImg = 3; showplot = true;
    
 %     for idxImg = 1:MaxImg
 
@@ -64,6 +67,10 @@ function NumMec = tp2_92993()
 
         A = im2double(rgb2gray(imread(imName)));
 
+%         A = medfilt2(filter2(fspecial("average",3),A));
+
+%         showplot = false;
+
         if showplot
             figure(1)
             imshow(A0)
@@ -73,18 +80,22 @@ function NumMec = tp2_92993()
 
         %% Reference subimages
 
-        [regionsRef,regionsRGBRef] = getRefImages(1);
+        [regionsRef,regionsRGBRef] = getRefImages(classe);
 
         N = numel(regionsRef);
         SS = ceil(sqrt(N));
         
         invMRef = zeros(7,N);
+        for k=1:N
+            invMRef(:,k) = invmoments(regionsRef{k});
+        end
+
+        
         if showplot
             figure(20)
             for k=1:N
                 subplot(SS,SS,k)
                 imshow(regionsRef{k})
-                invMRef(:,k) = invmoments(regionsRef{k});
                 xlabel(k)
             end
         end
@@ -124,7 +135,7 @@ function NumMec = tp2_92993()
 %         B = imadjust(imclearborder(A));
 %         D = imadjust(A.*not(B));
 
-        minTh = 0.01;
+        minTh = 0.1; % 0.01;
 
         E = (A>minTh);
 %         E = bwmorph(E,"close",inf);
@@ -249,7 +260,7 @@ function NumMec = tp2_92993()
             for k=1:N
                 subplot(SS, SS, k);
                 imshow(regions{k})
-                invM(:,k) = invmoments(regions{k});
+                
                 xlabel(str{k})
             end
         end
@@ -288,9 +299,12 @@ function NumMec = tp2_92993()
 
         %% Compare
 
+%         showplot = true;
+        
         matchs = zeros(k,1);
         resx = zeros(k,1);
         for k=1:N
+            invM(:,k) = invmoments(regions{k});
             [kRef,res] = getBestMatch(invM(:,k),invMRef);
             if showplot
                 figure(100)
@@ -299,78 +313,79 @@ function NumMec = tp2_92993()
                 xlabel(k)
     
                 subplot(1,2,2)
-                imshow(regionsRef{kRef})
+                imshow(regionsRGBRef{kRef})
                 xlabel(sprintf("Kref:%d,res:%f",kRef,res))
 
-                pause(0.01)
+                pause(1)
             end
 
             matchs(k) = kRef;
-            resx(k) = kRef;
+            resx(k) = res;
         end
 
+        
         for k=1:N
-            if matchs(k) < 3
-                beurre = beurre + 1;
-            elseif matchs(k) < 5
-                choco = choco + 1;
-            elseif matchs(k) < 7
-                confit = confit + 1;
-            elseif matchs(k) < 9
-                craker = craker + 1;
-            elseif matchs(k) < 11
-                fan = fan + 1;
-            elseif matchs(k) < 13
-                ginger = ginger + 1;
-            elseif matchs(k) < 15
-                lotus = lotus + 1;
-            elseif matchs(k) < 17
-                maria = maria + 1;
-            elseif matchs(k) < 19
-                oreo = oreo + 1;
-            elseif matchs(k) < 21
-                palmier = palmier + 1;
-            elseif matchs(k) < 23
-                parijse = parijse + 1;
-            elseif matchs(k) < 25
-                sugar = sugar + 1;
-            elseif matchs(k) < 27
-                wafer = wafer + 1;
+            if classe == 1
+                if matchs(k) < 3
+                    beurre = beurre + 1;
+                elseif matchs(k) < 5
+                    choco = choco + 1;
+                elseif matchs(k) < 7
+                    confit = confit + 1;
+                elseif matchs(k) < 9
+                    craker = craker + 1;
+                elseif matchs(k) < 11
+                    fan = fan + 1;
+                elseif matchs(k) < 13
+                    ginger = ginger + 1;
+                elseif matchs(k) < 15
+                    lotus = lotus + 1;
+                elseif matchs(k) < 17
+                    maria = maria + 1;
+                elseif matchs(k) < 19
+                    oreo = oreo + 1;
+                elseif matchs(k) < 21
+                    palmier = palmier + 1;
+                elseif matchs(k) < 23
+                    parijse = parijse + 1;
+                elseif matchs(k) < 25
+                    sugar = sugar + 1;
+                elseif matchs(k) < 27
+                    wafer = wafer + 1;
+                else
+                    zebra = zebra + 1;
+                end
             else
-                zebra = zebra + 1;
+                if matchs(k) == 1
+                    beurre = beurre + 1;
+                elseif matchs(k) == 2
+                    choco = choco + 1;
+                elseif matchs(k) == 3
+                    confit = confit + 1;
+                elseif matchs(k) == 4
+                    craker = craker + 1;
+                elseif matchs(k) == 5
+                    fan = fan + 1;
+                elseif matchs(k) == 6
+                    ginger = ginger + 1;
+                elseif matchs(k) == 7
+                    lotus = lotus + 1;
+                elseif matchs(k) == 8
+                    maria = maria + 1;
+                elseif matchs(k) == 9
+                    oreo = oreo + 1;
+                elseif matchs(k) == 10
+                    palmier = palmier + 1;
+                elseif matchs(k) == 11
+                    parijse = parijse + 1;
+                elseif matchs(k) == 12
+                    sugar = sugar + 1;
+                elseif matchs(k) == 13
+                    wafer = wafer + 1;
+                else
+                    zebra = zebra + 1;
+                end
             end
-
-
-%             if matchs(k) == 1
-%                 beurre = beurre + 1;
-%             elseif matchs(k) == 2
-%                 choco = choco + 1;
-%             elseif matchs(k) == 3
-%                 confit = confit + 1;
-%             elseif matchs(k) == 4
-%                 craker = craker + 1;
-%             elseif matchs(k) == 5
-%                 fan = fan + 1;
-%             elseif matchs(k) == 6
-%                 ginger = ginger + 1;
-%             elseif matchs(k) == 7
-%                 lotus = lotus + 1;
-%             elseif matchs(k) == 8
-%                 maria = maria + 1;
-%             elseif matchs(k) == 9
-%                 oreo = oreo + 1;
-%             elseif matchs(k) == 10
-%                 palmier = palmier + 1;
-%             elseif matchs(k) == 11
-%                 parijse = parijse + 1;
-%             elseif matchs(k) == 12
-%                 sugar = sugar + 1;
-%             elseif matchs(k) == 13
-%                 wafer = wafer + 1;
-%             else
-%                 zebra = zebra + 1;
-%             end
-
         end
         
                 
@@ -407,7 +422,7 @@ function NumMec = tp2_92993()
             save
         end
     
-
+    
 end
 
 
@@ -436,20 +451,24 @@ function Ibin = autobin2th(I) % autobin but for 2 thresholds
     end
 end
 
-function [kRef,res] = getBestMatch(invM,invMRef)
-
-    refSize = size(invMRef,2);
+function [kRef,minres] = getBestMatch(invM,invMRef)
 
     minres = inf;
-    for ii = 1:refSize
+    kRef = 1;
+    for k = 1:size(invMRef,2)
 
-        elem = invMRef(:,ii);
+        elem = invMRef(:,k)./sum(invMRef(:,k));
+        invM = invM./sum(invM);
 
-        res = sum(abs(elem-invM)./elem);
-        
+%         elem = invMRef(:,k);
+
+%         res = sum(abs((elem-invM)./elem));
+
+        res = sqrt(sum((elem-invM).^2)); % Euclidean Distance
+
         if res < minres 
             minres = res;
-            kRef = ii;
+            kRef = k;
         end
         
     end
