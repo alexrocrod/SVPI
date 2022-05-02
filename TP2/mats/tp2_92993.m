@@ -76,6 +76,10 @@ function NumMec = tp2_92993()
             imshow(A)
         end
 
+        %% Reference subimages
+
+        [regionsRef,regionsRGBRef] = getRefImages(1);
+
         %% Vars
         ObjBord = 0; % numero de objs a tocar o bordo (nao para classificar)
         ObjPart = 0; % numero de objs partidos (nao para classificar)
@@ -329,18 +333,41 @@ function Ibin = autobin2th(I) % autobin but for 2 thresholds
 end
 
 
+function [regions,regionsRGB] = getRefImages(classe)
+
+    if classe == 1
+        imgRef1 = im2double(imread("../svpi2022_TP2_img_001_01.png"));
+    else
+        imgRef1 = im2double(imread("../svpi2022_TP2_img_002_01.png"));
+    end
+    
+    A = rgb2gray(imgRef1);
+    minSize = 0.1;
+    cutx = -1;
+    cuty = -1;
+    relSizes = 3;
+    minWidth = 0.05;
+    extend = false;
+    fmaskPrev = zeros(size(A));
+    fromRef = true;
+    
+    [regions,regionsRGB,~] = getSubImages(A,minSize,cutx,cuty,relSizes,minWidth,extend,fmaskPrev,imgRef1,fromRef);
+
+end
+
 function B = maskNormal(A)
+    A = A<1;
     % mask for all other subimages
     
-%     B = edge(A,'roberts');
-%     B = bwmorph(B,'bridge');
-
     B = edge(A,'roberts') | edge(A,'sobel');
 %     B = bwmorph(B,'bridge',inf);
     B = bwmorph(B,'close',inf);
 end
 
-function [regions,fullMask] = getSubImages(A,minSize,cutx,cuty,relSizes,minWidth,extend,fmaskPrev)
+
+function [regions,regionsRGB,fullMask] = getSubImages(A,minSize,cutx,cuty,relSizes,minWidth,extend,fmaskPrev,imgRef,fromRef)
+
+    
     % get all subimages(regions)
 
     B = maskNormal(A);
@@ -356,9 +383,10 @@ function [regions,fullMask] = getSubImages(A,minSize,cutx,cuty,relSizes,minWidth
     
     count = 1;
 
-    figure(20)
-    imshow(B)
-    hold on
+%     figure(20)
+%     imshow(B)
+%     hold on
+
     
     for k = Nb+1:length(Bx) % use only interior boundaries
         boundary = Bx{k};
@@ -401,26 +429,59 @@ function [regions,fullMask] = getSubImages(A,minSize,cutx,cuty,relSizes,minWidth
             if sizesT(2) > relSizes * sizesT(1) || sizesT(1) < minWidth * sx , continue, end
         end
 
-        plot(boundary(:,2),boundary(:,1),'r','LineWidth',4);
-        pause(0.01)
+%         plot(boundary(:,2),boundary(:,1),'r','LineWidth',4);
+%         pause(0.01)
         
         selected = A.*mask;
+        selectedRGB = imgRef.*repmat(mask,[1 1 3]);
 
         fullMask = fullMask | mask;
         fmaskPrev = fmaskPrev | mask;
     
         % guardar regiao
+        selectedRGB = selectedRGB(:,any(selected,1),:);
+        selectedRGB = selectedRGB(any(selected,2),:,:);
+
         selected = selected(:,any(selected,1));
         selected = selected(any(selected,2),:);
-    
-        sizesT = sort(size(selected));
-        if sizesT(2) < 1.05 * sizesT(1) % guarantee that dices are squares
-            selected = selected(1:sizesT(1),1:sizesT(1));
-        end
-    
+        
         regions{count} = selected;
+
+        % zona branca da palmier passa a preto
+
+        for i = 1:size(selectedRGB,1)
+            for j = 1:size(selectedRGB,2)
+                if (sum(selectedRGB(i,j,:)) > 2.98)
+                     % White pixel - do what you want to original image
+                     selectedRGB(i,j,:) = [0 0 0]; % make it black, for example
+                end
+            end
+        end
+
+        regionsRGB{count} = selectedRGB;
+
+        if fromRef % compute better order for cookies
+            [y, x] = ndgrid(1:size(mask, 1), 1:size(mask, 2));
+            centroid = round(mean([x(logical(mask)), y(logical(mask))]));
+            
+            divx = int16(round(sx/10));
+            divy = int16(round(sy/10));
+            locals(count) = (int16(centroid(1))/divy) + (int16(centroid(2))/divx)*10 + 2;
+        end
+        
         count = count + 1;
     
+    end
+
+    if fromRef % compute better order for cookies
+        [~,sortedIdx] = sort(locals);
+        regionsOld = regions;
+        regionsRGB_old = regionsRGB;
+    
+        for i = 1:count-1
+            regions{i} = regionsOld{sortedIdx(i)};
+            regionsRGB{i} = regionsRGB_old{sortedIdx(i)};
+        end
     end
 end
 
