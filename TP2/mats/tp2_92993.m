@@ -292,14 +292,14 @@ function NumMec = tp2_92993()
             end
         end
 
-        if showplot
+%         if showplot
             figure(42)
             for k=1:N
                 subplot(SS, SS, k);
                 imshow(regionsRGB{k})
                 xlabel(k)
             end
-        end
+%         end
 
         %% Compare
 
@@ -314,7 +314,7 @@ function NumMec = tp2_92993()
 %             [kRef,res] = getBestMatch(invM(:,k),invMRef);
             [kRef,res,part] = getBestMatchFull(regionsRGB{k},regionsRGBRef);
 
-            if showplot
+            if  true %showplot
                 figure(100)
                 subplot(1,2,1)
                 imshow(regionsRGB{k})
@@ -476,15 +476,35 @@ function [kRef,minres] = getBestMatch(invM,invMRef)
     end
 end
 
+function res = getDiffRGB(img1,img2)
+    ola = imresize(img1,'OutputSize',size(img2,[1 2]));
+    res = mean(img2 - ola,'all');
+end
+
 function [kRef,minres,part] = getBestMatchFull(img1,regionsRGBRef)
     minresT = zeros(length(regionsRGBRef),1);
     
+%     for k=1:length(regionsRGBRef)
+%         ola = imresize(img1,'OutputSize',size(regionsRGBRef{k},[1 2]));
+% %         ola2 = sum(regionsRGBRef{k} - ola,'all');
+%         minresT(k) = sum(abs(regionsRGBRef{k} - ola),'all');
+%         fprintf("k:%d,Totaldiff:%.3f\n",k,minresT(k))
+%     end
+% 
+%     [minres,kRef] = min(minresT); 
+%     part = false;
+%     
+%     return
+
     % RGB Images
     for i=1:3
         invM = invmoments(img1(:,:,i));
         for k = 1:length(regionsRGBRef)
             img2 = regionsRGBRef{k};
             invMRef = invmoments(img2(:,:,i));
+
+%             imgB = imresize(img1(:,:,i),size(img2(:,:,i)));
+%             invM = invmoments(imgB);
     
             elem = invMRef./sum(invMRef);
             invM = invM./sum(invM);
@@ -500,9 +520,13 @@ function [kRef,minres,part] = getBestMatchFull(img1,regionsRGBRef)
     % GrayScale Images
     img1 = rgb2gray(img1);
     invM = invmoments(img1);
+
     for k = 1:length(regionsRGBRef)
         img2 = rgb2gray(regionsRGBRef{k});
         invMRef = invmoments(img2);
+
+%         imgB = imresize(img1,size(img2));
+%         invM = invmoments(imgB);
 
         elem = invMRef./sum(invMRef);
         invM = invM./sum(invM);
@@ -516,21 +540,44 @@ function [kRef,minres,part] = getBestMatchFull(img1,regionsRGBRef)
     
     [minres,kRef] = min(minresT); 
 
-    img1 = img1>0.01;
-    img2 = rgb2gray(regionsRGBRef{kRef})>0.01;
-%     img2 = imresize(img2,size(img1,1)/size(img2,1));
-    img2 = imresize(img2,size(img1));
+    imgPrev = img1;
+
+    img1 = img1 > 0.01;
+    img1 = bwmorph(img1,'close',inf);
+    img1 = imfill(img1,'holes');
+    
+    img2 = rgb2gray(regionsRGBRef{kRef}) > 0.01;
+    img2 = bwmorph(img2,'close',inf);
+    img2 = imfill(img2,'holes');
+
+    img1 = imresize(img1,size(img2));
+
+%     figure(27)
+%     subplot(1,2,1)
+%     imshow(img1)
+%     subplot(1,2,2)
+%     imshow(img2)
+%     pause(2)
 
     A = zeros(2,1);
     P = zeros(2,1);
     Ap = zeros(2,1);
 
-    A(1) = bwarea(img1);
-    A(2) = bwarea(img2);
+    % Areas
+    A(1) = nnz(img1);
+    A(2) = nnz(img2);
 
+    % Perimeter
     P(1) = nnz(bwperim(img1));
     P(2) = nnz(bwperim(img2));
+    
 
+    isRound(1) = 4*pi*A(1)/P(1)^2;
+    isRound(2) = 4*pi*A(2)/P(2)^2;
+
+    isRoundRef = ismember(kRef,[3,4,6,7,11,12,15,16,17,18,23,24,27,28]);
+
+    % P/A
     Ap(1) = P(1)/A(1);
     Ap(2) = P(2)/A(2);
 
@@ -539,10 +586,21 @@ function [kRef,minres,part] = getBestMatchFull(img1,regionsRGBRef)
     P = sort(P);
 
     part = false;
-    
+
 %     ths = [1.1 1.3 1.1 0.35];
-    ths = [1.2 100 1.2 0.35 0.5];
-    if Ap(2) > ths(1) * Ap(1) || A(2) > ths(2) * A(1) ||  P(2) > ths(3) * P(1) ||  minres > ths(4) || mean(img1,'all') < ths(5)
+%     ths = [1.2 100 1.2 0.35 0.5 0.94];
+    ths = [100 100 100 100 0 0.9 0.15];
+
+    ths(6) = 1-ths(6);
+    isRound = abs(1-isRound);
+
+    if (Ap(2) > ths(1) * Ap(1) ...
+            || A(2) > ths(2) * A(1) ...
+            || P(2) > ths(3) * P(1) ...
+            || minres > ths(4) ...
+            || mean(img1,'all') < ths(5) ...
+            || (isRound(1) > ths(6) && isRoundRef) ... % && isRound(2) < ths(6)) invert <
+            || getDiffRGB(imgPrev,regionsRGBRef{kRef}) > ths(7))
 %     if (Ap(2) > ths(1) * Ap(1) && A(2) > ths(2) * A(1) &&  P(2) > ths(3) * P(1)) ||  minres > ths(4)
         part = true;
         fprintf("fail ")
@@ -562,7 +620,15 @@ function [kRef,minres,part] = getBestMatchFull(img1,regionsRGBRef)
         end
 
         if mean(img1,'all') < ths(5)
-            fprintf("mean")
+            fprintf("mean ")
+        end
+
+        if (isRound(1) > ths(6) && isRoundRef)
+            fprintf("round: %.2f %2f ",isRound(1), isRound(2))
+        end
+
+        if getDiffRGB(imgPrev,regionsRGBRef{kRef}) > ths(7)
+           fprintf("diffRGB: %.2f ",getDiffRGB(imgPrev,regionsRGBRef{kRef}))
         end
 
         fprintf("\n")
