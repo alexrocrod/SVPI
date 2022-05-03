@@ -3,7 +3,7 @@
 % Abril 2022
 % Aula 07
 
-exlist = {'ex1','ex2','ex3','ex4','ex5','ex6','ex7'};
+exlist = {'ex1','ex2','ex3','ex4','ex5','ex6','ex7','ex8','ex9','ex10','ex11','ex12'};
 
 if ismember('ex1',exlist)
 %% Ex1
@@ -140,8 +140,9 @@ clearvars -except exlist
 figure(6)
 
 A = im2double(imread("pcb2.png"));
-B = im2bw(A);
-C = bwmorph(B,'skeleton');
+% B = im2bw(A);
+B = imbinarize(rgb2gray(A));
+C = bwmorph(B,'skel',inf);
 
 subplot(1,2,1)
 imshow(C)
@@ -153,7 +154,18 @@ T = [1 1 1
     0 1 0
     0 1 0];
 
-D = bwhitmiss(C,cruz,T);
+% cruz = [0 0 1 0 0
+%         0 0 1 0 0
+%         1 1 1 1 1
+%         0 0 1 0 0
+%         0 0 1 0 0];
+% T= [1 1 1 1 1
+%     0 0 1 0 0
+%     0 0 1 0 0
+%     0 0 1 0 0
+%     0 0 1 0 0];
+
+D = bwhitmiss(C,cruz,~cruz) | bwhitmiss(C,T,~T);
 subplot(1,2,2)
 imshow(D)
 
@@ -165,22 +177,188 @@ if ismember('ex7',exlist)
 clearvars -except exlist
 figure(7)
 
+A = im2double(imread("pcb.png"));
+% B = im2bw(A);
+B = imbinarize(rgb2gray(A));
+
+subplot(1,4,1)
+imshow(B)
+
+C = bwmorph(B,"shrink",inf);
+subplot(1,4,2)
+imshow(C)
+
+Fiso = [1 1 1; 1 -8 1; 1 1 1];
+isos = filter2(Fiso,C)==-8;
+imshow(isos)
+
+recon = imreconstruct(isos,B);
+subplot(1,4,3)
+imshow(recon)
+
+rec2 = ~recon;
+subplot(1,4,4)
+imshow(rec2)
+
+B = B.*rec2;
+C = bwmorph(B,'skel',inf);
+
+figure(17)
+subplot(1,2,1)
+imshow(C)
+
+cruz = [0 1 0
+        1 1 1
+        0 1 0];
+T = [1 1 1
+    0 1 0
+    0 1 0];
+
+% cruz = [0 0 1 0 0
+%         0 0 1 0 0
+%         1 1 1 1 1
+%         0 0 1 0 0
+%         0 0 1 0 0];
+% T= [1 1 1 1 1
+%     0 0 1 0 0
+%     0 0 1 0 0
+%     0 0 1 0 0
+%     0 0 1 0 0];
+
+D = bwhitmiss(C,cruz,~cruz) | bwhitmiss(C,T,~T);
+subplot(1,2,2)
+imshow(D)
+
 end
 
-function B = autobinwithmask(A,M)
-    B = A;
-    B(M) = autobin(A(M));
-end
+if ismember('ex8',exlist)
+%% Ex8
+clearvars -except exlist
+figure(8)
+
+A = im2double(imread("lixa10.png"));
+% B = im2bw(A);
+% B = imbinarize(rgb2gray(A));
+B = imbinarize(A);
+B = ~B;
+
+subplot(1,3,1)
+imshow(A) % A
+
+C = bwmorph(B,"shrink",inf);
+
+Fiso = [1 1 1; 1 -8 1; 1 1 1];
+isos = filter2(Fiso,C)==-8;
+
+subplot(1,3,2)
+imshow(C)
+
+rec2 = imdilate(isos,ones(15));
+
+A(rec2) = 0.4;
+
+subplot(1,3,3)
+imshow(A)
 
 
-function M = circularROI(y0,x0,ri,re,A)
-    M = zeros(size(A),'logical');
-    for i=1:size(A,1)
-        for j=1:size(A,2)
-            temp = (i-x0)^2 + (j-y0)^2;
-            if ((temp >= ri^2) && (temp <= re^2))
-                M(i,j) = 1;
-            end
-        end
-    end
 end
+
+if ismember('ex9',exlist)
+%% Ex9
+clearvars -except exlist
+figure(9)
+
+A = im2double(imread("pcb_holes.png"));
+B = imbinarize(rgb2gray(A));
+
+subplot(1,2,1)
+imshow(B)
+
+[Bx,~,Nb,~] = bwboundaries(B);
+
+ObjOK = 0;
+sx = size(B,1);
+sy = size(B,2);
+
+subplot(1,2,2)
+imshow(B)
+hold on
+
+for k = Nb+1:length(Bx)
+    boundary = Bx{k};
+    mask = poly2mask(boundary(:,2), boundary(:,1),sx,sy);
+    if nnz(mask) > 50, continue, end 
+
+    plot(boundary(:,2),boundary(:,1),'r','LineWidth',2);
+%     pause(0.01)
+    
+    ObjOK = ObjOK + 1;
+end
+xlabel(ObjOK)
+
+
+
+end
+
+if ismember('ex10',exlist)
+%% Ex10
+clearvars -except exlist
+figure(10)
+
+A = im2double(imread("porcas.png"));
+B = ~imbinarize(A);
+
+subplot(1,2,1)
+imshow(A)
+
+C = imfill(B,"holes");
+
+subplot(1,2,2)
+imshow(C)
+
+end
+
+if ismember('ex11',exlist)
+%% Ex11
+clearvars -except exlist
+figure(11)
+
+A = im2double(imread("porcas.png"));
+B = ~imbinarize(A);
+
+subplot(1,3,1)
+imshow(A)
+
+C = bwmorph(B,"shrink",inf);
+
+Fiso = [1 1 1; 1 -8 1; 1 1 1];
+isos = filter2(Fiso,C)==-8;
+
+recon = imreconstruct(isos,B);
+
+subplot(1,3,2)
+imshow(recon)
+
+rec2 = B.*~recon;
+subplot(1,3,3)
+imshow(rec2)
+
+
+end
+
+if ismember('ex12',exlist)
+%% Ex12
+clearvars -except exlist
+figure(12)
+
+A = im2double(imread("HappySad.png"));
+B = ~imbinarize(A);
+
+subplot(1,2,1)
+imshow(A)
+
+
+
+
+end
+
