@@ -5,17 +5,21 @@
 
 %% 
 
-% • Criar uma base dos objetos de referência (a partir das imagens de referência fornecidas). 
-% • Identificar e estabelecer os descritores relevantes para distinguir os diversos objetos.
-% • Nas imagens a processar separar os objetos do fundo (binarização, deteção de contornos, ou
-% outros, são técnicas esperadas para o fazer).
-% • Eliminar os objetos em contacto com o bordo da imagem.
-% • Identificar e eliminar os objetos partidos.
+% • Criar uma base dos objetos de referência (a partir das imagens de
+% referência fornecidas). << done
+% >>> • Identificar e estabelecer os descritores relevantes para distinguir os
+% diversos objetos. << falha nalgumas com invmoments
+% >>>> • Nas imagens a processar separar os objetos do fundo (binarização, deteção de contornos, ou
+% outros, são técnicas esperadas para o fazer). << (alterar para fundos
+% complexos)
+% • Eliminar os objetos em contacto com o bordo da imagem. << done
+% >>>>>> • Identificar e eliminar os objetos partidos. << ?? area e perimetro?? <<<
 % • Obter os descritores dos objetos restantes (na representação em máscara binária e/ou na
-% representação completa a cores).
+% representação completa a cores). << done com invmoments
 % • Classificar os objetos por comparação de descritores com os objetos de referência mediante
-% critérios de distância, ou outros.
-% • Contar as ocorrências de cada classe/tipo de objetos e atualizar o ficheiro de resultados.
+% critérios de distância, ou outros. << done com invmoments
+% • Contar as ocorrências de cada classe/tipo de objetos e atualizar o
+% ficheiro de resultados. << done
 
 
 %% 
@@ -36,19 +40,19 @@ function NumMec = tp2_92993()
 
     addpath('../Seq29x')
 
-%     listaF=dir('../Seq29x/svpi2022_TP2_img_*.png');
-%     fileExact = fopen("svpi2022_tp2_seq_ALL.txt","r"); nLineExact = 0;
-%     classe = 1;
+    listaF=dir('../Seq29x/svpi2022_TP2_img_*.png');
+    fileExact = fopen("svpi2022_tp2_seq_ALL.txt","r"); nLineExact = 0;
+    classe = 1;
 
 %     imgRef1 = im2double(imread("../svpi2022_TP2_img_001_01.png"));
 %     lista1=dir('../Seq29x/svpi2022_TP2_img_*1_*.png');
 %     fileExact1 = fopen("svpi2022_tp2_seq_291.txt","r"); nLineExact = 0;
 %     classe = 1;
 
-    imgRef2 = im2double(imread("../svpi2022_TP2_img_002_01.png"));
-    listaF=dir('../Seq29x/svpi2022_TP2_img_*2_*.png');
-    fileExact2 = fopen("svpi2022_tp2_seq_292.txt","r"); nLineExact = 0;
-    classe = 2;
+%     imgRef2 = im2double(imread("../svpi2022_TP2_img_002_01.png"));
+%     listaF=dir('../Seq29x/svpi2022_TP2_img_*2_*.png');
+%     fileExact = fopen("svpi2022_tp2_seq_292.txt","r"); nLineExact = 0;
+%     classe = 2;
 
     MaxImg = size(listaF,1);
 
@@ -66,6 +70,8 @@ function NumMec = tp2_92993()
         A0 = im2double(imread(imName));
 
         A = im2double(rgb2gray(imread(imName)));
+
+%         A = medfilt2(filter2(fspecial("average",3),A));
 
         showplot = false;
 
@@ -133,7 +139,7 @@ function NumMec = tp2_92993()
 %         B = imadjust(imclearborder(A));
 %         D = imadjust(A.*not(B));
 
-        minTh = 0.01;
+        minTh = 0.01; % 0.01;
 
         E = (A>minTh);
 %         E = bwmorph(E,"close",inf);
@@ -239,13 +245,13 @@ function NumMec = tp2_92993()
         count = 1;
         for k=1:N
             rBin = regions{k} > 0;
-            if mean(rBin) < 0.95  % Detetar Partidas <<< MUDAR
+            if mean(rBin) < 0.9  % Detetar Partidas <<< MUDAR
                 str{k} = sprintf("partida,k:%d\n",k);
-                fprintf(str{k})
-                ObjPart = ObjPart + 1;
+%                 fprintf(str{k})
+%                 ObjPart = ObjPart + 1;
             else
                 str{k} = sprintf("OK,k:%d\n",k);
-                ObjOK = ObjOK + 1;
+%                 ObjOK = ObjOK + 1;
                 regionsOK{count} = regions{k};
                 regionsOKRGB{count} = regionsRGB{k};
                 count = count + 1;
@@ -297,13 +303,15 @@ function NumMec = tp2_92993()
 
         %% Compare
 
-        showplot = true;
+%         showplot = true;
         
         matchs = zeros(k,1);
         resx = zeros(k,1);
         for k=1:N
             invM(:,k) = invmoments(regions{k});
-            [kRef,res] = getBestMatch(invM(:,k),invMRef);
+%             [kRef,res] = getBestMatch(invM(:,k),invMRef);
+            [kRef,res] = getBestMatchFull(regionsRGB{k},regionsRGBRef);
+
             if showplot
                 figure(100)
                 subplot(1,2,1)
@@ -314,13 +322,25 @@ function NumMec = tp2_92993()
                 imshow(regionsRGBRef{kRef})
                 xlabel(sprintf("Kref:%d,res:%f",kRef,res))
 
-                pause(1)
+                pause(0.05)
             end
 
             matchs(k) = kRef;
             resx(k) = res;
+
+            if res == -1e3
+                fprintf("Partida:%d\n",k)
+                ObjPart = ObjPart + 1;
+            else
+                ObjOK = ObjOK + 1;
+            end
         end
 
+        %% Descartar partidas
+
+
+
+        %% Contar
         
         for k=1:N
             if classe == 1
@@ -420,33 +440,7 @@ function NumMec = tp2_92993()
             save
         end
     
-
-end
-
-
-function Ibin = autobin(I)
-    Ibin = double(imbinarize(I));
-
-    if mean(Ibin,'all') > 0.5 % always more black
-        Ibin = not(Ibin);
-    end
-end
-
-function Ibin = autobin2th(I) % autobin but for 2 thresholds
-    warning ('off','all');
-    [ts,met] = multithresh(I,2);
-    warning ('on','all');
-
-    if met==0 % invalid 2nd threshold
-        Ibin = double(imbinarize(I));
-    else
-        T = (ts(1)+ts(2))/2;
-        Ibin = double(imbinarize(I,T));
-    end  
     
-    if mean(Ibin,'all') > 0.5 % always more black
-        Ibin = not(Ibin);
-    end
 end
 
 function [kRef,minres] = getBestMatch(invM,invMRef)
@@ -472,6 +466,91 @@ function [kRef,minres] = getBestMatch(invM,invMRef)
     end
 end
 
+function [kRef,minres] = getBestMatchFull(img1,regionsRGBRef)
+    minresT = zeros(length(regionsRGBRef),1);
+    
+    % RGB Images
+    for i=1:3
+        invM = invmoments(img1(:,:,i));
+        for k = 1:length(regionsRGBRef)
+            img2 = regionsRGBRef{k};
+            invMRef = invmoments(img2(:,:,i));
+    
+            elem = invMRef./sum(invMRef);
+            invM = invM./sum(invM);
+    
+       %         res = sum(abs((elem-invM)./elem));
+    
+            res = sqrt(sum((elem-invM).^2)); % Euclidean Distance
+    
+            minresT(k) = minresT(k) + res;            
+        end
+    end
+
+    % GrayScale Images
+    img1 = rgb2gray(img1);
+    invM = invmoments(img1);
+    for k = 1:length(regionsRGBRef)
+        img2 = rgb2gray(regionsRGBRef{k});
+        invMRef = invmoments(img2);
+
+        elem = invMRef./sum(invMRef);
+        invM = invM./sum(invM);
+
+   %         res = sum(abs((elem-invM)./elem));
+
+        res = sqrt(sum((elem-invM).^2)); % Euclidean Distance
+
+        minresT(k) = minresT(k) + res;            
+    end
+    
+    [minres,kRef] = min(minresT); 
+
+    img1 = img1>0.01;
+    img2 = rgb2gray(regionsRGBRef{kRef})>0.01;
+%     img2 = imresize(img2,size(img1,1)/size(img2,1));
+    img2 = imresize(img2,size(img1));
+
+    A = zeros(2,1);
+    P = zeros(2,1);
+    Ap = zeros(2,1);
+
+    A(1) = bwarea(img1);
+    A(2) = bwarea(img2);
+
+    P(1) = nnz(bwperim(img1));
+    P(2) = nnz(bwperim(img2));
+
+    Ap(1) = P(1)/A(1);
+    Ap(2) = P(2)/A(2);
+
+    Ap = sort(Ap);
+    A = sort(A);
+    P = sort(P);
+
+    ths = [1.1 1.1 1.1]
+    if Ap(2) > ths(1) * Ap(1) || A(2) > ths(2) * A(1) ||  P(2) > ths(3) * P(1)
+        minres = -1e3;
+        fprintf("fail ")
+    
+    
+
+        if Ap(2) > ths(1) * Ap(1) 
+            fprintf("Ap")
+        end
+        if A(2) > ths(2) * A(1) 
+            fprintf("A")
+            minres = -1e3;
+        end
+        if P(2) > ths(3) * P(1)
+            fprintf("fail P\n")
+            minres = -1e3;       
+        end
+
+    end
+    
+end
+
 function [regions,regionsRGB] = getRefImages(classe)
 
     if classe == 1
@@ -482,9 +561,9 @@ function [regions,regionsRGB] = getRefImages(classe)
     
     A = rgb2gray(imgRef1);
     minSize = 0.1;
-    cutx = -1;
-    cuty = -1;
-    relSizes = 3;
+    cutx = -2;
+    cuty = -2;
+    relSizes = 2.5;
     minWidth = 0.05;
     extend = false;
     fmaskPrev = zeros(size(A));

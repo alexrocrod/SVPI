@@ -5,17 +5,21 @@
 
 %% 
 
-% • Criar uma base dos objetos de referência (a partir das imagens de referência fornecidas). 
-% • Identificar e estabelecer os descritores relevantes para distinguir os diversos objetos.
-% • Nas imagens a processar separar os objetos do fundo (binarização, deteção de contornos, ou
-% outros, são técnicas esperadas para o fazer).
-% • Eliminar os objetos em contacto com o bordo da imagem.
-% • Identificar e eliminar os objetos partidos.
+% • Criar uma base dos objetos de referência (a partir das imagens de
+% referência fornecidas). << done
+% >>> • Identificar e estabelecer os descritores relevantes para distinguir os
+% diversos objetos. << falha nalgumas com invmoments
+% >>>> • Nas imagens a processar separar os objetos do fundo (binarização, deteção de contornos, ou
+% outros, são técnicas esperadas para o fazer). << (alterar para fundos
+% complexos)
+% • Eliminar os objetos em contacto com o bordo da imagem. << done
+% >>>>>> • Identificar e eliminar os objetos partidos. << ?? area e perimetro?? <<<
 % • Obter os descritores dos objetos restantes (na representação em máscara binária e/ou na
-% representação completa a cores).
+% representação completa a cores). << done com invmoments
 % • Classificar os objetos por comparação de descritores com os objetos de referência mediante
-% critérios de distância, ou outros.
-% • Contar as ocorrências de cada classe/tipo de objetos e atualizar o ficheiro de resultados.
+% critérios de distância, ou outros. << done com invmoments
+% • Contar as ocorrências de cada classe/tipo de objetos e atualizar o
+% ficheiro de resultados. << done
 
 
 %% 
@@ -54,7 +58,7 @@ function NumMec = tp2_92993()
 
 %     showplot = false;
 
-    idxImg = 3; showplot = true;
+    idxImg = 1; showplot = true;
    
 %     for idxImg = 1:MaxImg
 
@@ -69,7 +73,7 @@ function NumMec = tp2_92993()
 
 %         A = medfilt2(filter2(fspecial("average",3),A));
 
-%         showplot = false;
+        showplot = false;
 
         if showplot
             figure(1)
@@ -135,7 +139,7 @@ function NumMec = tp2_92993()
 %         B = imadjust(imclearborder(A));
 %         D = imadjust(A.*not(B));
 
-        minTh = 0.1; % 0.01;
+        minTh = 0.01; % 0.01;
 
         E = (A>minTh);
 %         E = bwmorph(E,"close",inf);
@@ -241,13 +245,13 @@ function NumMec = tp2_92993()
         count = 1;
         for k=1:N
             rBin = regions{k} > 0;
-            if mean(rBin) < 0.95  % Detetar Partidas <<< MUDAR
+            if mean(rBin) < 0.9  % Detetar Partidas <<< MUDAR
                 str{k} = sprintf("partida,k:%d\n",k);
-                fprintf(str{k})
-                ObjPart = ObjPart + 1;
+%                 fprintf(str{k})
+%                 ObjPart = ObjPart + 1;
             else
                 str{k} = sprintf("OK,k:%d\n",k);
-                ObjOK = ObjOK + 1;
+%                 ObjOK = ObjOK + 1;
                 regionsOK{count} = regions{k};
                 regionsOKRGB{count} = regionsRGB{k};
                 count = count + 1;
@@ -303,14 +307,22 @@ function NumMec = tp2_92993()
         
         matchs = zeros(k,1);
         resx = zeros(k,1);
+        partidas = [];
+
         for k=1:N
             invM(:,k) = invmoments(regions{k});
-            [kRef,res] = getBestMatch(invM(:,k),invMRef);
+%             [kRef,res] = getBestMatch(invM(:,k),invMRef);
+            [kRef,res,part] = getBestMatchFull(regionsRGB{k},regionsRGBRef);
+
             if showplot
                 figure(100)
                 subplot(1,2,1)
                 imshow(regionsRGB{k})
-                xlabel(k)
+                if part
+                    xlabel(sprintf("part%d",k))
+                else
+                    xlabel(k)
+                end
     
                 subplot(1,2,2)
                 imshow(regionsRGBRef{kRef})
@@ -321,8 +333,24 @@ function NumMec = tp2_92993()
 
             matchs(k) = kRef;
             resx(k) = res;
+
+            if part
+                fprintf("Partida:%d\n",k)
+                ObjPart = ObjPart + 1;
+                partidas = [partidas k];
+            else
+                ObjOK = ObjOK + 1;
+            end
         end
 
+        %% Descartar partidas
+
+        resx
+        partidas
+
+
+
+        %% Contar
         
         for k=1:N
             if classe == 1
@@ -418,37 +446,11 @@ function NumMec = tp2_92993()
 
 %     end
 
-        if showplot
+%         if showplot
             save
-        end
+%         end
     
     
-end
-
-
-function Ibin = autobin(I)
-    Ibin = double(imbinarize(I));
-
-    if mean(Ibin,'all') > 0.5 % always more black
-        Ibin = not(Ibin);
-    end
-end
-
-function Ibin = autobin2th(I) % autobin but for 2 thresholds
-    warning ('off','all');
-    [ts,met] = multithresh(I,2);
-    warning ('on','all');
-
-    if met==0 % invalid 2nd threshold
-        Ibin = double(imbinarize(I));
-    else
-        T = (ts(1)+ts(2))/2;
-        Ibin = double(imbinarize(I,T));
-    end  
-    
-    if mean(Ibin,'all') > 0.5 % always more black
-        Ibin = not(Ibin);
-    end
 end
 
 function [kRef,minres] = getBestMatch(invM,invMRef)
@@ -474,6 +476,100 @@ function [kRef,minres] = getBestMatch(invM,invMRef)
     end
 end
 
+function [kRef,minres,part] = getBestMatchFull(img1,regionsRGBRef)
+    minresT = zeros(length(regionsRGBRef),1);
+    
+    % RGB Images
+    for i=1:3
+        invM = invmoments(img1(:,:,i));
+        for k = 1:length(regionsRGBRef)
+            img2 = regionsRGBRef{k};
+            invMRef = invmoments(img2(:,:,i));
+    
+            elem = invMRef./sum(invMRef);
+            invM = invM./sum(invM);
+    
+       %         res = sum(abs((elem-invM)./elem));
+    
+            res = sqrt(sum((elem-invM).^2)); % Euclidean Distance
+    
+            minresT(k) = minresT(k) + res;            
+        end
+    end
+
+    % GrayScale Images
+    img1 = rgb2gray(img1);
+    invM = invmoments(img1);
+    for k = 1:length(regionsRGBRef)
+        img2 = rgb2gray(regionsRGBRef{k});
+        invMRef = invmoments(img2);
+
+        elem = invMRef./sum(invMRef);
+        invM = invM./sum(invM);
+
+   %         res = sum(abs((elem-invM)./elem));
+
+        res = sqrt(sum((elem-invM).^2)); % Euclidean Distance
+
+        minresT(k) = minresT(k) + res;            
+    end
+    
+    [minres,kRef] = min(minresT); 
+
+    img1 = img1>0.01;
+    img2 = rgb2gray(regionsRGBRef{kRef})>0.01;
+%     img2 = imresize(img2,size(img1,1)/size(img2,1));
+    img2 = imresize(img2,size(img1));
+
+    A = zeros(2,1);
+    P = zeros(2,1);
+    Ap = zeros(2,1);
+
+    A(1) = bwarea(img1);
+    A(2) = bwarea(img2);
+
+    P(1) = nnz(bwperim(img1));
+    P(2) = nnz(bwperim(img2));
+
+    Ap(1) = P(1)/A(1);
+    Ap(2) = P(2)/A(2);
+
+    Ap = sort(Ap);
+    A = sort(A);
+    P = sort(P);
+
+    part = false;
+    
+%     ths = [1.1 1.3 1.1 0.35];
+    ths = [1.2 100 1.2 0.35 0.5];
+    if Ap(2) > ths(1) * Ap(1) || A(2) > ths(2) * A(1) ||  P(2) > ths(3) * P(1) ||  minres > ths(4) || mean(img1,'all') < ths(5)
+%     if (Ap(2) > ths(1) * Ap(1) && A(2) > ths(2) * A(1) &&  P(2) > ths(3) * P(1)) ||  minres > ths(4)
+        part = true;
+        fprintf("fail ")
+
+        if Ap(2) > ths(1) * Ap(1) 
+            fprintf("Ap ")
+        end
+        if A(2) > ths(2) * A(1) 
+            fprintf("A ")
+        end
+        if P(2) > ths(3) * P(1)
+            fprintf("P ")       
+        end
+
+        if minres > ths(4)
+            fprintf("MR ")       
+        end
+
+        if mean(img1,'all') < ths(5)
+            fprintf("mean")
+        end
+
+        fprintf("\n")
+    end
+    
+end
+
 function [regions,regionsRGB] = getRefImages(classe)
 
     if classe == 1
@@ -484,9 +580,9 @@ function [regions,regionsRGB] = getRefImages(classe)
     
     A = rgb2gray(imgRef1);
     minSize = 0.1;
-    cutx = -1;
-    cuty = -1;
-    relSizes = 3;
+    cutx = -2;
+    cuty = -2;
+    relSizes = 2.5;
     minWidth = 0.05;
     extend = false;
     fmaskPrev = zeros(size(A));
