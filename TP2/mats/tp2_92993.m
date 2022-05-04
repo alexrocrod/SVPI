@@ -353,6 +353,7 @@ function NumMec = tp2_92993()
         %% Contar
         
         for k=1:N
+            if ismember(k,partidas), continue, end
             if classe == 1
                 if matchs(k) < 3
                     beurre = beurre + 1;
@@ -423,7 +424,7 @@ function NumMec = tp2_92993()
 
         %% Show vars
 
-        if showplot
+%         if showplot
             fprintf("%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d," + ...
                 "%d,%d,%d,%d\n", NumMec, NumSeq, NumImg, ObjBord, ObjPart, ...
                 ObjOK, beurre, choco, confit, craker, fan, ginger, lotus, ...
@@ -434,7 +435,7 @@ function NumMec = tp2_92993()
                 nLineExact = nLineExact + 1;
             end
             fprintf("%s\n",strExact(2:end));            
-        end
+%         end
        
         
         %% Write Table Entry
@@ -581,6 +582,9 @@ function [kRef,minres,part] = getBestMatchFull(img1,regionsRGBRef)
     Ap(1) = P(1)/A(1);
     Ap(2) = P(2)/A(2);
 
+%     ApNorm = P1*A2/A1 / A1 * A2 P(2)
+    ApNorm = P(1)/P(2) / A(1)^2 * A(1) ^ 2;
+
     Ap = sort(Ap);
     A = sort(A);
     P = sort(P);
@@ -589,38 +593,50 @@ function [kRef,minres,part] = getBestMatchFull(img1,regionsRGBRef)
 
 %     ths = [1.1 1.3 1.1 0.35];
 %     ths = [1.2 100 1.2 0.35 0.5 0.94];
-    ths = [100 100 100 100 0 0.9 0.15];
+    ths = [1.2 100 100 0.8 0.7 0.8 0.16 0.95];
 
     ths(6) = 1-ths(6);
     isRound = abs(1-isRound);
 
-    if (Ap(2) > ths(1) * Ap(1) ...
+    temp1 = imgPrev;
+    temp1(imgPrev<0.01) = nan;
+    avgColor(1) = mean(temp1,"all","omitnan");
+
+    temp2 = regionsRGBRef{kRef};
+    temp2(regionsRGBRef{kRef}<0.01) = nan;
+    avgColor(2) = mean(temp2,"all","omitnan");
+
+%     if (Ap(2) > ths(1) * Ap(1) ...
+    if (ApNorm > ths(1)  ...
             || A(2) > ths(2) * A(1) ...
             || P(2) > ths(3) * P(1) ...
             || minres > ths(4) ...
-            || mean(img1,'all') < ths(5) ...
+            || mean(img1,'all') < ths(5) * mean(img2,'all')  ...
             || (isRound(1) > ths(6) && isRoundRef) ... % && isRound(2) < ths(6)) invert <
-            || getDiffRGB(imgPrev,regionsRGBRef{kRef}) > ths(7))
+            || getDiffRGB(imgPrev,regionsRGBRef{kRef}) > ths(7) ...
+            || avgColor(1) < ths(8) * avgColor(2))
 %     if (Ap(2) > ths(1) * Ap(1) && A(2) > ths(2) * A(1) &&  P(2) > ths(3) * P(1)) ||  minres > ths(4)
         part = true;
         fprintf("fail ")
 
-        if Ap(2) > ths(1) * Ap(1) 
-            fprintf("Ap ")
+
+        if ApNorm > ths(1) %Ap(2) > ths(1) * Ap(1) 
+%             fprintf("Ap;%.2f ",Ap(2)/Ap(1))   
+            fprintf("Ap;%.2f ",ApNorm)   
         end
         if A(2) > ths(2) * A(1) 
-            fprintf("A ")
+            fprintf("A;%.2f ",A(2)/A(1))   
         end
         if P(2) > ths(3) * P(1)
-            fprintf("P ")       
+            fprintf("P:%.2f ",P(2)/P(1))       
         end
 
         if minres > ths(4)
-            fprintf("MR ")       
+            fprintf("MR:%.2f ",minres)       
         end
 
-        if mean(img1,'all') < ths(5)
-            fprintf("mean ")
+        if mean(img1,'all') < ths(5) * mean(img2,'all')
+            fprintf("mean:%.2f ",mean(img1,'all')/mean(img2,'all'))
         end
 
         if (isRound(1) > ths(6) && isRoundRef)
@@ -629,6 +645,10 @@ function [kRef,minres,part] = getBestMatchFull(img1,regionsRGBRef)
 
         if getDiffRGB(imgPrev,regionsRGBRef{kRef}) > ths(7)
            fprintf("diffRGB: %.2f ",getDiffRGB(imgPrev,regionsRGBRef{kRef}))
+        end
+
+        if avgColor(1) < ths(8) * avgColor(2)
+            fprintf("diffColor: %.2f ",avgColor(1)/avgColor(2))
         end
 
         fprintf("\n")

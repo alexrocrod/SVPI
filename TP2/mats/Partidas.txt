@@ -555,9 +555,132 @@ sorted so por round 0.7 com check round ref e diffRGB 0.1
 
 
 
+[100 100 100 0.8 0 0.8 0.16]
+2 xxxxxxxxx
+3 x round   <<<< oreo da mau perimetro
+4 x diffrgb  
+5 MR
+8 diffrgb
+13 xxxxxx
+15 xxxxxxx
+16 MR
+18 MR
+25 MR
+28 xxxxxxxxxx
+39 diffrgb
+47 x diffrgb <<< oreo corrresponde a errada
+
+
+[100 100 100 0.8 0.7 0.8 0.16] media relativa
+1 mean 0.54
+2 xxxxxxxxx
+3 x round 0.33   <<<< oreo da mau perimetro
+4 x mean 0.59 diffrgb 0.21  <<<<<
+5 MR 1.27 mean 0.54
+8 diffrgb 0.23
+13 mean 0.54
+15 xxxxxxx <<<<<
+16 MR 0.91 mean 0.59
+18 MR 2.52 mean 0.62
+24 xxxxxxxxx
+25 MR 0.84 mean 0.57
+28 mean 0.7
+31 x mean 0.59 <<<<<
+38 mean 0.68
+39 diffrgb 0.17 mean 0.61
+41 xxxxxxxx
+45 xxxxxxxxxx
+47 x diffrgb 0.36 <<< oreo corrresponde a errada
+
+
+[100 100 100 0.8 0.7 0.8 0.16 0.7] com diffColor
+1 mean 0.54
+2 xxxxxxxxx
+3 x round 0.33   <<<< oreo da mau perimetro
+4 x mean 0.59 diffrgb 0.21  <<<<<
+5 MR 1.27 mean 0.54
+8 diffrgb 0.23 diffColor 0.55
+13 mean 0.54
+15 xxxxxxx <<<<<
+16 MR 0.91 mean 0.59
+18 MR 2.52 mean 0.62
+24 xxxxxxxxx
+25 MR 0.84 mean 0.57
+28 mean 0.7
+31 x mean 0.59 <<<<<
+38 mean 0.68
+39 diffrgb 0.17 mean 0.61
+41 xxxxxxxx
+45 xxxxxxxxxx
+47 x diffrgb 0.36 diffColor 0.34 <<< oreo corrresponde a errada
+
+
+[100 100 100 0.8 0.7 0.8 0.16 0.95] com diffColor
+1 mean 0.54
+2 xxxxxxxxx
+3 x round 0.33   <<<< oreo da mau perimetro
+4 x mean 0.59 diffrgb 0.21  <<<<<
+5 MR 1.27 mean 0.54
+8 diffrgb 0.23 diffColor 0.55
+13 mean 0.54
+15 xxxxxxx <<<<<
+16 MR 0.91 mean 0.59 diffColor 0.88
+18 MR 2.52 mean 0.62
+24 xxxxxxxxx
+25 MR 0.84 mean 0.57
+28 mean 0.7
+31 x mean 0.59 <<<<<
+38 mean 0.68
+39 diffrgb 0.17 mean 0.61 diffColor 0.94
+41 xxxxxxxx
+45 xxxxxxxxxx
+47 x diffrgb 0.36 diffColor 0.34 <<< oreo corrresponde a errada
+
+
+[1.2 100 100 0.8 0.7 0.8 0.16 0.95] com diffColor
+1 Ap 1.46 mean 0.54
+2 xxxxxxxxx <<<<<<<<<<<<<<<<<<<<<<<<<<
+3 x Ap 1.38 round 0.33   <<<< oreo da mau perimetro
+4 x Ap 1.38 mean 0.59 diffrgb 0.21  <<<<<<<<<<<<<<<<<<<<<<<<<<<
+5 Ap 1.94 MR 1.27 mean 0.54
+8 diffrgb 0.23 diffColor 0.55
+13 Ap 1.78 mean 0.54
+15 Ap 1.21
+16 Ap 1.54 MR 0.91 mean 0.59 diffColor 0.88
+18 Ap 1.42 MR 2.52 mean 0.62
+24 Ap 1.36
+25 Ap 1.76 MR 0.84 mean 0.57
+28 Ap 1.55 mean 0.7
+31 x Ap 1.27 mean 0.59 <<<<<<<<<<<<<<<<<<<<<<<<<
+38 Ap 1.48 mean 0.68
+39 Ap 1.47 diffrgb 0.17 mean 0.61 diffColor 0.94
+41 Ap 1.39
+45 xxxxxxxxxx <<<<<<<<<<<<<<<<<<<<<
+47 x diffrgb 0.36 diffColor 0.34 <<< oreo corrresponde a errada
 
 
 
+[1.2 100 100 0.8 0.7 0.8 0.16 0.95] com ApNorm
+1 mean 0.54
+2 xxxxxxxxx <<<<<<<<<<<<<<<<<<<<<<<<<<
+3 x Ap 1.30 round 0.33   <<<< oreo da mau perimetro
+4 x mean 0.59 diffrgb 0.21  <<<<<<<<<<<<<<<<<<<<<<<<<<<
+5 MR 1.27 mean 0.54
+8 diffrgb 0.23 diffColor 0.55
+13 mean 0.54
+15 Ap 1.40
+16 MR 0.91 mean 0.59 diffColor 0.88
+18 MR 2.52 mean 0.62
+24 xxxxxxxxxx <<<<<<<<<<<<<<<<<<<<<
+25 MR 0.84 mean 0.57
+28 mean 0.7
+31 x mean 0.59 <<<<<<<<<<<<<<<<<<<<<<<<<
+38 mean 0.68
+39 diffrgb 0.17 mean 0.61 diffColor 0.94
+40 x Ap 1.36 <<<<<<<<<<<<<<<<<<
+41 Ap 1.39
+45 xxxxxxxxxx <<<<<<<<<<<<<<<<<<<<<
+47 x diffrgb 0.36 diffColor 0.34 <<< oreo corrresponde a errada
 
 
 
