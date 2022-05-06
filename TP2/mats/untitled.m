@@ -124,8 +124,8 @@ function [regions,regionsRGB,fullMask] = getSubImages(A,minSize,cutx,cuty,relSiz
             if sizesT(2) > relSizes * sizesT(1) || sizesT(1) < minWidth * sx , continue, end
         end
 
-%         plot(boundary(:,2),boundary(:,1),'r','LineWidth',4);
-%         pause(0.01)
+        plot(boundary(:,2),boundary(:,1),'r','LineWidth',4);
+        pause(0.01)
         
         selected = A.*mask;
         selectedRGB = imgRef.*repmat(mask,[1 1 3]);
