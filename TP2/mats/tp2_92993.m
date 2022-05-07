@@ -3,7 +3,7 @@
 % Maio 2022
 % Trabalho Pratico 2
 
-%% 
+%% Sugestoes
 
 % • Criar uma base dos objetos de referência (a partir das imagens de
 % referência fornecidas). << done
@@ -24,16 +24,16 @@
 
 
 
-%%
+%% Ideias
 
 % Oreos pretas, bolacha vermelha
 % encontrar zona oreo mal binarizada e tentar tratar so dessa zona
 % estender a circulos as bolachas para perceber se sao partidas
 
 
-%%
+%% Falhas
 
-% Falhas bin? (muitas migalhas) 291: 11,12,13  24,25,26,27
+% Falhas bin? 11a13,24a27 >> fundos diferentes cores
 
 %% 
 
@@ -70,9 +70,9 @@ function NumMec = tp2_92993()
 
     showplot = false;
 
-%     idxImg = 3; showplot = true;
+    idxImg = 24; showplot = true;
    
-    for idxImg = 1:MaxImg
+%     for idxImg = 1:MaxImg
 
         imName = listaF(idxImg).name;
         
@@ -249,12 +249,12 @@ function NumMec = tp2_92993()
         relSizes = 5; %3
 
         % Find other subimages
-        try 
+%         try 
         [regions,regionsRGB,~,ObjBord] = getSubImages(A,minSize,cutx,cuty,relSizes,minWidth,extend,fmaskRot,A0,minAreaMigalha);
-        catch
-            fprintf(">>>>>>>>>>>>>>>>fail binarization %d\n",idxImg)
-            continue
-        end
+%         catch
+%             fprintf(">>>>>>>>>>>>>>>>fail binarization %d\n",idxImg)
+%             continue
+%         end
 
 %         return
 
@@ -470,7 +470,7 @@ function NumMec = tp2_92993()
 
         writetable(T,'tp2_92993.txt', 'WriteVariableNames',false, 'WriteMode','append')
 
-    end
+%     end
 
         if showplot
             save
@@ -814,6 +814,15 @@ function [regions,regionsRGB,fullMask,countBord] = getSubImages(A,minSize,cutx,c
 
     E = imbinarize(A,T);
 
+    mean(E,'all')
+
+
+%     Eold = E;
+
+    if mean(E,'all') > 0.3
+        E = not(E);
+    end
+
     F = imclearborder(E);
 
     F = bwareaopen(F,100);
@@ -834,9 +843,9 @@ function [regions,regionsRGB,fullMask,countBord] = getSubImages(A,minSize,cutx,c
     
     count = 1;
 
-%     figure(751)
-%     imshow(B)
-%     hold on
+    figure(751)
+    imshow(B)
+    hold on
     
 %     for k = Nb+1:length(Bx) % use only interior boundaries
     for k = 1:Nb % use only exterior boundaries
@@ -880,8 +889,8 @@ function [regions,regionsRGB,fullMask,countBord] = getSubImages(A,minSize,cutx,c
             if sizesT(2) > relSizes * sizesT(1) || sizesT(1) < minWidth * sx , continue, end
         end
 
-%         plot(boundary(:,2),boundary(:,1),'r','LineWidth',4);
-%         pause(0.01)
+        plot(boundary(:,2),boundary(:,1),'r','LineWidth',4);
+        pause(0.01)
       
         
         selected = A.*mask;
@@ -943,9 +952,9 @@ function [regions,regionsRGB,fullMask,countBord] = getSubImages(A,minSize,cutx,c
     sx = size(B,1);
     sy = size(B,2);
 
-%     figure(752)
-%     imshow(B)
-%     hold on
+    figure(752)
+    imshow(B)
+    hold on
 
     countBord = 0;
     
@@ -968,8 +977,8 @@ function [regions,regionsRGB,fullMask,countBord] = getSubImages(A,minSize,cutx,c
         sizesT = sort(size(mask0s));
         if sizesT(2) > relSizes * sizesT(1) || sizesT(1) < minWidth * sx, continue, end
     
-%         plot(boundary(:,2),boundary(:,1),'r','LineWidth',4);
-%         pause(0.01)
+        plot(boundary(:,2),boundary(:,1),'r','LineWidth',4);
+        pause(0.01)
       
         fmaskPrev = fmaskPrev | mask;
 
