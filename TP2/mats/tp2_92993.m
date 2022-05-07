@@ -31,6 +31,10 @@
 % estender a circulos as bolachas para perceber se sao partidas
 
 
+%%
+
+% Falhas bin? (muitas migalhas) 291: 11,12,13  24,25,26,27
+
 %% 
 
 
