@@ -145,95 +145,95 @@ function NumMec = tp2_92993()
 
         %% Binarizar imagem
 
-        minTh = 0.01; % 0.01;
-
-        
-%         E = double(A>minTh);
-
-%         B = medfilt2(filter2(fspecial("average",3),A));
-        B=A;
-        T = adaptthresh(B);
-
-        E = imbinarize(A,T);
-
-        F = imclearborder(E);
-
-        F = bwareaopen(F,100);
-        F = bwmorph(F,"close",inf);
-        F = imfill(F,"holes");
-
-
-        [Bx,L,Nb,~] = bwboundaries(F);
-
-        figure(100)
-        imshow(F)
-        hold on
-
-        ObjOK = 0;
-        sx = size(A,1);
-        sy = size(A,2);
-
-        for k = 1:Nb
-            boundary = Bx{k};
-            mask = poly2mask(boundary(:,2), boundary(:,1),sx,sy);
-            if nnz(mask) < 300, continue, end 
-            
-            ObjOK = ObjOK + 1;
-
-            plot(boundary(:,2), boundary(:,1), 'r', 'LineWidth', 2)
-            pause(0.1)
-        end
-
-        return
-
-%         G = (D>minTh);
-%         G = bwmorph(G,"close",inf);
-%         G = bwareaopen(G,50);
-%         G = bwmorph(G,"close",inf);
-        G = imadjust(E.*not(F));
-
-%         [~,Nb] = bwlabel(G);
-        [Bx,L,Nb,~] = bwboundaries(G,'noholes');
-
-        figure(101)
-        imshow(label2rgb(L, @jet, [.5 .5 .5]))
-        hold on
-
-        ObjBord = 0;
-        sx = size(A,1);
-        sy = size(A,2);
-
-        for k = 1:Nb
-            boundary = Bx{k};
-            mask = poly2mask(boundary(:,2), boundary(:,1),sx,sy);
-            if nnz(mask) < 100, continue, end 
-            
-            ObjBord = ObjBord + 1;
-
-            plot(boundary(:,2), boundary(:,1), 'w', 'LineWidth', 2)
-            pause(1)
-        end
-
-        if showplot
-            figure(11)
-            subplot(1,3,1)
-            imshow(E)
-
-            subplot(1,3,2)
-            imshow(F)
-            xlabel(ObjOK)
-            
-            subplot(1,3,3)
-            imshow(G)
-            xlabel(ObjBord)
-        end
+% %         minTh = 0.01; % 0.01;
+% % 
+% %         
+% % %         E = double(A>minTh);
+% % 
+% % %         B = medfilt2(filter2(fspecial("average",3),A));
+% %         B=A;
+% %         T = adaptthresh(B);
+% % 
+% %         E = imbinarize(A,T);
+% % 
+% %         F = imclearborder(E);
+% % 
+% %         F = bwareaopen(F,100);
+% %         F = bwmorph(F,"close",inf);
+% %         F = imfill(F,"holes");
+% % 
+% % 
+% %         [Bx,L,Nb,~] = bwboundaries(F);
+% % 
+% %         figure(100)
+% %         imshow(F)
+% %         hold on
+% % 
+% %         ObjOK = 0;
+% %         sx = size(A,1);
+% %         sy = size(A,2);
+% % 
+% %         for k = 1:Nb
+% %             boundary = Bx{k};
+% %             mask = poly2mask(boundary(:,2), boundary(:,1),sx,sy);
+% %             if nnz(mask) < 300, continue, end 
+% %             
+% %             ObjOK = ObjOK + 1;
+% % 
+% % %             plot(boundary(:,2), boundary(:,1), 'r', 'LineWidth', 2)
+% % %             pause(0.1)
+% %         end
+% % 
+% % %         return
+% % 
+% % %         G = (D>minTh);
+% % %         G = bwmorph(G,"close",inf);
+% % %         G = bwareaopen(G,50);
+% % %         G = bwmorph(G,"close",inf);
+% %         G = imadjust(E.*not(F));
+% % 
+% % %         [~,Nb] = bwlabel(G);
+% %         [Bx,L,Nb,~] = bwboundaries(G,'noholes');
+% % 
+% % %         figure(101)
+% % %         imshow(label2rgb(L, @jet, [.5 .5 .5]))
+% % %         hold on
+% % 
+% %         ObjBord = 0;
+% %         sx = size(A,1);
+% %         sy = size(A,2);
+% % 
+% %         for k = 1:Nb
+% %             boundary = Bx{k};
+% %             mask = poly2mask(boundary(:,2), boundary(:,1),sx,sy);
+% %             if nnz(mask) < 100, continue, end 
+% %             
+% %             ObjBord = ObjBord + 1;
+% % 
+% % %             plot(boundary(:,2), boundary(:,1), 'w', 'LineWidth', 2)
+% % %             pause(1)
+% %         end
+% % 
+% %         if showplot
+% %             figure(11)
+% %             subplot(1,3,1)
+% %             imshow(E)
+% % 
+% %             subplot(1,3,2)
+% %             imshow(F)
+% %             xlabel(ObjOK)
+% %             
+% %             subplot(1,3,3)
+% %             imshow(G)
+% %             xlabel(ObjBord)
+% %         end
         
         
         
         
         %% SubImages
         
-        A = F;
+%         A = F;
         minSize = 0.1; % 0.2  min nnz for aceptable boundary (percentage)
         minWidth = 0.01; % 0.04 min width of subimage (percentage)
 
@@ -248,11 +248,13 @@ function NumMec = tp2_92993()
 
         % Find other subimages
 %         try 
-        [regions,regionsRGB] = getSubImages(A,minSize,cutx,cuty,relSizes,minWidth,extend,fmaskRot,A0,false,minAreaMigalha);
+        [regions,regionsRGB] = getSubImages(A,minSize,cutx,cuty,relSizes,minWidth,extend,fmaskRot,A0,minAreaMigalha);
 %         catch
 %             fprintf(">>>>>>>>>>>>>>>>fail binarization %d\n",idxImg)
 % %             continue
 %         end
+
+        return
 
         N = numel(regions);
         SS = ceil(sqrt(N));
@@ -334,7 +336,7 @@ function NumMec = tp2_92993()
             [kRef,res,part] = getBestMatchFull(regionsRGB{k},regionsRGBRef);
 
             if  showplot
-                figure(100)
+                figure(300)
                 subplot(1,2,1)
                 imshow(regionsRGB{k})
                 if part
@@ -680,58 +682,20 @@ end
 function [regions,regionsRGB,bigRefArea] = getRefImages(classe)
 
     if classe == 1
-        imgRef1 = im2double(imread("../svpi2022_TP2_img_001_01.png"));
+        imgRef = im2double(imread("../svpi2022_TP2_img_001_01.png"));
     else
-        imgRef1 = im2double(imread("../svpi2022_TP2_img_002_01.png"));
+        imgRef = im2double(imread("../svpi2022_TP2_img_002_01.png"));
     end
     
-    A = rgb2gray(imgRef1);
+    A = rgb2gray(imgRef);
     minSize = 0.1;
-    cutx = -3;
-    cuty = -3;
     relSizes = 2.5;
     minWidth = 0.05;
-    extend = false;
     fmaskPrev = zeros(size(A));
-    fromRef = true;
     
-    [regions,regionsRGB,~] = getSubImages(A,minSize,cutx,cuty,relSizes,minWidth,extend,fmaskPrev,imgRef1,fromRef,0);
+    A = A <1;
 
-%     bigRefArea = 0;
-%     for k=1:length(regions)
-%         area = bwarea(regions{k});
-%         if area > bigRefArea
-%             bigRefArea = area;
-%         end
-%     end
-
-    bigRefArea = inf;
-    for k=1:length(regions)
-        area = bwarea(regions{k});
-        if area < bigRefArea
-            bigRefArea = area;
-        end
-    end
-
-end
-
-function B = maskNormal(A,ref)
-    if ref
-        A = A<1;
-    end
-    % mask for all other subimages
-    
-    B = edge(A,'roberts') | edge(A,'sobel');
-%     B = bwmorph(B,'bridge',inf);
-    B = bwmorph(B,'close',inf);
-end
-
-
-function [regions,regionsRGB,fullMask] = getSubImages(A,minSize,cutx,cuty,relSizes,minWidth,extend,fmaskPrev,imgRef,fromRef,minAreaMigalha)
-
-    % get all subimages(regions)
-
-    B = maskNormal(A,fromRef);
+    B = maskNormal(A);
     
     B = bwareaopen(B,round(minSize*size(B,1)));
     
@@ -744,12 +708,6 @@ function [regions,regionsRGB,fullMask] = getSubImages(A,minSize,cutx,cuty,relSiz
     
     count = 1;
 
-    if ~fromRef
-        figure(751)
-        imshow(B)
-        hold on
-    end
-
     
     for k = Nb+1:length(Bx) % use only interior boundaries
         boundary = Bx{k};
@@ -757,8 +715,130 @@ function [regions,regionsRGB,fullMask] = getSubImages(A,minSize,cutx,cuty,relSiz
         mask = poly2mask(boundary(:,2), boundary(:,1),sx,sy);
         if (nnz(mask) < minSize*sx), continue, end
 
-        
+        % remove already found
+        if nnz(mask.*fmaskPrev), continue, end
     
+        % clean all zeros cols and rows
+        mask0s = mask(:,any(mask,1));
+        mask0s = mask0s(any(mask0s,2),:);
+        if (mean(mask0s,'all') < 0.4), continue, end % very sparse image
+    
+        % remove weird shapes
+        sizesT = sort(size(mask0s));
+        if sizesT(2) > relSizes * sizesT(1) || sizesT(1) < minWidth * sx, continue, end
+    
+       
+        selected = A.*mask;
+        selectedRGB = imgRef.*repmat(mask,[1 1 3]);
+
+        fullMask = fullMask | mask;
+        fmaskPrev = fmaskPrev | mask;
+    
+        % guardar regiao
+        selectedRGB = selectedRGB(:,any(selected,1),:);
+        selectedRGB = selectedRGB(any(selected,2),:,:);
+
+        selected = selected(:,any(selected,1));
+        selected = selected(any(selected,2),:);
+
+        
+        regions{count} = selected;
+
+        % zona branca da palmier passa a preto
+
+        for i = 1:size(selectedRGB,1)
+            for j = 1:size(selectedRGB,2)
+                if (sum(selectedRGB(i,j,:)) > 2.98)
+                     % White pixel - do what you want to original image
+                     selectedRGB(i,j,:) = [0 0 0]; % make it black, for example
+                end
+            end
+        end
+
+        regionsRGB{count} = selectedRGB;
+
+        % compute better order for cookies
+        [y, x] = ndgrid(1:size(mask, 1), 1:size(mask, 2));
+        centroid = round(mean([x(logical(mask)), y(logical(mask))]));
+        
+        divx = int16(round(sx/10));
+        divy = int16(round(sy/10));
+        locals(count) = (int16(centroid(1))/divy) + (int16(centroid(2))/divx)*10 + 2;
+        
+        
+        count = count + 1;
+    
+    end
+
+    % compute better order for cookies
+    [~,sortedIdx] = sort(locals);
+    regionsOld = regions;
+    regionsRGB_old = regionsRGB;
+
+    for i = 1:count-1
+        regions{i} = regionsOld{sortedIdx(i)};
+        regionsRGB{i} = regionsRGB_old{sortedIdx(i)};
+    end
+
+    bigRefArea = inf;
+    for k=1:length(regions)
+        area = bwarea(regions{k});
+        if area < bigRefArea
+            bigRefArea = area;
+        end
+    end
+
+end
+
+function B = maskNormal(A)
+    % mask for all other subimages
+    
+    B = edge(A,'roberts') | edge(A,'sobel');
+    B = bwmorph(B,'close',inf);
+end
+
+
+function [regions,regionsRGB,fullMask] = getSubImages(A,minSize,cutx,cuty,relSizes,minWidth,extend,fmaskPrev,imgRef,minAreaMigalha)
+
+    % get all subimages(regions)
+
+%     B = maskNormal(A);
+%     
+%     B = bwareaopen(B,round(minSize*size(B,1)));
+
+%         B = medfilt2(filter2(fspecial("average",3),A));
+    B = A;
+    T = adaptthresh(B);
+
+    E = imbinarize(A,T);
+
+    F = imclearborder(E);
+
+    F = bwareaopen(F,100);
+    F = bwmorph(F,"close",inf);
+    F = imfill(F,"holes");
+    B = F;
+
+    fullMask = zeros(size(B));
+    
+    [Bx,~,Nb] = bwboundaries(B);
+    
+    sx = size(B,1);
+    sy = size(B,2);
+    
+    count = 1;
+
+    figure(751)
+    imshow(B)
+    hold on
+    
+%     for k = Nb+1:length(Bx) % use only interior boundaries
+    for k = 1:Nb % use only exterior boundaries
+        boundary = Bx{k};
+    
+        mask = poly2mask(boundary(:,2), boundary(:,1),sx,sy);
+        if (nnz(mask) < minSize*sx), continue, end
+
         % remove already found
         if nnz(mask.*fmaskPrev), continue, end
     
@@ -794,10 +874,9 @@ function [regions,regionsRGB,fullMask] = getSubImages(A,minSize,cutx,cuty,relSiz
             if sizesT(2) > relSizes * sizesT(1) || sizesT(1) < minWidth * sx , continue, end
         end
 
-        if ~fromRef
-            plot(boundary(:,2),boundary(:,1),'r','LineWidth',4);
-            pause(0.01)
-        end
+        plot(boundary(:,2),boundary(:,1),'r','LineWidth',4);
+        pause(0.01)
+      
         
         selected = A.*mask;
         selectedRGB = imgRef.*repmat(mask,[1 1 3]);
@@ -813,9 +892,9 @@ function [regions,regionsRGB,fullMask] = getSubImages(A,minSize,cutx,cuty,relSiz
         selected = selected(any(selected,2),:);
 
         if (nnz(mask) < minAreaMigalha)
-            figure(300)
-            imshow(selectedRGB)
-            fprintf("ola\n")
+%             figure(300)
+%             imshow(selectedRGB)
+            fprintf("migalha\n")
             pause(2)
             continue
         end
@@ -823,7 +902,6 @@ function [regions,regionsRGB,fullMask] = getSubImages(A,minSize,cutx,cuty,relSiz
         regions{count} = selected;
 
         % zona branca da palmier passa a preto
-
         for i = 1:size(selectedRGB,1)
             for j = 1:size(selectedRGB,2)
                 if (sum(selectedRGB(i,j,:)) > 2.98)
@@ -835,28 +913,9 @@ function [regions,regionsRGB,fullMask] = getSubImages(A,minSize,cutx,cuty,relSiz
 
         regionsRGB{count} = selectedRGB;
 
-        if fromRef % compute better order for cookies
-            [y, x] = ndgrid(1:size(mask, 1), 1:size(mask, 2));
-            centroid = round(mean([x(logical(mask)), y(logical(mask))]));
-            
-            divx = int16(round(sx/10));
-            divy = int16(round(sy/10));
-            locals(count) = (int16(centroid(1))/divy) + (int16(centroid(2))/divx)*10 + 2;
-        end
         
         count = count + 1;
     
-    end
-
-    if fromRef % compute better order for cookies
-        [~,sortedIdx] = sort(locals);
-        regionsOld = regions;
-        regionsRGB_old = regionsRGB;
-    
-        for i = 1:count-1
-            regions{i} = regionsOld{sortedIdx(i)};
-            regionsRGB{i} = regionsRGB_old{sortedIdx(i)};
-        end
     end
 end
 

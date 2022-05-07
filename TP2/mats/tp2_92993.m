@@ -163,26 +163,26 @@ function NumMec = tp2_92993()
         F = imfill(F,"holes");
 
 
-        [Bx,L,Nb,~] = bwboundaries(F);
+%         [Bx,L,Nb,~] = bwboundaries(F);
 
-        figure(100)
-        imshow(F)
-        hold on
-
-        ObjOK = 0;
-        sx = size(A,1);
-        sy = size(A,2);
-
-        for k = 1:Nb
-            boundary = Bx{k};
-            mask = poly2mask(boundary(:,2), boundary(:,1),sx,sy);
-            if nnz(mask) < 300, continue, end 
-            
-            ObjOK = ObjOK + 1;
-
-%             plot(boundary(:,2), boundary(:,1), 'r', 'LineWidth', 2)
-%             pause(0.1)
-        end
+%         figure(100)
+%         imshow(F)
+%         hold on
+% 
+%         ObjOK = 0;
+%         sx = size(A,1);
+%         sy = size(A,2);
+% 
+%         for k = 1:Nb
+%             boundary = Bx{k};
+%             mask = poly2mask(boundary(:,2), boundary(:,1),sx,sy);
+%             if nnz(mask) < 300, continue, end 
+%             
+%             ObjOK = ObjOK + 1;
+% 
+% %             plot(boundary(:,2), boundary(:,1), 'r', 'LineWidth', 2)
+% %             pause(0.1)
+%         end
 
 %         return
 
@@ -193,7 +193,7 @@ function NumMec = tp2_92993()
         G = imadjust(E.*not(F));
 
 %         [~,Nb] = bwlabel(G);
-        [Bx,L,Nb,~] = bwboundaries(G,'noholes');
+        [Bx,~,Nb,~] = bwboundaries(G,'noholes');
 
 %         figure(101)
 %         imshow(label2rgb(L, @jet, [.5 .5 .5]))
@@ -254,7 +254,7 @@ function NumMec = tp2_92993()
 % %             continue
 %         end
 
-        return
+%         return
 
         N = numel(regions);
         SS = ceil(sqrt(N));
@@ -321,7 +321,7 @@ function NumMec = tp2_92993()
             end
         end
 
-        return 
+%         return 
 
         %% Compare
 
@@ -832,7 +832,8 @@ function [regions,regionsRGB,fullMask] = getSubImages(A,minSize,cutx,cuty,relSiz
     imshow(B)
     hold on
     
-    for k = Nb+1:length(Bx) % use only interior boundaries
+%     for k = Nb+1:length(Bx) % use only interior boundaries
+    for k = 1:Nb % use only exterior boundaries
         boundary = Bx{k};
     
         mask = poly2mask(boundary(:,2), boundary(:,1),sx,sy);
@@ -891,10 +892,10 @@ function [regions,regionsRGB,fullMask] = getSubImages(A,minSize,cutx,cuty,relSiz
         selected = selected(any(selected,2),:);
 
         if (nnz(mask) < minAreaMigalha)
-            figure(300)
-            imshow(selectedRGB)
+%             figure(300)
+%             imshow(selectedRGB)
             fprintf("migalha\n")
-            pause(2)
+%             pause(2)
             continue
         end
         
