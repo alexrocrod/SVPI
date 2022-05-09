@@ -144,30 +144,33 @@ A = im2double(imread("pcb2.png"));
 B = imbinarize(rgb2gray(A));
 C = bwmorph(B,'skel',inf);
 
-subplot(1,2,1)
+subplot(1,3,1)
 imshow(C)
 
 cruz = [0 1 0
         1 1 1
         0 1 0];
-T = [1 1 1
-    0 1 0
+T = [0 0 0
+    1 1 1
     0 1 0];
 
-% cruz = [0 0 1 0 0
-%         0 0 1 0 0
-%         1 1 1 1 1
-%         0 0 1 0 0
-%         0 0 1 0 0];
-% T= [1 1 1 1 1
-%     0 0 1 0 0
-%     0 0 1 0 0
-%     0 0 1 0 0
-%     0 0 1 0 0];
+D = bwhitmiss(C,cruz,~cruz) + bwhitmiss(C,T,~T);
+T = rot90(T);
+D = D + bwhitmiss(C,T,~T);
+T = rot90(T);
+D = D + bwhitmiss(C,T,~T);
+T = rot90(T);
+D = D + bwhitmiss(C,T,~T);
 
-D = bwhitmiss(C,cruz,~cruz) | bwhitmiss(C,T,~T);
-subplot(1,2,2)
+subplot(1,3,2)
 imshow(D)
+
+subplot(1,3,3)
+imshow(C)
+hold on
+
+[r,c] = find(D==1);
+plot(c,r,'*g','MarkerSize',20);
 
 
 end
@@ -181,53 +184,63 @@ A = im2double(imread("pcb.png"));
 % B = im2bw(A);
 B = imbinarize(rgb2gray(A));
 
-subplot(1,4,1)
-imshow(B)
+% subplot(1,4,1)
+% imshow(B)
+% 
+% C = bwmorph(B,"shrink",inf);
+% subplot(1,4,2)
+% imshow(C)
+% 
+% Fiso = [1 1 1; 1 -8 1; 1 1 1];
+% isos = filter2(Fiso,C)==-8;
+% imshow(isos)
+% 
+% recon = imreconstruct(isos,B);
+% subplot(1,4,3)
+% imshow(recon)
+% 
+% rec2 = ~recon;
+% subplot(1,4,4)
+% imshow(rec2)
+% 
+% B = B.*rec2;
+% C = bwmorph(B,'skel',inf);
 
-C = bwmorph(B,"shrink",inf);
-subplot(1,4,2)
-imshow(C)
-
-Fiso = [1 1 1; 1 -8 1; 1 1 1];
-isos = filter2(Fiso,C)==-8;
-imshow(isos)
-
-recon = imreconstruct(isos,B);
-subplot(1,4,3)
-imshow(recon)
-
-rec2 = ~recon;
-subplot(1,4,4)
-imshow(rec2)
-
-B = B.*rec2;
-C = bwmorph(B,'skel',inf);
+% OU:
+S=bwmorph(B,"shrink",inf);
+S = bwareaopen(S,2);
+S = imreconstruct(S,logical(B));
+C= bwmorph(S,'skel',inf);
 
 figure(17)
-subplot(1,2,1)
+subplot(1,3,1)
 imshow(C)
 
 cruz = [0 1 0
         1 1 1
         0 1 0];
-T = [1 1 1
-    0 1 0
+T = [0 0 0
+    1 1 1
     0 1 0];
 
-% cruz = [0 0 1 0 0
-%         0 0 1 0 0
-%         1 1 1 1 1
-%         0 0 1 0 0
-%         0 0 1 0 0];
-% T= [1 1 1 1 1
-%     0 0 1 0 0
-%     0 0 1 0 0
-%     0 0 1 0 0
-%     0 0 1 0 0];
+D = bwhitmiss(C,cruz,~cruz) + bwhitmiss(C,T,~T);
+T = rot90(T);
+D = D + bwhitmiss(C,T,~T);
+T = rot90(T);
+D = D + bwhitmiss(C,T,~T);
+T = rot90(T);
+D = D + bwhitmiss(C,T,~T);
 
-D = bwhitmiss(C,cruz,~cruz) | bwhitmiss(C,T,~T);
-subplot(1,2,2)
+subplot(1,3,2)
 imshow(D)
+
+subplot(1,3,3)
+imshow(C)
+hold on
+[r,c] = find(D==1);
+plot(c,r,'*g','MarkerSize',20);
+
+
 
 end
 
