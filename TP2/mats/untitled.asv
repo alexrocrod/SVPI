@@ -249,8 +249,8 @@ sy = size(RGB,2);
 L = superpixels(RGB,500);
 
 Ahsv = rgb2hsv(RGB);
-minS = 0.2; %0.4
-minV = 0.2; % 0.2
+minS = 0.4;
+minV = 0.2;
 
 % im=RGB;
 % Im1=im (:,:,1)*100+im (:,:,2)*10+im (:,:,3);
@@ -270,10 +270,12 @@ tol = 0.1;
 [r2,c2] = find(BW);
 r = [r;r2];
 c = [c;c2];
+r = unique(r);
+c = unique(c);
+
 temp = [r,c];
 temp = unique(temp,"rows");
-r = temp(:,1);
-c = temp(:,2);
+[r,c]
 background = sub2ind(size(RGB),r,c);
 
 % background = bwmorph(background,"close",inf);
@@ -284,8 +286,7 @@ background = sub2ind(size(RGB),r,c);
 % [r,c] = ind2sub(size(RGB),background);
 plot(c,r,'g*')
 
-% RMask = ((Ahsv(:,:,1)<0.1 |Ahsv(:,:,1)>0.9) & Ahsv(:,:,2)>minS & Ahsv(:,:,3)>minV);
-RMask = ( Ahsv(:,:,2)>minS & Ahsv(:,:,3)>minV);
+RMask = ((Ahsv(:,:,1)<0.1 |Ahsv(:,:,1)>0.9) & Ahsv(:,:,2)>minS & Ahsv(:,:,3)>minV);
 % RMask = bwmorph(RMask,"close",inf);
 % RMask = bwareaopen(RMask,150);
 % RMask = imfill(RMask,"holes");
