@@ -37,7 +37,7 @@ end
 end
 if ismember('ex2',exlist)
 %% Ex2
-close all
+% close all
 clearvars -except exlist
 figure(2)
 
@@ -64,8 +64,11 @@ for k=1:Nb
     r = Rprops.Centroid(1);
     c = Rprops.Centroid(2);
   
-    text(r-5,c-7,num2str(idx),"FontSize",10,"Color","r",FontWeight="bold")
-    text(r-17,c+7,num2str(Rprops.Circularity,4),"FontSize",10)
+    str1=['\bf \color{red}' num2str(idx)];
+    str = sprintf('\\color{black}\\rm%0.3f',Rprops.Circularity);
+%     text(r-5,c-7,num2str(idx),"FontSize",10,"Color","r",FontWeight="bold")
+%     text(r-17,c+7,num2str(Rprops.Circularity,4),"FontSize",10)
+    text(r,c,{str1,str},'HorizontalAlignment','center');
     idx = idx + 1;
 end
 
@@ -217,8 +220,24 @@ erroColher = abs(ff-StatsColher)./StatsColher;
 
 
 Garfoidx = find(all(erroGarfo<0.05));
-Facaidx = find(all(erroFaca<0.05));
-Colheridx = find(all(erroColher<0.05));
+Colheridx = find(all(erroColher<0.05 & erroColher<erroFaca));
+% Facaidx = find(all(erroFaca<0.05 & erroFaca<erroColher));
+Facaidx = [];
+% Garfoidx = [];
+% Colheridx = [];
+for i=1:Nb
+%     if  erroGarfo(i)<erroColher(i) && erroGarfo(i)<erroFaca(i) && erroGarfo(i)<0.05
+%         Garfoidx = [Garfoidx i];
+%     elseif erroColher(i)<erroGarfo(i) && erroColher(i)<erroFaca(i) && erroColher(i)<0.05
+%         Colheridx = [Colheridx i];
+%     else
+%         Facaidx = [Facaidx i];
+%     end
+    if ~ismember(i,Garfoidx) && ~ismember(i,Colheridx)
+        Facaidx = [Facaidx i];
+    end
+end
+% Colheridx = find(all(erroColher<0.05));
 
 Garfos = ismember(L,Garfoidx);
 Facas = ismember(L,Facaidx);
@@ -230,12 +249,12 @@ imshow(Garfos)
 title('Garfos')
 
 subplot(1,3,2)
-imshow(Facas)
-title('Facas')
-
-subplot(1,3,3)
 imshow(Colheres)
 title('Colheres')
+
+subplot(1,3,3)
+imshow(Facas)
+title('Facas')
 
 
 end
