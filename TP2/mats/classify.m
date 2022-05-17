@@ -26,9 +26,8 @@ for k=1:N
     xlabel(k)
 end
 
-nFeats = 12; % 3, 10, 14
+nFeats = 13;
 
-% AllFeatures = getFeatures(regionsRef,regionsRGBRef,nFeats);
 AllFeatures = getFeatures(regionsRef,regionsGray,regionsRGBRef,nFeats);
 
 % return
@@ -153,6 +152,7 @@ for k=1:N
     pause(0.1)
 end
 
+return
 
 %%
 ola = getFeats(Brgb2,B2,Bbin2,nFeats);
@@ -185,14 +185,30 @@ function features = getFeatures(regions,regionsGray,regionsRGB,nFeats)
 end
 
 function feats = getFeats(ARGB,Agray,Abin,nFeats)
-%     if nFeats == 12
-        s = regionprops(Abin,'Circularity','Eccentricity','Solidity');
+    if nFeats == 12
+        s = regionprops(Abin,'Eccentricity','Solidity');
         meanR = mean(ARGB(:,:,1),'all');
         meanG = mean(ARGB(:,:,2),'all');
         meanB = mean(ARGB(:,:,3),'all');
         ola = real(log(invmoments(Agray)));
         feats = [meanR meanG meanB ola s.Eccentricity s.Solidity]';
-%     end
+    elseif nFeats == 13
+        s = regionprops(Abin,'Eccentricity','Solidity');
+        meanR = mean(ARGB(:,:,1),'all');
+        meanG = mean(ARGB(:,:,2),'all');
+        meanB = mean(ARGB(:,:,3),'all');
+        Ahsv = rgb2hsv(ARGB);
+        meanH = mean(Ahsv(:,:,1),'all');
+        ola = real(log(invmoments(Agray)));
+        feats = [meanR meanG meanB meanH ola s.Eccentricity s.Solidity]';
+    else
+        s = regionprops(Abin,'Eccentricity','Solidity','Area','EquivDiameter','Extent');
+        meanR = mean(ARGB(:,:,1),'all');
+        meanG = mean(ARGB(:,:,2),'all');
+        meanB = mean(ARGB(:,:,3),'all');
+        ola = real(log(invmoments(Agray)));
+        feats = [meanR meanG meanB ola s.Eccentricity s.Solidity s.Area s.EquivDiameter s.Extent]';
+    end
 end
 
 
