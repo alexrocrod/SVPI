@@ -59,7 +59,11 @@ relSizes = 5; %3
 
 N=numel(regions);
 % AllFeats = zeros(N,Nref,nFeats);
+partidaMean = zeros(N,Nref);
+partidaDiffY = zeros(N,Nref);
+partsMBbin = [];
 dist = zeros(N,Nref);
+
 for k=1:N
     B = rgb2gray(regionsRGB{k});
     Brgb = regionsRGB{k};
@@ -112,8 +116,6 @@ for k=1:N
         dists(1) = norm(ola-AllFeatures(:,iRef));
 %         AllFeats(k,iRef,:) = ola;
 
-        
-
         Brgb3 = imrotate(Brgb2,180);
         Bbin3 = imrotate(Bbin2,180);
         B3 = imrotate(B2,180);
@@ -133,37 +135,47 @@ for k=1:N
         dists(2) = norm(ola-AllFeatures(:,iRef));
         dist(k,iRef) = min(dists);
         
-%         if dists(2)<dists(1)
-%             AllFeats(k,iRef,:) = ola2; 
-%         end
+        
+        if dists(2)<dists(1)
+%             AllFeats(k,iRef,:) = ola2;
+            partidaMean(k,iRef) =  mean(Bbin3,'all')/mean(regionsRef{iRef},'all');
+            partidaDiffY(k,iRef) = size(Bbin3,2)/size(regionsRef{iRef},2);
+        else
+            partidaMean(k,iRef) =  mean(Bbin2,'all')/mean(regionsRef{iRef},'all');
+            partidaDiffY(k,iRef) = size(Bbin2,2)/size(regionsRef{iRef},2);
+        end
 %         pause(1)
     end
 end
-
-%% 
-size(Brgb2)
-size(Bbin2)
 
 
 %%
 [minVal,minIdx] = min(dist,[],2);
 
-% thPartida = 1e4;
 
 %%
+tolPartidasMean = 0.7;
+tolPartidasMinVal = 3e-1;
+tolPartidasDiffY = 0.05;
+
+partidaDiffY = abs(1-partidaDiffY);
+
 for k=1:N
     figure;
     sgtitle(sprintf("Bolacha k=%d",k))
     subplot(1,2,1)
     imshow(regionsRGB{k})
-%     if minVal(k) > thPartida
-%         title("Partida")
-%     end
+    if partidaMean(k,minIdx(k))<tolPartidasMean || minVal(k) > tolPartidasMinVal || partidaDiffY(k,minIdx(k)) > tolPartidasDiffY 
+        fprintf("Partida %d\n",k);
+        xlabel(sprintf("Partida\n meanRel=%.2f\n minVal=%d\n DiffY:%d",partidaMean(k,minIdx(k),minVal(k),partidaDiffY(k,minIdx(k)))))
+        partsMBbin = [partsMBbin k];
+    end
 %     xlabel(sprintf("%.3f %.3f %.3f\n %.3f\n %.3f %.3f %.3f %.3f %.3f %.3f %.3f\n %.3f %.3f",AllFeats(k,minIdx(k),:)))
     subplot(1,2,2)
     imshow(regionsRGBRef{minIdx(k)})
     title(sprintf("Corr:%d",minIdx(k)))
     xlabel(sprintf("Diff:%d",minVal(k)))
+    
 %     xlabel(sprintf("%.3f %.3f %.3f\n %.3f\n %.3f %.3f %.3f %.3f %.3f %.3f %.3f\n %.3f %.3f",AllFeatures(:,minIdx(k))))
 %     feats = [meanR meanG meanB meanV ola s.Eccentricity s.Solidity]';
    
@@ -192,8 +204,9 @@ subplot(1,4,4)
 imshow(Brgb3)
 
 %% 
-thPartida = 3e-1;
-partsTH = find(minVal>thPartida)'
+tolPartidasMinVal = 3e-1
+partsTH = find(minVal>tolPartidasMinVal)'
+partsMBbin = unique(partsMBbin)
 partidas = sort([2 5 8 12 19 16 18 24 25 28 38 39 41 45])
 
 
@@ -227,9 +240,26 @@ function feats = getFeats(ARGB,Agray,Abin,nFeats)
         Ahsv = rgb2hsv(ARGB);
         meanV = mean(Ahsv(:,:,3),'all');
 %         meanH = mean(Ahsv(:,:,1),'all');
-        ola = real(log(invmoments(Agray)));
-        ola = real(log(invmoments(Agray)))/20;
+%         ola = real(log(invmoments(Agray)));
+%         arr = [1.5 10 10 15 20 15 20];
+%         ola = -real(log(invmoments(Agray)))./arr;
+        ola = -real(log(invmoments(Agray)))/20;
         feats = [meanR meanG meanB meanV ola s.Eccentricity s.Solidity]';
+     elseif nFeats == 15
+        s = regionprops(Abin,'Eccentricity','Solidity');
+        meanR = mean(ARGB(:,:,1),'all');
+        meanG = mean(ARGB(:,:,2),'all');
+        meanB = mean(ARGB(:,:,3),'all');
+        Ahsv = rgb2hsv(ARGB);
+        meanH = mean(Ahsv(:,:,1),'all');
+        meanS = mean(Ahsv(:,:,2),'all');
+        meanV = mean(Ahsv(:,:,3),'all');
+%         ola = real(log(invmoments(Agray)));
+%         arr = [1.5 10 10 15 20 15 20];
+%         ola = -real(log(invmoments(Agray)))./arr;
+        ola = -real(log(invmoments(Agray)))/20;
+        
+        feats = [meanR meanG meanB meanH meanS meanV ola s.Eccentricity s.Solidity]';
     else
         s = regionprops(Abin,'Eccentricity','Solidity','Area','EquivDiameter','Extent');
         meanR = mean(ARGB(:,:,1),'all');
