@@ -58,7 +58,7 @@ relSizes = 5; %3
 [regions,regionsRGB,~,ObjBord] = getSubImages(A,minSize,cutx,cuty,relSizes,minWidth,extend,fmaskRot,A0,minAreaMigalha);
 
 N=numel(regions);
-
+% AllFeats = zeros(N,Nref,nFeats);
 dist = zeros(N,Nref);
 for k=1:N
     B = rgb2gray(regionsRGB{k});
@@ -78,6 +78,7 @@ for k=1:N
         Bbin2 = imrotate(Bbin,oriRef-oriB);
         B2 = imrotate(B,oriRef-oriB);
 
+        Bbin2 = bwareaopen(Bbin2,size(regionsRef{iRef},1));
         Bbin2 = Bbin2(:,any(Bbin2,1));
         Bbin2 = Bbin2(any(Bbin2,2),:);
         
@@ -107,7 +108,11 @@ for k=1:N
 %         subplot(1,4,3)
 %         imshow(Brgb2)
 %         oriB2 = regionprops(Bbin2,'Orientation').Orientation;
-        dists(1) = norm((getFeats(Brgb2,B2,Bbin2,nFeats)-AllFeatures(:,iRef)));
+        ola = getFeats(Brgb2,B2,Bbin2,nFeats);
+        dists(1) = norm(ola-AllFeatures(:,iRef));
+%         AllFeats(k,iRef,:) = ola;
+
+        
 
         Brgb3 = imrotate(Brgb2,180);
         Bbin3 = imrotate(Bbin2,180);
@@ -123,18 +128,27 @@ for k=1:N
 
 %         subplot(1,4,4)
 %         imshow(Brgb3)
-%         oriB2 = regionprops(Bbin2,'Orientation').Orientation;
-        dists(2) = norm((getFeats(Brgb3,B3,Bbin3,nFeats)-AllFeatures(:,iRef)));
+%         oriB2 = regionprops(Bbin2,'Orientation').Orientation; 
+        ola2 = getFeats(Brgb3,B3,Bbin3,nFeats);
+        dists(2) = norm(ola-AllFeatures(:,iRef));
         dist(k,iRef) = min(dists);
+        
+%         if dists(2)<dists(1)
+%             AllFeats(k,iRef,:) = ola2; 
+%         end
 %         pause(1)
     end
 end
+
+%% 
+size(Brgb2)
+size(Bbin2)
 
 
 %%
 [minVal,minIdx] = min(dist,[],2);
 
-thPartida = 1e4;
+% thPartida = 1e4;
 
 %%
 for k=1:N
@@ -142,20 +156,27 @@ for k=1:N
     sgtitle(sprintf("Bolacha k=%d",k))
     subplot(1,2,1)
     imshow(regionsRGB{k})
-    if minVal(k) > thPartida
-        title("Partida")
-    end
+%     if minVal(k) > thPartida
+%         title("Partida")
+%     end
+%     xlabel(sprintf("%.3f %.3f %.3f\n %.3f\n %.3f %.3f %.3f %.3f %.3f %.3f %.3f\n %.3f %.3f",AllFeats(k,minIdx(k),:)))
     subplot(1,2,2)
     imshow(regionsRGBRef{minIdx(k)})
-    xlabel(sprintf("Corresponde a %d \n minVal:%d",minIdx(k),minVal(k)))
-    
+    title(sprintf("Corr:%d",minIdx(k)))
+    xlabel(sprintf("Diff:%d",minVal(k)))
+%     xlabel(sprintf("%.3f %.3f %.3f\n %.3f\n %.3f %.3f %.3f %.3f %.3f %.3f %.3f\n %.3f %.3f",AllFeatures(:,minIdx(k))))
+%     feats = [meanR meanG meanB meanV ola s.Eccentricity s.Solidity]';
+   
     pause(0.1)
 end
 
 return
 
 %%
-ola = getFeats(Brgb2,B2,Bbin2,nFeats);
+ola = getFeats(Brgb2,B2,Bbin2,nFeats)
+% figure;
+% imshow(A0)
+% xlabel(sprintf("%.3f %.3f %.3f %.3f %.3f %.3f %.3f %.3f %.3f %.3f %.3f %.3f %.3f",ola))
 size(ola)
 size(ola')
 size(AllFeatures(:,iRef)')
@@ -169,6 +190,12 @@ subplot(1,4,3)
 imshow(Brgb2)
 subplot(1,4,4)
 imshow(Brgb3)
+
+%% 
+thPartida = 3e-1;
+partsTH = find(minVal>thPartida)'
+partidas = sort([2 5 8 12 19 16 18 24 25 28 38 39 41 45])
+
 
 
 %%
@@ -198,9 +225,11 @@ function feats = getFeats(ARGB,Agray,Abin,nFeats)
         meanG = mean(ARGB(:,:,2),'all');
         meanB = mean(ARGB(:,:,3),'all');
         Ahsv = rgb2hsv(ARGB);
-        meanH = mean(Ahsv(:,:,1),'all');
+        meanV = mean(Ahsv(:,:,3),'all');
+%         meanH = mean(Ahsv(:,:,1),'all');
         ola = real(log(invmoments(Agray)));
-        feats = [meanR meanG meanB meanH ola s.Eccentricity s.Solidity]';
+        ola = real(log(invmoments(Agray)))/20;
+        feats = [meanR meanG meanB meanV ola s.Eccentricity s.Solidity]';
     else
         s = regionprops(Abin,'Eccentricity','Solidity','Area','EquivDiameter','Extent');
         meanR = mean(ARGB(:,:,1),'all');
