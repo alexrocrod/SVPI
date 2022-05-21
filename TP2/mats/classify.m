@@ -67,7 +67,8 @@ dist = zeros(N,Nref);
 for k=1:N
     B = rgb2gray(regionsRGB{k});
     Brgb = regionsRGB{k};
-    Bbin = B;
+%     Bbin = B;
+    Bbin = regions{k};
     Bbin = bwareaopen(Bbin,10);
 %     figure;
 %     subplot(1,4,1)
@@ -167,7 +168,7 @@ for k=1:N
     imshow(regionsRGB{k})
     if partidaMean(k,minIdx(k))<tolPartidasMean || minVal(k) > tolPartidasMinVal || partidaDiffY(k,minIdx(k)) > tolPartidasDiffY 
         fprintf("Partida %d\n",k);
-        xlabel(sprintf("Partida\n meanRel=%.2f\n minVal=%d\n DiffY:%d",partidaMean(k,minIdx(k),minVal(k),partidaDiffY(k,minIdx(k)))))
+        xlabel(sprintf("Partida\n meanRel=%.2f\n minVal=%d\n DiffY:%d",partidaMean(k,minIdx(k)),minVal(k),partidaDiffY(k,minIdx(k))))
         partsMBbin = [partsMBbin k];
     end
 %     xlabel(sprintf("%.3f %.3f %.3f\n %.3f\n %.3f %.3f %.3f %.3f %.3f %.3f %.3f\n %.3f %.3f",AllFeats(k,minIdx(k),:)))
