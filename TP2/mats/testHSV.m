@@ -1,98 +1,47 @@
 close all
 clear all
 
-Z = imread("../Seq29x/svpi2022_TP2_img_291_27.png");
+%% Funciona
+%
+% Branco -> 11 -> perde bolachas a 0, 0.05, 0.005
+% Azul1 -> 12,25 -> so algumas elipses para 0
+% Azul2 -> 13,26 -> so algumas linhas para 0
+% Azul3 -> 20 -> muito bom para 0.005 e 0
+% Azul4 -> 23 -> corta oreos partidas a 0, deixa pequenos ruidos para 0.005
+% Branco -> 24 -> alguns pequenos ruidos a 0
+% Verde-> 27 -> funciona com 0.005 e 0
 
 
-A0 = im2double(Z);
-
-A = rgb2gray(A0);
-
-A1 = A;
-
-figure;
-imshow(A0)
-
-Ahsv = rgb2hsv(A0);
-figure;
-imshow(Ahsv)
-
-H = Ahsv(:,:,1);
-S = Ahsv(:,:,2);
-V = Ahsv(:,:,3);
-
-figure;
-imshow(H)
-
-figure;
-imshow(S)
-
-figure;
-imshow(V)
-
-
-figure;
-imshow(H>0 & Ahsv(:,:,2)>0.1 & Ahsv(:,:,3)>0.1)
-
-figure;
-imshow(imadjust(H))
-
-
-%% HSV
-% 
-% figure;
-% Abin = ~saveB2.*A2;
-% A2R = Abin(:,:,1);
-% A2R(saveB2) = frequentRGB(1);
-% A2G = Abin(:,:,2);
-% A2G(saveB2) = frequentRGB(2);
-% A2B = Abin(:,:,3);
-% A2B(saveB2) = frequentRGB(3);
-% Abin = cat(3,A2R,A2G,A2B);
-% 
-% 
-% imshow(Abin)
-% 
-% figure;
-% imshow(rgb2hsv(Abin));
-% title("hsv Abin")
-% Abin = rgb2hsv(Abin);
-% 
-% 
-% figure;
-% imshow(Abin)
-% 
-% 
-% B = autobin(Abin(:,:,1));
-% B = bwareaopen(B,1000);
-% B = bwmorph(B,"open",inf);
-% B = bwareaopen(B,1000);
-% B = bwmorph(B,"bridge",inf);
-% B = imfill(B,"holes");
-% 
-% 
-% 
-% figure;
-% imshow(B)
-% 
-% figure;
-% imshow(B.*A0)
-% 
 
 %%
 
-function Ibin = autobin(I)
-%     Ibin = double(imbinarize(I));
 
-%     T = adaptthresh(I,0.2,'ForegroundPolarity','dark');
-    [counts,x] = imhist(I,16);
-    T = otsuthresh(counts);
-    Ibin = double(imbinarize(I,T));
+B=imread('fundoVerde.png');
+HSV=rgb2hsv(B); H=HSV(:,:,1); S=HSV(:,:,2); V=HSV(:,:,3);
+% tol=[0.005 0.995]; 
+% tol=[0.05 0.95]; 
+tol = 0;
+Hlims=stretchlim(H,tol);
+Slims=stretchlim(S,tol);
+Vlims=stretchlim(V,tol);
 
-    if mean(Ibin,'all') > 0.5 % always more black
-        Ibin = not(Ibin);
-    end
-end
+figure;
+imshow(B)
 
 
+A=im2double(imread("../Seq29x/svpi2022_TP2_img_291_11.png"));
+figure;
+imshow(A)
 
+HSV=rgb2hsv(A); H=HSV(:,:,1); S=HSV(:,:,2); V=HSV(:,:,3);
+mask= (H > Hlims(1) & H < Hlims(2)); %select by Hue
+mask=mask & (S > Slims(1) & S < Slims(2)); %add a condition for saturation
+mask=mask & (V > Vlims(1) & V < Vlims(2)); %add a condition for value
+mask=~mask; %mask for objects (negation of background)
+mask=bwareaopen(mask,100); %in case we need some cleaning of "small" areas.
+
+figure;
+imshow(mask)
+
+figure;
+imshow(mask.*A)

@@ -3,26 +3,6 @@
 % Maio 2022
 % Trabalho Pratico 2
 
-%% Sugestoes
-
-% • Criar uma base dos objetos de referência (a partir das imagens de
-% referência fornecidas). << done
-% >>> • Identificar e estabelecer os descritores relevantes para distinguir os
-% diversos objetos. << falha nalgumas com invmoments
-% >>>> • Nas imagens a processar separar os objetos do fundo (binarização, deteção de contornos, ou
-% outros, são técnicas esperadas para o fazer). << (alterar para fundos
-% complexos)
-% • Eliminar os objetos em contacto com o bordo da imagem. << done
-% >>>>>> • Identificar e eliminar os objetos partidos. << ?? area e perimetro?? <<<
-% • Obter os descritores dos objetos restantes (na representação em máscara binária e/ou na
-% representação completa a cores). << done com invmoments
-% • Classificar os objetos por comparação de descritores com os objetos de referência mediante
-% critérios de distância, ou outros. << done com invmoments
-% • Contar as ocorrências de cada classe/tipo de objetos e atualizar o
-% ficheiro de resultados. << done
-
-
-
 
 %% Ideias
 
@@ -35,6 +15,7 @@
 
 % Falhas bin? 11a13,24a27 >> fundos diferentes cores
 % falha imgidx = 2 nas bolachas iref=5
+% falhas imgIdx=4 para oreos e vermelhas
 
 %% 
 
@@ -72,7 +53,7 @@ function NumMec = tp2_92993()
     global showplot;
     showplot = false;
 
-    idxImg = 3; showplot = true;
+    idxImg = 5; showplot = true;
    
 %     for idxImg = 1:MaxImg
         fprintf("idxImg:%d\n",idxImg);
@@ -142,7 +123,7 @@ function NumMec = tp2_92993()
         %% Vars
 %         ObjBord = 0; % numero de objs a tocar o bordo (nao para classificar)
         ObjPart = 0; % numero de objs partidos (nao para classificar)
-        ObjOK = 0; % numero de objs para classificar (migalhas nao contam (0.05% do obj inicial))
+        ObjOK = 0; % numero de objs para classificar (migalhas nao contam (5% do obj inicial))
         
         % Bolachas;
         beurre = 0;
@@ -167,17 +148,19 @@ function NumMec = tp2_92993()
         minWidth = 0.01; % 0.04 min width of subimage (percentage)
 
         
-        minAreaMigalha = 0.05 * bigRefArea;
+%         minAreaMigalha = 0.05 * bigRefArea;
+        minAreaMigalha = 0.03 * bigRefArea;
 
         fmaskRot = zeros(size(A));
         cutx = -3; 
         cuty = -3; 
         extend = false; %true;
         relSizes = 5; %3
+        minSpare = 0.4; %0.2 da melhor na img4, melhor binarizacao das bolachas vermelhas??
 
         % Find other subimages
 %         try 
-        [regions,regionsRGB,~,ObjBord] = getSubImages(A,minSize,cutx,cuty,relSizes,minWidth,extend,fmaskRot,A0,minAreaMigalha);
+        [regions,regionsRGB,~,ObjBord] = getSubImages(A,minSize,cutx,cuty,relSizes,minWidth,extend,fmaskRot,A0,minAreaMigalha,minSpare);
 %         catch
 %             fprintf(">>>>>>>>>>>>>>>>fail binarization %d\n",idxImg)
 %             continue
@@ -236,7 +219,7 @@ function NumMec = tp2_92993()
 
         fanKs = [];
         if classe==1
-            fanKs = [10 11];
+            fanKs = [9 10];
         elseif classe==2
             fanKs = 5;
         end
@@ -683,9 +666,11 @@ function B = maskNormal(A)
     B = bwmorph(B,'close',inf);
 end
 
-function B = maskComplex(A0)
+function B = maskComplex(A0,minAreaMigalha)
     global showplot;
 %     A = rgb2gray(A0);
+
+    minAreaMigalha = round(minAreaMigalha);
 
 %     tol = 0.2;
     rgbImg = A0;
@@ -708,7 +693,7 @@ function B = maskComplex(A0)
     B = bwmorph(B,"close",inf);
     B = bwmorph(B,"bridge",inf);
     B = imfill(B,"holes");
-    B = bwareaopen(B,1000);
+    B = bwareaopen(B,minAreaMigalha); % 1000
    
     saveB=B;
 
@@ -747,16 +732,16 @@ function B = maskComplex(A0)
         Abin(:,:,i) = autobin(Abin(:,:,i));
         Abin(:,:,i) = bwmorph(Abin(:,:,i),"close",inf);
 %         Abin(:,:,i) = imfill(Abin(:,:,i),"holes");
-        Abin(:,:,i) = bwareaopen(Abin(:,:,i),2000);
+        Abin(:,:,i) = bwareaopen(Abin(:,:,i),minAreaMigalha);%2000
     end
     
     Abin(:,:,freqChanel) = 0;
     
     B = sum(Abin,3)>0;
     B = autobinBW(double(B));
-    B = bwareaopen(B,1000);
+    B = bwareaopen(B,minAreaMigalha);%1000
     B = bwmorph(B,"open",inf);
-    B = bwareaopen(B,1000);
+    B = bwareaopen(B,minAreaMigalha);%1000
     
     
     saveB2=B|saveB;
@@ -780,9 +765,9 @@ function B = maskComplex(A0)
     Abin = rgb2hsv(Abin);
            
     B = autobin(Abin(:,:,1));
-    B = bwareaopen(B,1000);
+    B = bwareaopen(B,minAreaMigalha);%1000
     B = bwmorph(B,"open",inf);
-    B = bwareaopen(B,1000);
+    B = bwareaopen(B,minAreaMigalha);%1000
     B = bwmorph(B,"bridge",inf);
     B = imfill(B,"holes");
    
@@ -795,7 +780,7 @@ function B = maskComplex(A0)
     end
 end
 
-function [regions,regionsRGB,fullMask,countBord] = getSubImages(A,minSize,cutx,cuty,relSizes,minWidth,extend,fmaskPrev,imgRef,minAreaMigalha)
+function [regions,regionsRGB,fullMask,countBord] = getSubImages(A,minSize,cutx,cuty,relSizes,minWidth,extend,fmaskPrev,imgRef,minAreaMigalha,minSparse)
     % get all subimages(regions)
 
 %     B = A;
@@ -810,7 +795,7 @@ function [regions,regionsRGB,fullMask,countBord] = getSubImages(A,minSize,cutx,c
     global showplot;
 
     
-    E = maskComplex(imgRef);
+    E = maskComplex(imgRef,minAreaMigalha);
 %     E = E(2:end-1,2:end-1);
 
 %     E = bwareaopen(E,10);
@@ -867,7 +852,7 @@ function [regions,regionsRGB,fullMask,countBord] = getSubImages(A,minSize,cutx,c
         % clean all zeros cols and rows
         mask0s = mask(:,any(mask,1));
         mask0s = mask0s(any(mask0s,2),:);
-        if (mean(mask0s,'all') < 0.4), continue, end % very sparse image
+        if (mean(mask0s,'all') < minSparse), continue, end % very sparse image % 0.4 ou 0.2??
     
         % remove weird shapes
         sizesT = sort(size(mask0s));
@@ -1023,6 +1008,9 @@ function features = getFeatures(regions,regionsGray,regionsRGB,nFeats)
 end
 
 function [kRef,minres,part,str] = getBestMatchv2(img1, AllFeatsRef, oriRefs, sizesRefs, nFeats, fanKs)
+
+    global showplot;
+
     part = false;
     solRefs = AllFeatsRef(end,:);
 
@@ -1032,7 +1020,7 @@ function [kRef,minres,part,str] = getBestMatchv2(img1, AllFeatsRef, oriRefs, siz
     dist = zeros(Nref,1);
     
     tolPartidasMean = 0.7;
-    tolPartidasMinVal = 3e-1;
+    tolPartidasMinVal = 3.5e-1;% 3e-1;
     tolPartidasDiffY = 0.095; %0.1 falha 1 ou 2x no img3
 
     B = rgb2gray(img1);
@@ -1103,11 +1091,20 @@ function [kRef,minres,part,str] = getBestMatchv2(img1, AllFeatsRef, oriRefs, siz
             partidaDiffY(iRef) = size(Bbin3,2)/syRef;
             minres = dists(2);
             eulerN = regionprops(Bbin3,'EulerNumber').EulerNumber;
+            
+            if iRef == 8 && size(Bbin3,2)/sxRef < partidaDiffY(iRef)
+                partidaDiffY(iRef) = size(Bbin3,2)/sxRef;
+            end
+
         else
             partidaMean(iRef) =  mean(Bbin2,'all')/solRefs(iRef);
             partidaDiffY(iRef) = size(Bbin2,2)/syRef;
             minres = dists(1);
             eulerN = regionprops(Bbin2,'EulerNumber').EulerNumber;
+
+            if iRef == 8 && size(Bbin2,2)/sxRef < partidaDiffY(iRef)
+                partidaDiffY(iRef) = size(Bbin2,2)/sxRef;
+            end
         end
     end
 
@@ -1128,6 +1125,87 @@ function [kRef,minres,part,str] = getBestMatchv2(img1, AllFeatsRef, oriRefs, siz
         part = true;
     end
     str = sprintf("meanRel=%.2f\n minVal=%d\n DiffY:%d",partidaMean(kRef),minVal,partidaDiffY(kRef));
+
+    if false %showplot && kRef==8
+        iRef = kRef;
+
+        oriRef = oriRefs(iRef);
+        sxRef = sizesRefs(iRef,1);
+
+        Brgb2 = imrotate(Brgb,oriRef-oriB);
+        Bbin2 = imrotate(Bbin,oriRef-oriB);
+        B2 = imrotate(B,oriRef-oriB);
+
+        Bbin2 = bwareaopen(Bbin2,sxRef);
+        Bbin2 = Bbin2(:,any(Bbin2,1));
+        Bbin2 = Bbin2(any(Bbin2,2),:);
+        
+        Brgb2 = Brgb2(:,any(B2,1),:);
+        Brgb2 = Brgb2(any(B2,2),:,:);
+
+        B2 = B2(:,any(B2,1));
+        B2 = B2(any(B2,2),:);
+
+        Brgb2 = imresize(Brgb2,[sxRef NaN]);
+        Bbin2 = imresize(Bbin2,[sxRef NaN]);
+        B2 = imresize(B2,[sxRef NaN]);
+
+        Bbin2 = bwmorph(Bbin2,"close",3);
+%         Bbin2 = bwmorph(Bbin2,"dilate",1);
+%         Bbin2 = bwmorph(Bbin2,"fill",10);
+        Bbin2 = bwareaopen(Bbin2, sxRef);
+        
+
+        [~,Nb] = bwlabel(Bbin2);
+        if Nb==0 || Nb==2
+            disp("fail")
+            Brgb2 = Brgb;
+            Bbin2 = Bbin;
+            B2 = B;
+        end
+
+        featsIm = getFeats(Brgb2,B2,Bbin2,nFeats);
+        dists(1) = norm(featsIm - AllFeatsRef(:,iRef));
+
+        Brgb3 = imrotate(Brgb2,180);
+        Bbin3 = imrotate(Bbin2,180);
+        B3 = imrotate(B2,180);
+
+        [~,Nb] = bwlabel(Bbin3);
+        if Nb==0 || Nb==2
+            disp("fail")
+            Brgb3 = Brgb;
+            Bbin3 = Bbin;
+            B3 = B;
+        end
+        
+        figure;
+        sgtitle("Brgb")
+        subplot(1,3,1)
+        imshow(Brgb)
+        subplot(1,3,2)
+        imshow(Brgb2)
+        subplot(1,3,3)
+        imshow(Brgb3)
+
+        figure;
+        sgtitle("B")
+        subplot(1,3,1)
+        imshow(B)
+        subplot(1,3,2)
+        imshow(B2)
+        subplot(1,3,3)
+        imshow(B3)
+
+        figure;
+        sgtitle("Bbin")
+        subplot(1,3,1)
+        imshow(Bbin)
+        subplot(1,3,2)
+        imshow(Bbin2)
+        subplot(1,3,3)
+        imshow(Bbin3)
+    end
     
     
 end
