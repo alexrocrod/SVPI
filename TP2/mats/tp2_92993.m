@@ -13,9 +13,37 @@
 
 %% Falhas
 
-% Falhas bin? 11a13,24a27 >> fundos diferentes cores
 % falha imgidx = 2 nas bolachas iref=5
 % falhas imgIdx=4 para oreos e vermelhas
+% idxImg=6 varios fails e quase tudo classificado como uma ref
+% idxImg=7 considera OK algumas partidas
+% idxImg=8 fail total getSubImages
+% idxImg=9 fail oriB
+% idxImg=10 fail oriB
+
+% De volta a B>0
+% idxImg=11 quase bem
+% idxImg=12 volta a por os fundos
+% idxImg=13 volta todo o fundo
+% idxImg=14 fundo preto, 3 partidas consideradas OK, tudo no mesmo Kref
+% idxImg=15 menos 2 partidas, mais 1 OK, outra perde-se?
+% idxImg=16 menos 2 partidas, mais 1 OK, outra perde-se? (same da 15)
+% idxImg=17 menos 3 OK
+% idxImg=18 1 partida foi OK
+% idxImg=19 4 partidas a mais, 15 OK a menos
+% idxImg=20 6 OKs foram partidas
+% idxImg=21 fail regions
+% idxImg=22 5 migalhas border, 40 partidas a mais, 13 ok a menos
+% idxImg=23 2 partidas foram OK
+% idxImg=24 2 OK foram partidas
+% idxImg=25 bue mialhas border, 5 border a mais, 25 partidas a mais, 16 OK a menos
+% idxImg=26 nenhuma OK, poucas no resto tambem
+% idxImg=27 fail regions
+% idxImg=28 2 partidas a menos, 1 ok a mais
+% idxImg=29 2 partidas a menos
+% idxImg=30 1 border a menos, 3 partidas a menos
+
+
 
 %% 
 
@@ -26,6 +54,46 @@ function NumMec = tp2_92993()
     clear all
     clc
 
+    %% DATA
+    FundoLims = zeros(6,3,2);
+
+    FundoLims(:,:,1)=[  0.125001907377737	0.0745098039215686	0.898039215686275
+                        0.447913328755627	0.183901731898985	0.231372549019608
+                        0.488883802548257	0.120683604180972	0.741176470588235
+                        0.631311512932021	0.529411764705882	0.0823529411764706
+                        0.583337148088808	0.230762188143740	0.0862745098039216
+                        0.215442130159457	0.168780041199359	0.733333333333333];
+
+
+    FundoLims(:,:,2)=[  0.190478370336461	0.162386511024643	1
+                        0.600000000000000	1	                0.984313725490196
+                        0.565590905622950	0.790814068818189	0.996078431372549
+                        0.685191119249256	1	                0.227450980392157
+                        0.866666666666667	0.704921034561685	0.286274509803922
+                        0.268024719615473	0.545448996719310	0.956862745098039];
+
+    AllFeatsRef=[   0.851757421935144	0.776536487873463	0.510835929768854	0.591310150603512	0.762683556835130	0.409440149116653	0.693367234603474	0.825033468306951	0.391962846012778	0.454997664459511	0.579605935638551	0.540806950963776	0.751610142929411	0.604613562596737	0.529719236915157	0.602079718756263	0.119561056745928	0.204589756481160	0.607132849584929	0.504846328775400	0.614112891171732	0.549581471933048	0.610448753462676	0.557517629858993	0.724518735995067	0.697333538727858	0.569078239703594	0.392564125082701
+                    0.667890007872159	0.482861652772511	0.356984372402582	0.421177853857587	0.478931857103038	0.249924944070909	0.646081397231055	0.490997850692844	0.229720585522532	0.369524441163979	0.371631139502426	0.322822109036032	0.495912292542777	0.398282141139289	0.421917826657947	0.429879283026321	0.0977377819814778	0.180394632014547	0.483705903264233	0.267890692862511	0.377960132077778	0.307726861236300	0.545508228776282	0.478937478500177	0.605678857005266	0.585887744547872	0.536073990517136	0.371127465617478
+                    0.364205506845117	0.0208778215908343	0.164601972821978	0.202811062696693	0.202958055260017	0.152009197461371	0.484374751797865	0.225464430066816	0.0997661237525818	0.246697117836050	0.134652099181641	0.107475171166373	0.268396318025101	0.197434933569389	0.245258986207018	0.269946425034674	0.0962885154061608	0.166975493418939	0.297087890257416	0.114772616363621	0.176805130922776	0.0624904059984650	0.416149041333989	0.330947389920888	0.407564301220585	0.383442632571171	0.514617536561157	0.358585588908595
+                    0.851757421935144	0.776536487873463	0.510835929768854	0.591310150603512	0.762683556835130	0.409440149116653	0.693367536216197	0.825033468306951	0.391962846012778	0.454997664459511	0.579605935638551	0.540806950963776	0.751610142929411	0.604613562596737	0.529719236915157	0.602079718756263	0.119566412423553	0.204649366386924	0.607132849584929	0.504846328775400	0.614112891171732	0.549581471933048	0.610476888816541	0.557893661850737	0.724518735995067	0.697333538727858	0.569078239703594	0.392804524616656
+                    0.0763256443439214	0.0634108204082636	0.0579644574833433	0.0647377341080383	0.0593242141782367	0.0328714018073162	0.0838656939805354	0.0630001066491051	0.0482651764354248	0.0663446521593569	0.0609389422941789	0.0544625035482754	0.0532092961546371	0.0412927230992731	0.0637984156555873	0.0680360571328213	-0.00629007846385020	0.0199744398426183	0.0613859144821097	0.0475189710684544	0.0573935434459818	0.0511254681015161	0.0763982087119962	0.0679412840482279	0.0537980047906273	0.0549540669010531	0.0747308840265686	0.0557370190027638
+                    0.380640968561193	0.292221721566560	0.397809736937550	0.464076125748464	0.379061635220365	0.363563540445323	0.658483253154052	0.402754556551298	0.227977861763039	0.250262185759679	0.435664382572787	0.425783530115299	0.160470110684082	0.132751146035338	0.408379867761637	0.635484976474678	0.397282026639246	0.516719856455032	0.222439737965310	0.240934451647536	0.247381963370084	0.196840353714737	0.551673629006275	0.730636633487545	0.160228312053522	0.173831136030860	0.554908592577331	0.288800319533892
+                    0.676184205749678	0.564454133544641	0.509791640325040	0.526112411548035	0.510271310163892	0.475886684439938	0.705592498340301	0.566049530775769	0.242397047728854	0.293313465870398	0.643257912003403	0.417047933624112	0.501016790405754	0.483902768785867	0.569554433061810	0.748267425843033	0.309928230586509	0.475428410662386	0.321239150123198	0.265908461927490	0.475353735794006	0.566946702340381	0.625315921725315	0.679054139388796	0.529854324513497	0.629637336463907	0.549331463082860	0.500171154006333
+                    0.774485423331711	0.575924025182647	0.553018415947143	0.499776935637063	0.520986010591176	0.447159804273622	0.679846878868709	0.639863394665673	0.456117418613584	0.584768773080030	0.511561147772029	0.529975056119710	0.536703457422136	0.510879222093352	0.592723517226953	0.635817120014945	0.251164136691115	0.518116881413128	0.502708525971318	0.390916226172285	0.548849164454902	0.575155053728528	0.631073008961371	0.522096938535269	0.524582499676670	0.577882494137158	0.641989092258999	0.522250476545898
+                    1.50786890918283	1.20170403219717	1.09353277177948	1.01280887374803	1.21614651043040	0.993356237071503	1.38219136878898	1.33905463595920	0.844749681369611	1.05453676890898	1.09085595570262	1.01354731795718	1.05557620505136	1.01981936241211	1.32143217860475	1.43163524677329	0.562632214584681	1.06021404382861	0.933481170303420	0.784424303686421	1.06148461204505	1.15122594904025	1.29579216570648	1.13318407736793	1.05799632417507	1.24057969695992	1.24684116972785	1.15668259202905
+                    0.967105084223550	0.790715637799598	0.783016569878732	0.732340172839049	0.793275446763407	0.659666433182826	1.03962676607915	0.841474727914524	0.583616804471436	0.723464009314085	0.916991710700416	0.771118465821523	0.617011296312062	0.598500334062433	0.804881050916472	0.956086362799625	0.472613848338895	0.820660837722109	0.626232056423290	0.593131898689241	0.686473180672640	0.718102562211055	0.966639076923369	0.887742716480942	0.606971540891406	0.758086493368480	0.984743764439938	0.679725556986337
+                    1.53207091815730	1.14897635420823	1.11407938374136	1.15420740770674	1.03663369566605	0.909542980272982	1.40108807840374	1.24335792379475	0.811173183601329	1.03246256207343	1.15452740597292	1.03110427377705	1.24534624028788	1.03312949009112	1.17393088131174	1.32825622897394	0.540282782055593	1.01934279820066	0.930622587255342	0.721250318346421	1.15737313832833	1.18881001478656	1.26586684141500	1.14940430245986	1.08971134733068	1.18412845479226	1.26711871442992	1.03364281937510
+                    0.438462352712190	0.536236806523133	0.323747675892400	0.251193618047179	0.358487622809473	0.197933590658997	0.121668576081582	0.392015244506290	0.670468176413584	0.678318660079544	0.282720851789937	0.270975023484798	0.857733529096273	0.867797007796599	0.270851183121448	0.158553103229933	0.132635353313724	0.0985018381472082	0.712712888821645	0.607891399172778	0.668796199543946	0.748450560285473	0.143985778960761	0.127810988782563	0.857099128710967	0.839592766062695	0.163798400668826	0.485303591979776
+                    0.947560044629749	0.960025141420490	0.992083177601848	0.989624900239425	0.941751922933313	0.964118512573569	0.972992320708057	0.996681337820981	0.991406348011542	0.987092261715521	0.990543420351625	0.985483754772711	0.960171198388721	0.964467005076142	0.993995976361122	0.992442916450441	0.991107012285498	0.992374038429518	0.923397449387601	0.950836172189532	0.915243751546647	0.926762265809571	0.976014171833481	0.978447683211880	1	                0.995176999438097	0.971305691821786	0.979185692541857];
+
+    sizesRefs = [176	197; 165	198; 191	197; 189	192; 211	196; 193	196; 198	197; 216	198; 139	195 ;
+               141	195; 193	196; 190	186; 103	198; 99	196; 206	198; 200	198; 198	196; 195	195; 145	194;
+               164	196; 148	195; 122	196; 190	190; 192	190; 102	198; 108	198; 194	193; 170	197];
+
+    oriRefs = [ 3.38919024622040	1.46852348518252	-21.2005264739338 4.36594225341164	86.0846686159345	7.35814106752544	50.9861987115747 -88.9717264840199	-0.541413482684292	1.83968022026784	-29.9285983834382	-37.3146530651279	-0.219720085201630	-0.158011705759180	76.8122729297615	65.1933090785739	-47.7495263654879	-31.8482857910492	-0.945324350175936	-10.7289926331406	-5.06439439977258	5.62219176743755	51.5618865742229	-80.5126715079722	0	-0.0159581128439894	58.1666067704519	-7.45185780985075];
+
+    bigRefArea = 1.55e4;
+
     %% Init Vars
     NumMec = 92993;
     
@@ -35,12 +103,12 @@ function NumMec = tp2_92993()
 
     addpath('../Seq29x')
 
-    listaF=dir('../Seq29x/svpi2022_TP2_img_*.png');
-    fileExact = fopen("svpi2022_tp2_seq_ALL.txt","r"); nLineExact = 0;
+%     listaF=dir('../Seq29x/svpi2022_TP2_img_*.png');
+%     fileExact = fopen("svpi2022_tp2_seq_ALL.txt","r"); nLineExact = 0;
 
 %     imgRef1 = im2double(imread("../svpi2022_TP2_img_001_01.png"));
-%     lista1=dir('../Seq29x/svpi2022_TP2_img_*1_*.png');
-%     fileExact1 = fopen("svpi2022_tp2_seq_291.txt","r"); nLineExact = 0;
+    listaF=dir('../Seq29x/svpi2022_TP2_img_*1_*.png');
+    fileExact = fopen("svpi2022_tp2_seq_291.txt","r"); nLineExact = 0;
 %     classe = 1;
 
 %     imgRef2 = im2double(imread("../svpi2022_TP2_img_002_01.png"));
@@ -53,9 +121,9 @@ function NumMec = tp2_92993()
     global showplot;
     showplot = false;
 
-    idxImg = 5; showplot = true;
+%     idxImg = 1; showplot = true;
    
-%     for idxImg = 1:MaxImg
+    for idxImg = 28:MaxImg
         fprintf("idxImg:%d\n",idxImg);
 
         imName = listaF(idxImg).name;
@@ -70,55 +138,12 @@ function NumMec = tp2_92993()
 
 %         A = medfilt2(filter2(fspecial("average",3),A));
 
-%         showplot = false;
 
         if showplot
             figure;
             title("A0 RGB")
             imshow(A0)
         end
-
-        %% Reference subimages
-        %%% SUBSTITUIR POR SO PARAMETROS
-        [regionsRef,regionsRGBRef,bigRefArea] = getRefImages(classe);
-
-        regionsGray = regionsRGBRef;
-
-        N = numel(regionsRef);
-        
-        
-        invMRef = zeros(7,N);
-        oriRefs = zeros(N,1);
-        sizesRefs = zeros(N,2);
-        for k=1:N
-            invMRef(:,k) = invmoments(regionsRef{k});
-            regionsRef{k} = logical(regionsRef{k});
-            regionsGray{k} = rgb2gray(regionsRGBRef{k});
-            sizesRefs(k,:) = size(regionsRef{k});
-        end
-
-        
-        if showplot
-            SS = ceil(sqrt(N));
-            figure;
-            title("Regions Ref")
-            for k=1:N
-                subplot(SS,SS,k)
-                imshow(regionsRef{k})
-                xlabel(k)
-            end
-            figure;
-            title("Regions RGB Ref")
-            for k=1:N
-                subplot(SS,SS,k)
-                imshow(regionsRGBRef{k})
-                xlabel(k)
-            end
-        end
-
-        nFeats = 13;
-        AllFeatsRef = getFeatures(regionsRef,regionsGray,regionsRGBRef,nFeats);
-
 
         %% Vars
 %         ObjBord = 0; % numero de objs a tocar o bordo (nao para classificar)
@@ -160,36 +185,14 @@ function NumMec = tp2_92993()
 
         % Find other subimages
 %         try 
-        [regions,regionsRGB,~,ObjBord] = getSubImages(A,minSize,cutx,cuty,relSizes,minWidth,extend,fmaskRot,A0,minAreaMigalha,minSpare);
+        [regions,regionsRGB,~,ObjBord] = getSubImages(A,minSize,cutx,cuty,relSizes,minWidth,extend,fmaskRot,A0,minAreaMigalha,minSpare,FundoLims);
 %         catch
 %             fprintf(">>>>>>>>>>>>>>>>fail binarization %d\n",idxImg)
 %             continue
 %         end
 
-%         return
-
-%         
-%         SS = ceil(sqrt(N));
-
         N = numel(regions);
         
-%         count = 1;
-%         for k=1:N
-%             rBin = regions{k} > 0;
-%             if mean(rBin) < 0.9  % Detetar Partidas <<< MUDAR
-% %                 str{k} = sprintf("partida,k:%d\n",k);
-% %                 fprintf(str{k})
-% %                 ObjPart = ObjPart + 1;
-%             else
-% %                 str{k} = sprintf("OK,k:%d\n",k);
-% %                 ObjOK = ObjOK + 1;
-%                 regionsOK{count} = regions{k};
-%                 regionsOKRGB{count} = regionsRGB{k};
-%                 count = count + 1;
-%             end
-%         end
-
-%         invM = zeros(7,N);
    
 
         if showplot
@@ -213,8 +216,8 @@ function NumMec = tp2_92993()
         %% Compare
 
         
-        matchs = zeros(k,1);
-        resx = zeros(k,1);
+        matchs = zeros(N,1);
+        resx = zeros(N,1);
         partidas = [];
 
         fanKs = [];
@@ -224,10 +227,8 @@ function NumMec = tp2_92993()
             fanKs = 5;
         end
 
+        nFeats = 13;
         for k=1:N
-%             invM(:,k) = invmoments(regions{k});
-%             [kRef,res] = getBestMatch(invM(:,k),invMRef);
-%             [kRef,res,part] = getBestMatchFull(regionsRGB{k},regionsRGBRef);
             
             [kRef,res,part,str] = getBestMatchv2(regionsRGB{k}, AllFeatsRef, oriRefs, sizesRefs, nFeats, fanKs);
             
@@ -360,191 +361,12 @@ function NumMec = tp2_92993()
 
         writetable(T,'tp2_92993.txt', 'WriteVariableNames',false, 'WriteMode','append')
 
-%     end
+    end
 
         if showplot
             save
         end
     
-    
-end
-
-function res = getDiffRGB(img1,img2)
-    ola = imresize(img1,'OutputSize',size(img2,[1 2]));
-    res = mean(img2 - ola,'all');
-end
-
-function [kRef,minres,part] = getBestMatchFull(img1,regionsRGBRef)
-    minresT = zeros(length(regionsRGBRef),1);
-    
-%     for k=1:length(regionsRGBRef)
-%         ola = imresize(img1,'OutputSize',size(regionsRGBRef{k},[1 2]));
-% %         ola2 = sum(regionsRGBRef{k} - ola,'all');
-%         minresT(k) = sum(abs(regionsRGBRef{k} - ola),'all');
-%         fprintf("k:%d,Totaldiff:%.3f\n",k,minresT(k))
-%     end
-% 
-%     [minres,kRef] = min(minresT); 
-%     part = false;
-%     
-%     return
-
-    % RGB Images
-    for i=1:3
-        invM = invmoments(img1(:,:,i));
-        for k = 1:length(regionsRGBRef)
-            img2 = regionsRGBRef{k};
-            invMRef = invmoments(img2(:,:,i));
-
-%             imgB = imresize(img1(:,:,i),size(img2(:,:,i)));
-%             invM = invmoments(imgB);
-    
-            elem = invMRef./sum(invMRef);
-            invM = invM./sum(invM);
-    
-       %         res = sum(abs((elem-invM)./elem));
-    
-            res = sqrt(sum((elem-invM).^2)); % Euclidean Distance
-    
-            minresT(k) = minresT(k) + res;            
-        end
-    end
-
-    % GrayScale Images
-    img1 = rgb2gray(img1);
-    invM = invmoments(img1);
-
-    for k = 1:length(regionsRGBRef)
-        img2 = rgb2gray(regionsRGBRef{k});
-        invMRef = invmoments(img2);
-
-%         imgB = imresize(img1,size(img2));
-%         invM = invmoments(imgB);
-
-        elem = invMRef./sum(invMRef);
-        invM = invM./sum(invM);
-
-   %         res = sum(abs((elem-invM)./elem));
-
-        res = sqrt(sum((elem-invM).^2)); % Euclidean Distance
-
-        minresT(k) = minresT(k) + res;            
-    end
-    
-    [minres,kRef] = min(minresT); 
-
-    imgPrev = img1;
-
-    img1 = img1 > 0.01;
-    img1 = bwmorph(img1,'close',inf);
-    img1 = imfill(img1,'holes');
-    
-    img2 = rgb2gray(regionsRGBRef{kRef}) > 0.01;
-    img2 = bwmorph(img2,'close',inf);
-    img2 = imfill(img2,'holes');
-
-    img1 = imresize(img1,size(img2));
-
-%     figure(27)
-%     subplot(1,2,1)
-%     imshow(img1)
-%     subplot(1,2,2)
-%     imshow(img2)
-%     pause(2)
-
-    A = zeros(2,1);
-    P = zeros(2,1);
-    Ap = zeros(2,1);
-
-    % Areas
-    A(1) = nnz(img1);
-    A(2) = nnz(img2);
-
-    % Perimeter
-    P(1) = nnz(bwperim(img1));
-    P(2) = nnz(bwperim(img2));
-    
-
-    isRound(1) = 4*pi*A(1)/P(1)^2;
-    isRound(2) = 4*pi*A(2)/P(2)^2;
-
-    isRoundRef = ismember(kRef,[3,4,6,7,11,12,15,16,17,18,23,24,27,28]);
-
-    % P/A
-    Ap(1) = P(1)/A(1);
-    Ap(2) = P(2)/A(2);
-
-%     ApNorm = P1*A2/A1 / A1 * A2 P(2)
-    ApNorm = P(1)/P(2) / A(1)^2 * A(1) ^ 2;
-
-    Ap = sort(Ap);
-    A = sort(A);
-    P = sort(P);
-
-    part = false;
-
-%     ths = [1.1 1.3 1.1 0.35];
-%     ths = [1.2 100 1.2 0.35 0.5 0.94];
-    ths = [1.2 100 100 0.8 0.7 0.8 0.16 0.95];
-
-    ths(6) = 1-ths(6);
-    isRound = abs(1-isRound);
-
-    temp1 = imgPrev;
-    temp1(imgPrev<0.01) = nan;
-    avgColor(1) = mean(temp1,"all","omitnan");
-
-    temp2 = regionsRGBRef{kRef};
-    temp2(regionsRGBRef{kRef}<0.01) = nan;
-    avgColor(2) = mean(temp2,"all","omitnan");
-
-%     if (Ap(2) > ths(1) * Ap(1) ...
-    if (ApNorm > ths(1)  ...
-            || A(2) > ths(2) * A(1) ...
-            || P(2) > ths(3) * P(1) ...
-            || minres > ths(4) ...
-            || mean(img1,'all') < ths(5) * mean(img2,'all')  ...
-            || (isRound(1) > ths(6) && isRoundRef) ... % && isRound(2) < ths(6)) invert <
-            || getDiffRGB(imgPrev,regionsRGBRef{kRef}) > ths(7) ...
-            || avgColor(1) < ths(8) * avgColor(2))
-%     if (Ap(2) > ths(1) * Ap(1) && A(2) > ths(2) * A(1) &&  P(2) > ths(3) * P(1)) ||  minres > ths(4)
-        part = true;
-        fprintf("fail ")
-
-
-        if ApNorm > ths(1) %Ap(2) > ths(1) * Ap(1) 
-%             fprintf("Ap;%.2f ",Ap(2)/Ap(1))   
-            fprintf("Ap;%.2f ",ApNorm)   
-        end
-        if A(2) > ths(2) * A(1) 
-            fprintf("A;%.2f ",A(2)/A(1))   
-        end
-        if P(2) > ths(3) * P(1)
-            fprintf("P:%.2f ",P(2)/P(1))       
-        end
-
-        if minres > ths(4)
-            fprintf("MR:%.2f ",minres)       
-        end
-
-        if mean(img1,'all') < ths(5) * mean(img2,'all')
-            fprintf("mean:%.2f ",mean(img1,'all')/mean(img2,'all'))
-        end
-
-        if (isRound(1) > ths(6) && isRoundRef)
-            fprintf("round: %.2f %2f ",isRound(1), isRound(2))
-        end
-
-        if getDiffRGB(imgPrev,regionsRGBRef{kRef}) > ths(7)
-           fprintf("diffRGB: %.2f ",getDiffRGB(imgPrev,regionsRGBRef{kRef}))
-        end
-
-        if avgColor(1) < ths(8) * avgColor(2)
-            fprintf("diffColor: %.2f ",avgColor(1)/avgColor(2))
-        end
-
-        fprintf("\n")
-    end
     
 end
 
@@ -780,7 +602,8 @@ function B = maskComplex(A0,minAreaMigalha)
     end
 end
 
-function [regions,regionsRGB,fullMask,countBord] = getSubImages(A,minSize,cutx,cuty,relSizes,minWidth,extend,fmaskPrev,imgRef,minAreaMigalha,minSparse)
+function [regions,regionsRGB,fullMask,countBord] = getSubImages(A,minSize,cutx,cuty,relSizes, ...
+    minWidth,extend,fmaskPrev,imgRef,minAreaMigalha,minSparse,FundosLims)
     % get all subimages(regions)
 
 %     B = A;
@@ -794,7 +617,20 @@ function [regions,regionsRGB,fullMask,countBord] = getSubImages(A,minSize,cutx,c
 
     global showplot;
 
-    
+    fundoUsed = 0;
+    for i=1:length(FundosLims)
+        [AnoF,mask] = removeFundoDado(imgRef,FundosLims(i,:,:));
+        if mean(mask,"all")<0.3
+            A = rgb2gray(AnoF);
+            imgRef = AnoF;
+            fprintf("fundo n%d",i)
+            fundoUsed = i;
+            break
+        end
+    end
+
+%     if fundoUsed
+%     end
     E = maskComplex(imgRef,minAreaMigalha);
 %     E = E(2:end-1,2:end-1);
 
@@ -995,18 +831,6 @@ function [regions,regionsRGB,fullMask,countBord] = getSubImages(A,minSize,cutx,c
 
 end
 
-function features = getFeatures(regions,regionsGray,regionsRGB,nFeats)
-    N = numel(regions);
-    features = zeros(nFeats,N);
-    for k=1:N
-        A = regionsGray{k};
-        Argb = regionsRGB{k};
-        Abin = regions{k};
-        features(:,k) = getFeats(Argb,A,Abin,nFeats);
-    end
-    
-end
-
 function [kRef,minres,part,str] = getBestMatchv2(img1, AllFeatsRef, oriRefs, sizesRefs, nFeats, fanKs)
 
     global showplot;
@@ -1025,15 +849,26 @@ function [kRef,minres,part,str] = getBestMatchv2(img1, AllFeatsRef, oriRefs, siz
 
     B = rgb2gray(img1);
     Brgb = img1;
-    Bbin = B;
-    Bbin = bwareaopen(Bbin,10);
+    Bbin = B>0; % Bbin = B
+%     Bbin = imbinarize(B,0.1); % 0.1
+    Bbin = bwareaopen(Bbin,100); % 10
 
-    oriB = regionprops(Bbin,'Orientation').Orientation;
+%     figure;
+%     subplot(1,3,1)
+%     imshow(img1)
+%     subplot(1,3,2)
+%     imshow(B)
+%     subplot(1,3,3)
+%     imshow(Bbin)
+    
     eulerN = 1;
     for iRef=1:Nref
         oriRef = oriRefs(iRef);
         sxRef = sizesRefs(iRef,1);
         syRef = sizesRefs(iRef,2);
+
+        Bbin = bwareaopen(Bbin,sxRef);
+        oriB = regionprops(Bbin,'Orientation').Orientation;
 
         Brgb2 = imrotate(Brgb,oriRef-oriB);
         Bbin2 = imrotate(Bbin,oriRef-oriB);
@@ -1088,23 +923,38 @@ function [kRef,minres,part,str] = getBestMatchv2(img1, AllFeatsRef, oriRefs, siz
         
         if dists(2)<dists(1)
             partidaMean(iRef) =  mean(Bbin3,'all')/solRefs(iRef);
-            partidaDiffY(iRef) = size(Bbin3,2)/syRef;
+%             partidaDiffY(iRef) = size(Bbin3,2)/syRef;
             minres = dists(2);
             eulerN = regionprops(Bbin3,'EulerNumber').EulerNumber;
-            
-            if iRef == 8 && size(Bbin3,2)/sxRef < partidaDiffY(iRef)
-                partidaDiffY(iRef) = size(Bbin3,2)/sxRef;
-            end
 
+            sz1 = sort(size(Bbin3));
+            szRa = sz1(1)/sz1(2);
+
+            sz1 = sort(sizesRefs(iRef,:));
+            szRef = sz1(1)/sz1(2);
+            partidaDiffY(iRef) = szRa/szRef;
+            
+%             if iRef == 8 && size(Bbin3,2)/sxRef < partidaDiffY(iRef)
+%             if size(Bbin3,2)/sxRef < partidaDiffY(iRef)
+%                 partidaDiffY(iRef) = size(Bbin3,2)/sxRef;
+%             end
         else
             partidaMean(iRef) =  mean(Bbin2,'all')/solRefs(iRef);
-            partidaDiffY(iRef) = size(Bbin2,2)/syRef;
+%             partidaDiffY(iRef) = size(Bbin2,2)/syRef;
             minres = dists(1);
             eulerN = regionprops(Bbin2,'EulerNumber').EulerNumber;
 
-            if iRef == 8 && size(Bbin2,2)/sxRef < partidaDiffY(iRef)
-                partidaDiffY(iRef) = size(Bbin2,2)/sxRef;
-            end
+            sz1 = sort(size(Bbin2));
+            szRa = sz1(1)/sz1(2);
+
+            sz1 = sort(sizesRefs(iRef,:));
+            szRef = sz1(1)/sz1(2);
+            partidaDiffY(iRef) = szRa/szRef;
+
+%             if iRef == 8 && size(Bbin2,2)/sxRef < partidaDiffY(iRef)
+%             if size(Bbin2,2)/sxRef < partidaDiffY(iRef)
+%                 partidaDiffY(iRef) = size(Bbin2,2)/sxRef;
+%             end
         end
     end
 
@@ -1116,12 +966,39 @@ function [kRef,minres,part,str] = getBestMatchv2(img1, AllFeatsRef, oriRefs, siz
 
     partidaDiffY = abs(1-partidaDiffY);
     
-%     str = "fine";
     if partidaMean(kRef)<tolPartidasMean || minVal > tolPartidasMinVal || partidaDiffY(kRef) > tolPartidasDiffY 
-%         str = sprintf("Partida\n meanRel=%.2f\n minVal=%d\n DiffY:%d",partidaMean(kRef),minVal,partidaDiffY(kRef));
         part = true;
     end
     if kRef == 19 && eulerN~=0
+%         strOla = sprintf("EulerN:%d",eulerN);
+% 
+%         figure;
+%         sgtitle(strOla)
+%         subplot(1,3,1)
+%         imshow(Brgb)
+%         subplot(1,3,2)
+%         imshow(Brgb2)
+%         subplot(1,3,3)
+%         imshow(Brgb3)
+% 
+%         figure;
+%         sgtitle(strOla)
+%         subplot(1,3,1)
+%         imshow(B)
+%         subplot(1,3,2)
+%         imshow(B2)
+%         subplot(1,3,3)
+%         imshow(B3)
+% 
+%         figure;
+%         sgtitle(strOla)
+%         subplot(1,3,1)
+%         imshow(Bbin)
+%         subplot(1,3,2)
+%         imshow(Bbin2)
+%         subplot(1,3,3)
+%         imshow(Bbin3)
+
         part = true;
     end
     str = sprintf("meanRel=%.2f\n minVal=%d\n DiffY:%d",partidaMean(kRef),minVal,partidaDiffY(kRef));
@@ -1240,4 +1117,21 @@ function Ibin = autobinBW(I)
     if mean(Ibin,'all') > 0.5 % always more black
         Ibin = not(Ibin);
     end
+end
+
+function [B,mask] = removeFundoDado(A,FundoLim)
+    HSV=rgb2hsv(A); H=HSV(:,:,1); S=HSV(:,:,2); V=HSV(:,:,3);
+
+    mask= (H > FundoLim(:,1,1) & H < FundoLim(:,1,2)); %select by Hue
+    mask=mask & (S > FundoLim(:,2,1) & S < FundoLim(:,2,2)); %add a condition for saturation
+    mask=mask & (V > FundoLim(:,3,1) & V < FundoLim(:,3,2)); %add a condition for value
+    mask=~mask; %mask for objects (negation of background)
+    
+    mask = bwmorph(mask,"close",inf);
+    mask = imfill(mask,"holes");
+    
+%     mask0=mask;
+    mask=bwareaopen(mask,1000); %in case we need some cleaning of "small" areas.
+
+    B = mask.*A;
 end
