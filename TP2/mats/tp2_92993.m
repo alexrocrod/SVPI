@@ -21,7 +21,18 @@
 % idxImg=9 fail oriB
 % idxImg=10 fail oriB
 
+
 % De volta a B>0
+% idxImg=1 perfeito
+% idxImg=2 1 imagem classificada mal (a outra versao da vermelha foi partida)
+% idxImg=3
+% idxImg=4
+% idxImg=5
+% idxImg=6
+% idxImg=7
+% idxImg=8
+% idxImg=9
+% idxImg=10
 % idxImg=11 quase bem
 % idxImg=12 volta a por os fundos
 % idxImg=13 volta todo o fundo
@@ -87,8 +98,8 @@ function NumMec = tp2_92993()
                     0.947560044629749	0.960025141420490	0.992083177601848	0.989624900239425	0.941751922933313	0.964118512573569	0.972992320708057	0.996681337820981	0.991406348011542	0.987092261715521	0.990543420351625	0.985483754772711	0.960171198388721	0.964467005076142	0.993995976361122	0.992442916450441	0.991107012285498	0.992374038429518	0.923397449387601	0.950836172189532	0.915243751546647	0.926762265809571	0.976014171833481	0.978447683211880	1	                0.995176999438097	0.971305691821786	0.979185692541857];
 
     sizesRefs = [176	197; 165	198; 191	197; 189	192; 211	196; 193	196; 198	197; 216	198; 139	195 ;
-               141	195; 193	196; 190	186; 103	198; 99	196; 206	198; 200	198; 198	196; 195	195; 145	194;
-               164	196; 148	195; 122	196; 190	190; 192	190; 102	198; 108	198; 194	193; 170	197];
+                 141	195; 193	196; 190	186; 103	198; 99	196; 206	198; 200	198; 198	196; 195	195; 145	194;
+                 164	196; 148	195; 122	196; 190	190; 192	190; 102	198; 108	198; 194	193; 170	197];
 
     oriRefs = [ 3.38919024622040	1.46852348518252	-21.2005264739338 4.36594225341164	86.0846686159345	7.35814106752544	50.9861987115747 -88.9717264840199	-0.541413482684292	1.83968022026784	-29.9285983834382	-37.3146530651279	-0.219720085201630	-0.158011705759180	76.8122729297615	65.1933090785739	-47.7495263654879	-31.8482857910492	-0.945324350175936	-10.7289926331406	-5.06439439977258	5.62219176743755	51.5618865742229	-80.5126715079722	0	-0.0159581128439894	58.1666067704519	-7.45185780985075];
 
@@ -121,9 +132,9 @@ function NumMec = tp2_92993()
     global showplot;
     showplot = false;
 
-%     idxImg = 1; showplot = true;
+    idxImg = 2; showplot = true;
    
-    for idxImg = 28:MaxImg
+%     for idxImg = 28:MaxImg
         fprintf("idxImg:%d\n",idxImg);
 
         imName = listaF(idxImg).name;
@@ -144,6 +155,9 @@ function NumMec = tp2_92993()
             title("A0 RGB")
             imshow(A0)
         end
+
+        %%
+        [regionsRef,regionsRGBRef,~] = getRefImages(classe);
 
         %% Vars
 %         ObjBord = 0; % numero de objs a tocar o bordo (nao para classificar)
@@ -361,7 +375,7 @@ function NumMec = tp2_92993()
 
         writetable(T,'tp2_92993.txt', 'WriteVariableNames',false, 'WriteMode','append')
 
-    end
+%     end
 
         if showplot
             save
@@ -1125,13 +1139,12 @@ function [B,mask] = removeFundoDado(A,FundoLim)
     mask= (H > FundoLim(:,1,1) & H < FundoLim(:,1,2)); %select by Hue
     mask=mask & (S > FundoLim(:,2,1) & S < FundoLim(:,2,2)); %add a condition for saturation
     mask=mask & (V > FundoLim(:,3,1) & V < FundoLim(:,3,2)); %add a condition for value
+
+    mask=bwareaopen(mask,100);
+
     mask=~mask; %mask for objects (negation of background)
-    
-    mask = bwmorph(mask,"close",inf);
-    mask = imfill(mask,"holes");
-    
-%     mask0=mask;
-    mask=bwareaopen(mask,1000); %in case we need some cleaning of "small" areas.
+
+    mask=bwareaopen(mask,100); %in case we need some cleaning of "small" areas.
 
     B = mask.*A;
 end
