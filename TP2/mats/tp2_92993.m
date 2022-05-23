@@ -25,17 +25,17 @@
 % De volta a B>0
 % idxImg=1 perfeito
 % idxImg=2 1 imagem classificada mal (a outra versao da vermelha foi partida)
-% idxImg=3
-% idxImg=4
-% idxImg=5
-% idxImg=6
-% idxImg=7
-% idxImg=8
-% idxImg=9
-% idxImg=10
+% idxImg=3 parte pelo menos uma bolacha
+% idxImg=4 quase bem 
+% idxImg=5 falhas oreos
+% idxImg=6 weird shapes do fundo
+% idxImg=7 quase bem
+% idxImg=8 fail regions
+% idxImg=9 falha binarizacao pq tem noises > tentar binarizar depois cada regiao
+% idxImg=10 algum ruido da poucos erros
 % idxImg=11 quase bem
-% idxImg=12 volta a por os fundos
-% idxImg=13 volta todo o fundo
+% idxImg=12 quase bem
+% idxImg=13 quase bem
 % idxImg=14 fundo preto, 3 partidas consideradas OK, tudo no mesmo Kref
 % idxImg=15 menos 2 partidas, mais 1 OK, outra perde-se?
 % idxImg=16 menos 2 partidas, mais 1 OK, outra perde-se? (same da 15)
@@ -47,9 +47,9 @@
 % idxImg=22 5 migalhas border, 40 partidas a mais, 13 ok a menos
 % idxImg=23 2 partidas foram OK
 % idxImg=24 2 OK foram partidas
-% idxImg=25 bue mialhas border, 5 border a mais, 25 partidas a mais, 16 OK a menos
-% idxImg=26 nenhuma OK, poucas no resto tambem
-% idxImg=27 fail regions
+% idxImg=25 quase bem, nao reconhece algumas pequenas
+% idxImg=26 quase bem
+% idxImg=27 quase bem
 % idxImg=28 2 partidas a menos, 1 ok a mais
 % idxImg=29 2 partidas a menos
 % idxImg=30 1 border a menos, 3 partidas a menos
@@ -66,22 +66,31 @@ function NumMec = tp2_92993()
     clc
 
     %% DATA
-    FundoLims = zeros(6,3,2);
 
-    FundoLims(:,:,1)=[  0.125001907377737	0.0745098039215686	0.898039215686275
-                        0.447913328755627	0.183901731898985	0.231372549019608
-                        0.488883802548257	0.120683604180972	0.741176470588235
-                        0.631311512932021	0.529411764705882	0.0823529411764706
-                        0.583337148088808	0.230762188143740	0.0862745098039216
-                        0.215442130159457	0.168780041199359	0.733333333333333];
+    FundoLims = zeros(8,3,2);
 
+    FundoLims(:,:,1)=[  0.112	0.076	0.911
+                        0.514	0.268	0.188
+                        0.516	0	    0
+                        0.614	0.132	0.019
+                        0.588	0	    0
+                        0.206	0.146	0.519
+                        0.194	0	    0
+                        0.995	0	    0];
+    
+    
+    FundoLims(:,:,2)=[  0.185	0.163	1
+                        0.602	1	    1
+                        0.569	1	    1
+                        0.704	1	    0.493
+                        0.929	1	    1
+                        0.274	1	    1
+                        1	    1	    0.181
+                        0.008	0.014	0.190];
+    
+    minSizesFundos = [100 10 100 10 100 10 1000 10]; 
 
-    FundoLims(:,:,2)=[  0.190478370336461	0.162386511024643	1
-                        0.600000000000000	1	                0.984313725490196
-                        0.565590905622950	0.790814068818189	0.996078431372549
-                        0.685191119249256	1	                0.227450980392157
-                        0.866666666666667	0.704921034561685	0.286274509803922
-                        0.268024719615473	0.545448996719310	0.956862745098039];
+    minAcceptFundo = 0.4;
 
     AllFeatsRef=[   0.851757421935144	0.776536487873463	0.510835929768854	0.591310150603512	0.762683556835130	0.409440149116653	0.693367234603474	0.825033468306951	0.391962846012778	0.454997664459511	0.579605935638551	0.540806950963776	0.751610142929411	0.604613562596737	0.529719236915157	0.602079718756263	0.119561056745928	0.204589756481160	0.607132849584929	0.504846328775400	0.614112891171732	0.549581471933048	0.610448753462676	0.557517629858993	0.724518735995067	0.697333538727858	0.569078239703594	0.392564125082701
                     0.667890007872159	0.482861652772511	0.356984372402582	0.421177853857587	0.478931857103038	0.249924944070909	0.646081397231055	0.490997850692844	0.229720585522532	0.369524441163979	0.371631139502426	0.322822109036032	0.495912292542777	0.398282141139289	0.421917826657947	0.429879283026321	0.0977377819814778	0.180394632014547	0.483705903264233	0.267890692862511	0.377960132077778	0.307726861236300	0.545508228776282	0.478937478500177	0.605678857005266	0.585887744547872	0.536073990517136	0.371127465617478
@@ -132,9 +141,9 @@ function NumMec = tp2_92993()
     global showplot;
     showplot = false;
 
-    idxImg = 2; showplot = true;
+%     idxImg = 7; showplot = true;
    
-%     for idxImg = 28:MaxImg
+    for idxImg = 1:MaxImg
         fprintf("idxImg:%d\n",idxImg);
 
         imName = listaF(idxImg).name;
@@ -188,7 +197,7 @@ function NumMec = tp2_92993()
 
         
 %         minAreaMigalha = 0.05 * bigRefArea;
-        minAreaMigalha = 0.03 * bigRefArea;
+        minAreaMigalha = 0.05 * bigRefArea;
 
         fmaskRot = zeros(size(A));
         cutx = -3; 
@@ -198,12 +207,17 @@ function NumMec = tp2_92993()
         minSpare = 0.4; %0.2 da melhor na img4, melhor binarizacao das bolachas vermelhas??
 
         % Find other subimages
-%         try 
-        [regions,regionsRGB,~,ObjBord] = getSubImages(A,minSize,cutx,cuty,relSizes,minWidth,extend,fmaskRot,A0,minAreaMigalha,minSpare,FundoLims);
-%         catch
-%             fprintf(">>>>>>>>>>>>>>>>fail binarization %d\n",idxImg)
-%             continue
-%         end
+        try 
+        [regions,regionsRGB,~,ObjBord] = getSubImages(A,minSize,cutx,cuty,relSizes,minWidth,extend,fmaskRot,A0,minAreaMigalha,minSpare,FundoLims,minSizesFundos,minAcceptFundo);
+        catch
+            fprintf(">>>>>>>>>>>>>>>>fail binarization %d\n",idxImg)
+            T = table(NumMec, NumSeq, NumImg, ObjBord, ObjPart, ObjOK, beurre, ...
+                choco, confit, craker, fan, ginger, lotus, maria, oreo , ...
+                palmier, parijse, sugar, wafer, zebra);
+
+            writetable(T,'tp2_92993.txt', 'WriteVariableNames',false, 'WriteMode','append')
+            continue
+        end
 
         N = numel(regions);
         
@@ -375,7 +389,7 @@ function NumMec = tp2_92993()
 
         writetable(T,'tp2_92993.txt', 'WriteVariableNames',false, 'WriteMode','append')
 
-%     end
+    end
 
         if showplot
             save
@@ -617,7 +631,7 @@ function B = maskComplex(A0,minAreaMigalha)
 end
 
 function [regions,regionsRGB,fullMask,countBord] = getSubImages(A,minSize,cutx,cuty,relSizes, ...
-    minWidth,extend,fmaskPrev,imgRef,minAreaMigalha,minSparse,FundosLims)
+    minWidth,extend,fmaskPrev,imgRef,minAreaMigalha,minSparse,FundosLims,minSizesFundos,minAcceptFundo)
     % get all subimages(regions)
 
 %     B = A;
@@ -631,15 +645,20 @@ function [regions,regionsRGB,fullMask,countBord] = getSubImages(A,minSize,cutx,c
 
     global showplot;
 
+    minAccept = minAcceptFundo;
     fundoUsed = 0;
+    imgRefOld = imgRef;
     for i=1:length(FundosLims)
-        [AnoF,mask] = removeFundoDado(imgRef,FundosLims(i,:,:));
-        if mean(mask,"all")<0.3
+        [AnoF,mask] = removeFundoDado(imgRefOld,FundosLims(i,:,:),minSizesFundos(i));
+%         if mean(mask,"all") < minAcceptFundo % ALTERAR PARA ACEITAR O MINIMO DOS FUNDOS E
+        fprintf("fundo n%d, mean%.2f \n",i, mean(mask,"all"))
+        if mean(mask,"all") < minAccept % ALTERAR PARA ACEITAR O MINIMO DOS FUNDOS E
+            minAccept = mean(mask,"all");
             A = rgb2gray(AnoF);
             imgRef = AnoF;
-            fprintf("fundo n%d",i)
+            fprintf("Usado fundo n%d, mean%.2f \n",i, minAccept)
             fundoUsed = i;
-            break
+            %break
         end
     end
 
@@ -1133,18 +1152,18 @@ function Ibin = autobinBW(I)
     end
 end
 
-function [B,mask] = removeFundoDado(A,FundoLim)
+function [B,mask] = removeFundoDado(A,FundoLim,minS)
     HSV=rgb2hsv(A); H=HSV(:,:,1); S=HSV(:,:,2); V=HSV(:,:,3);
 
-    mask= (H > FundoLim(:,1,1) & H < FundoLim(:,1,2)); %select by Hue
-    mask=mask & (S > FundoLim(:,2,1) & S < FundoLim(:,2,2)); %add a condition for saturation
-    mask=mask & (V > FundoLim(:,3,1) & V < FundoLim(:,3,2)); %add a condition for value
+    mask= (H >= FundoLim(:,1,1) & H <= FundoLim(:,1,2)); %select by Hue
+    mask=mask & (S >= FundoLim(:,2,1) & S <= FundoLim(:,2,2)); %add a condition for saturation
+    mask=mask & (V >= FundoLim(:,3,1) & V <= FundoLim(:,3,2)); %add a condition for value
 
-    mask=bwareaopen(mask,100);
+    mask=bwareaopen(mask,minS);
 
     mask=~mask; %mask for objects (negation of background)
 
-    mask=bwareaopen(mask,100); %in case we need some cleaning of "small" areas.
+    mask=bwareaopen(mask,minS); %in case we need some cleaning of "small" areas.
 
     B = mask.*A;
 end

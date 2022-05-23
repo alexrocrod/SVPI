@@ -15,4 +15,6 @@ Erro(At==0) = 100; % remove Infs
 
 MediaErros = mean(Erro,1);
 
+grade  = (100 - mean(MediaErros(2:end))) *20/100;
+
 save comparison.mat
