@@ -1,4 +1,4 @@
-function phi = invmoments(F)
+function phi = invmoments2(F)
 %INVMOMENTS Compute invariant moments of image.
 %   PHI = INVMOMENTS(F) computes the moment invariants of the image
 %   F. PHI is a seven-element row vector containing the moment
