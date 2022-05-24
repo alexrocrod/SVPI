@@ -154,10 +154,8 @@ function NumMec = Fasttp2_92993()
         partidas = [];
 
         for k=1:N
-            [kRef,res,part] = getBestMatchv2(regionsRGB{k}, AllFeatsRef, oriRefs, sizesRefs, fanKs);
-            matchs(k) = kRef;
-            resx(k) = res;
-
+            [matchs(k),resx(k),part] = getBestMatchv2(regionsRGB{k}, AllFeatsRef, oriRefs, sizesRefs, fanKs);
+            
             if part
                 partidas = [partidas k];
             else
@@ -472,9 +470,6 @@ function [kRef,minres,part] = getBestMatchv2(img1, AllFeatsRef, oriRefs, sizesRe
     solRefs = AllFeatsRef(end,:);
 
     Nref = length(oriRefs);
-%     partidaMean = zeros(Nref,1);
-%     partidaDiffY = zeros(Nref,1);
-%     dist = zeros(Nref,1);
     partidaMean = 0;
     partidaDiffY = 0;
     minres = 1;
@@ -530,7 +525,7 @@ function [kRef,minres,part] = getBestMatchv2(img1, AllFeatsRef, oriRefs, sizesRe
             partidaMean =  mean(Bbin2,'all')/solRefs(iRef);
             
             if iRef==19
-                eulerN = regionprops(Bbin2,'EulerNumber').EulerNumber;
+                eulerN = regionprops(Bbin2,'EulerNumber').EulerNumber;e
             end
     
             sz1 = sort(size(Bbin2));
@@ -553,7 +548,7 @@ function [kRef,minres,part] = getBestMatchv2(img1, AllFeatsRef, oriRefs, sizesRe
 
     partidaDiffY = abs(1-partidaDiffY);
     
-    if partidaMean< tolPartidasMean || minres > tolPartidasMinVal || partidaDiffY > tolPartidasDiffY || eulerN ~= 0
+    if partidaMean< tolPartidasMean || minres > tolPartidasMinVal || partidaDiffY > tolPartidasDiffY || (kRef==19 && eulerN ~= 0)
         part = true;
     end
 end

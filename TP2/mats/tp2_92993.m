@@ -4,23 +4,7 @@
 % Trabalho Pratico 2
 
 
-%% Ideias
-
-% Oreos pretas, bolacha vermelha
-% encontrar zona oreo mal binarizada e tentar tratar so dessa zona
-% estender a circulos as bolachas para perceber se sao partidas
-
-
 %% Falhas
-
-% falha imgidx = 2 nas bolachas iref=5
-% falhas imgIdx=4 para oreos e vermelhas
-% idxImg=6 varios fails e quase tudo classificado como uma ref
-% idxImg=7 considera OK algumas partidas
-% idxImg=8 fail total getSubImages
-% idxImg=9 fail oriB
-% idxImg=10 fail oriB
-
 
 % De volta a B>0
 % idxImg=1 perfeito
@@ -117,27 +101,26 @@ function NumMec = tp2_92993()
 
     bigRefArea = 1.55e4;
 
+    minSize = 0.1; % 0.2  min nnz for aceptable boundary (percentage)
+    minWidth = 0.01; % 0.04 min width of subimage (percentage)
+
+    minAreaMigalha = 0.05 * bigRefArea;
+
+    relSizes = 5; %3
+    minSpare = 0.4; %0.2 da melhor na img4, melhor binarizacao das bolachas vermelhas??
+
+    fanKs = [9 10];
+
     %% Init Vars
     NumMec = 92993;
     
     %% Open Image
     
-%     addpath('../')
 
     addpath('../Seq29x')
-
-%     listaF=dir('../Seq29x/svpi2022_TP2_img_*.png');
-%     fileExact = fopen("svpi2022_tp2_seq_ALL.txt","r"); nLineExact = 0;
-
-%     imgRef1 = im2double(imread("../svpi2022_TP2_img_001_01.png"));
     listaF=dir('../Seq29x/svpi2022_TP2_img_*1_*.png');
     fileExact = fopen("svpi2022_tp2_seq_291.txt","r"); nLineExact = 0;
     classe = 1;
-
-%     imgRef2 = im2double(imread("../svpi2022_TP2_img_002_01.png"));
-%     listaF=dir('../Seq29x/svpi2022_TP2_img_*2_*.png');
-%     fileExact = fopen("svpi2022_tp2_seq_292.txt","r"); nLineExact = 0;
-%     classe = 2;
 
     MaxImg = size(listaF,1);
 
@@ -149,10 +132,10 @@ function NumMec = tp2_92993()
 %%
     [regionsRef,regionsRGBRef,~] = getRefImages(classe);
    
-    for idxImg = 1:MaxImg
+%     for idxImg = 1:MaxImg
         tic
-%     showplot = true;
-%     for idxImg = 1
+    showplot = true;
+    for idxImg = 2
         fprintf("idxImg:%d\n",idxImg);
 
         imName = listaF(idxImg).name;
@@ -163,8 +146,6 @@ function NumMec = tp2_92993()
         A0 = im2double(imread(imName));
 
         A = im2double(rgb2gray(imread(imName)));
-
-%         A = medfilt2(filter2(fspecial("average",3),A));
 
 
         if showplot
@@ -197,25 +178,12 @@ function NumMec = tp2_92993()
         zebra = 0;
 
         %% SubImages
-        
-%         A = F;
-        minSize = 0.1; % 0.2  min nnz for aceptable boundary (percentage)
-        minWidth = 0.01; % 0.04 min width of subimage (percentage)
-
-        
-%         minAreaMigalha = 0.05 * bigRefArea;
-        minAreaMigalha = 0.05 * bigRefArea;
 
         fmaskRot = zeros(size(A));
-        cutx = -3; 
-        cuty = -3; 
-        extend = false; %true;
-        relSizes = 5; %3
-        minSpare = 0.4; %0.2 da melhor na img4, melhor binarizacao das bolachas vermelhas??
 
         % Find other subimages
 %         try 
-        [regions,regionsRGB,~,ObjBord] = getSubImages(A,minSize,cutx,cuty,relSizes,minWidth,extend,fmaskRot,A0,minAreaMigalha,minSpare,FundoLims,minSizesFundos,minAcceptFundo,maxAcceptFundo);
+        [regions,regionsRGB,~,ObjBord] = getSubImages(A,minSize,relSizes,minWidth,fmaskRot,A0,minAreaMigalha,minSpare,FundoLims,minSizesFundos,minAcceptFundo,maxAcceptFundo);
 %         catch
 %             fprintf(">>>>>>>>>>>>>>>>fail binarization %d\n",idxImg)
 %             T = table(NumMec, NumSeq, NumImg, ObjBord, ObjPart, ObjOK, beurre, ...
@@ -228,8 +196,7 @@ function NumMec = tp2_92993()
 
         N = numel(regions);
         
-   
-
+  
         if showplot
             SS = ceil(sqrt(N));
             figure;
@@ -255,19 +222,11 @@ function NumMec = tp2_92993()
         resx = zeros(N,1);
         partidas = [];
 
-        fanKs = [];
-        if classe==1
-            fanKs = [9 10];
-        elseif classe==2
-            fanKs = 5;
-        end
-
-        nFeats = 13;
         for k=1:N
+            fprintf("Testing k %d\n",k)
+            [kRef,res,part,str] = getBestMatchv2(regionsRGB{k}, AllFeatsRef, oriRefs, sizesRefs, fanKs);
             
-            [kRef,res,part,str] = getBestMatchv2(regionsRGB{k}, AllFeatsRef, oriRefs, sizesRefs, nFeats, fanKs);
-            
-            if  showplot %&& kRef == 19
+            if  showplot
                 figure;
                 subplot(1,2,1)
                 imshow(regionsRGB{k})
@@ -296,78 +255,39 @@ function NumMec = tp2_92993()
             end
         end
 
-        %% Descartar partidas
-
-        if showplot
-            resx
-            partidas
-        end
-
 
         %% Contar
         
         for k=1:N
             if ismember(k,partidas), continue, end
-            if classe == 1
-                if matchs(k) < 3
-                    beurre = beurre + 1;
-                elseif matchs(k) < 5
-                    choco = choco + 1;
-                elseif matchs(k) < 7
-                    confit = confit + 1;
-                elseif matchs(k) < 9
-                    craker = craker + 1;
-                elseif matchs(k) < 11
-                    fan = fan + 1;
-                elseif matchs(k) < 13
-                    ginger = ginger + 1;
-                elseif matchs(k) < 15
-                    lotus = lotus + 1;
-                elseif matchs(k) < 17
-                    maria = maria + 1;
-                elseif matchs(k) < 19
-                    oreo = oreo + 1;
-                elseif matchs(k) < 21
-                    palmier = palmier + 1;
-                elseif matchs(k) < 23
-                    parijse = parijse + 1;
-                elseif matchs(k) < 25
-                    sugar = sugar + 1;
-                elseif matchs(k) < 27
-                    wafer = wafer + 1;
-                else
-                    zebra = zebra + 1;
-                end
+            if matchs(k) < 3
+                beurre = beurre + 1;
+            elseif matchs(k) < 5
+                choco = choco + 1;
+            elseif matchs(k) < 7
+                confit = confit + 1;
+            elseif matchs(k) < 9
+                craker = craker + 1;
+            elseif matchs(k) < 11
+                fan = fan + 1;
+            elseif matchs(k) < 13
+                ginger = ginger + 1;
+            elseif matchs(k) < 15
+                lotus = lotus + 1;
+            elseif matchs(k) < 17
+                maria = maria + 1;
+            elseif matchs(k) < 19
+                oreo = oreo + 1;
+            elseif matchs(k) < 21
+                palmier = palmier + 1;
+            elseif matchs(k) < 23
+                parijse = parijse + 1;
+            elseif matchs(k) < 25
+                sugar = sugar + 1;
+            elseif matchs(k) < 27
+                wafer = wafer + 1;
             else
-                if matchs(k) == 1
-                    beurre = beurre + 1;
-                elseif matchs(k) == 2
-                    choco = choco + 1;
-                elseif matchs(k) == 3
-                    confit = confit + 1;
-                elseif matchs(k) == 4
-                    craker = craker + 1;
-                elseif matchs(k) == 5
-                    fan = fan + 1;
-                elseif matchs(k) == 6
-                    ginger = ginger + 1;
-                elseif matchs(k) == 7
-                    lotus = lotus + 1;
-                elseif matchs(k) == 8
-                    maria = maria + 1;
-                elseif matchs(k) == 9
-                    oreo = oreo + 1;
-                elseif matchs(k) == 10
-                    palmier = palmier + 1;
-                elseif matchs(k) == 11
-                    parijse = parijse + 1;
-                elseif matchs(k) == 12
-                    sugar = sugar + 1;
-                elseif matchs(k) == 13
-                    wafer = wafer + 1;
-                else
-                    zebra = zebra + 1;
-                end
+                zebra = zebra + 1;
             end
         end
         
@@ -638,18 +558,10 @@ function B = maskComplex(A0,minAreaMigalha)
     end
 end
 
-function [regions,regionsRGB,fullMask,countBord] = getSubImages(A,minSize,cutx,cuty,relSizes, ...
-    minWidth,extend,fmaskPrev,imgRef,minAreaMigalha,minSparse,FundosLims,minSizesFundos,minAcceptFundo,maxAcceptFundo)
+function [regions,regionsRGB,fullMask,countBord] = getSubImages(A,minSize,relSizes, ...
+    minWidth,fmaskPrev,imgRef,minAreaMigalha,minSparse,FundosLims,minSizesFundos,minAcceptFundo,maxAcceptFundo)
     % get all subimages(regions)
 
-%     B = A;
-%     T = adaptthresh(B);
-% 
-%     E = imbinarize(A,T);
-% 
-%     if mean(E,'all') > 0.3
-%         E = not(E);
-%     end
 
     global showplot;
 
@@ -671,18 +583,9 @@ function [regions,regionsRGB,fullMask,countBord] = getSubImages(A,minSize,cutx,c
         end
     end
 
-%     if ~fundoUsed
-    if ~fundoUsed || fundoUsed==7
+    if ~fundoUsed 
         fprintf("Not using a fundo\n")
-        E = maskComplex(imgRef,minAreaMigalha);
-    %     E = E(2:end-1,2:end-1);
-    
-    %     E = bwareaopen(E,10);
-        E = bwmorph(E,"bridge",inf);
-        E = bwmorph(E,"close",inf);
-        E = imfill(E,"holes");
-        E = bwareaopen(E,100);
-    
+        E = maskComplex(imgRef,minAreaMigalha);    
     else
         fprintf("Usou fundo n%d, mean%.2f \n",fundoUsed, maxAccept)
 %         E = bwareaopen(mask,minAreaMigalha);
@@ -738,29 +641,6 @@ function [regions,regionsRGB,fullMask,countBord] = getSubImages(A,minSize,cutx,c
         sizesT = sort(size(mask0s));
         if sizesT(2) > relSizes * sizesT(1) || sizesT(1) < minWidth * sx, continue, end
     
-        % estender a quadrilateros
-        if extend
-            idxs = find(max(mask,[],2));
-            minx = max(idxs(1)+cutx,1);
-            maxx = min(idxs(end)-cutx,sx);
-            idxs = find(max(mask));
-            miny = max(idxs(1)+cuty,1);
-            maxy = min(idxs(end)-cuty,sy);
-            mask = zeros(size(A));
-            mask(minx:maxx,miny:maxy) = 1;
-
-            % remove already found
-            if nnz(mask.*fmaskPrev), continue, end
-
-            % clean all zeros cols and rows
-            mask0s = mask(:,any(mask,1));
-            mask0s = mask0s(any(mask0s,2),:);
-
-            % remove weird shapes
-            sizesT = sort(size(mask0s));
-            if sizesT(2) > relSizes * sizesT(1) || sizesT(1) < minWidth * sx , continue, end
-        end
-
         mask = bwmorph(mask,"dilate");
         mask = bwmorph(mask,"close",inf);
         mask = imfill(mask,"holes");
@@ -875,7 +755,7 @@ function [regions,regionsRGB,fullMask,countBord] = getSubImages(A,minSize,cutx,c
 
 end
 
-function [kRef,minres,part,str] = getBestMatchv2(img1, AllFeatsRef, oriRefs, sizesRefs, nFeats, fanKs)
+function [kRef,minres,part,str] = getBestMatchv2(img1, AllFeatsRef, oriRefs, sizesRefs, fanKs)
 
     global showplot;
 
@@ -883,9 +763,10 @@ function [kRef,minres,part,str] = getBestMatchv2(img1, AllFeatsRef, oriRefs, siz
     solRefs = AllFeatsRef(end,:);
 
     Nref = length(oriRefs);
-    partidaMean = zeros(Nref,1);
-    partidaDiffY = zeros(Nref,1);
-    dist = zeros(Nref,1);
+    partidaMean = 0;
+    partidaDiffY = 0;
+    minres = 1;
+    kRef = 1;
     
     tolPartidasMean = 0.7;
     tolPartidasMinVal = 3.5e-1;% 3e-1;
@@ -905,248 +786,106 @@ function [kRef,minres,part,str] = getBestMatchv2(img1, AllFeatsRef, oriRefs, siz
 %     subplot(1,3,3)
 %     imshow(Bbin)
     
-    eulerN = 1;
+    eulerN = 0;
+    oriB = regionprops(Bbin,'Orientation').Orientation;
     for iRef=1:Nref
         oriRef = oriRefs(iRef);
         sxRef = sizesRefs(iRef,1);
-        syRef = sizesRefs(iRef,2);
-
-        Bbin = bwareaopen(Bbin,sxRef);
-        oriB = regionprops(Bbin,'Orientation').Orientation;
 
         Brgb2 = imrotate(Brgb,oriRef-oriB);
-        Bbin2 = imrotate(Bbin,oriRef-oriB);
+%         Bbin2 = imrotate(Bbin,oriRef-oriB);
         B2 = imrotate(B,oriRef-oriB);
 
-        Bbin2 = bwareaopen(Bbin2,sxRef);
-        Bbin2 = Bbin2(:,any(Bbin2,1));
-        Bbin2 = Bbin2(any(Bbin2,2),:);
+%         Bbin2 = bwareaopen(Bbin2,sxRef);
+%         Bbin2 = Bbin2(:,any(Bbin2,1));
+%         Bbin2 = Bbin2(any(Bbin2,2),:);
         
         Brgb2 = Brgb2(:,any(B2,1),:);
         Brgb2 = Brgb2(any(B2,2),:,:);
 
-        B2 = B2(:,any(B2,1));
-        B2 = B2(any(B2,2),:);
+%         B2 = B2(:,any(B2,1));
+%         B2 = B2(any(B2,2),:);
 
         Brgb2 = imresize(Brgb2,[sxRef NaN]);
-        Bbin2 = imresize(Bbin2,[sxRef NaN]);
-        B2 = imresize(B2,[sxRef NaN]);
+%         Bbin2 = imresize(Bbin2,[sxRef NaN]);
+%         B2 = imresize(B2,[sxRef NaN]);
+        B2 = rgb2gray(Brgb2);
+        Bbin2 = B2>0;
+        Bbin2 = bwareaopen(Bbin2, 100); %sxRef
 
-        Bbin2 = bwmorph(Bbin2,"close",3);
-%         Bbin2 = bwmorph(Bbin2,"dilate",1);
-%         Bbin2 = bwmorph(Bbin2,"fill",10);
-        Bbin2 = bwareaopen(Bbin2, sxRef);
+%         Bbin2 = bwmorph(Bbin2,"close",3);
+% %         Bbin2 = bwmorph(Bbin2,"dilate",1);
+% %         Bbin2 = bwmorph(Bbin2,"fill",10);
+%         Bbin2 = bwareaopen(Bbin2, sxRef);
         
 
         [~,Nb] = bwlabel(Bbin2);
-        if Nb==0 || Nb==2
-            disp("fail")
+        if Nb~=1
+            fprintf(">>>>>>>>> fail Nb=%d iref=%d\n",Nb,iRef)
             Brgb2 = Brgb;
             Bbin2 = Bbin;
             B2 = B;
         end
 
-        featsIm = getFeats(Brgb2,B2,Bbin2,nFeats);
-        dists(1) = norm(featsIm - AllFeatsRef(:,iRef));
+        featsIm = getFeats(Brgb2,B2,Bbin2);
+%         dists(1) = norm(featsIm - AllFeatsRef(:,iRef));
+        dist1 = norm(featsIm - AllFeatsRef(:,iRef));
 
-        Brgb3 = imrotate(Brgb2,180);
-        Bbin3 = imrotate(Bbin2,180);
-        B3 = imrotate(B2,180);
-
-        [~,Nb] = bwlabel(Bbin3);
-        if Nb==0 || Nb==2
-            disp("fail")
-            Brgb3 = Brgb;
-            Bbin3 = Bbin;
-            B3 = B;
-        end
-
-        featsIm2 = getFeats(Brgb3,B3,Bbin3,nFeats);
-        dists(2) = norm(featsIm2 - AllFeatsRef(:,iRef));
-        dist(iRef) = min(dists);
-        
-        if dists(2)<dists(1)
-            partidaMean(iRef) =  mean(Bbin3,'all')/solRefs(iRef);
-%             partidaDiffY(iRef) = size(Bbin3,2)/syRef;
-            minres = dists(2);
-            eulerN = regionprops(Bbin3,'EulerNumber').EulerNumber;
-
-            sz1 = sort(size(Bbin3));
-            szRa = sz1(1)/sz1(2);
-
-            sz1 = sort(sizesRefs(iRef,:));
-            szRef = sz1(1)/sz1(2);
-            partidaDiffY(iRef) = szRa/szRef;
+        if dist1 < minres
+            kRef = iRef;
+            minres = dist1;
+    
+            partidaMean =  mean(Bbin2,'all')/solRefs(iRef);
             
-%             if iRef == 8 && size(Bbin3,2)/sxRef < partidaDiffY(iRef)
-%             if size(Bbin3,2)/sxRef < partidaDiffY(iRef)
-%                 partidaDiffY(iRef) = size(Bbin3,2)/sxRef;
-%             end
-        else
-            partidaMean(iRef) =  mean(Bbin2,'all')/solRefs(iRef);
-%             partidaDiffY(iRef) = size(Bbin2,2)/syRef;
-            minres = dists(1);
-            eulerN = regionprops(Bbin2,'EulerNumber').EulerNumber;
-
+            if iRef==19
+                eulerN = regionprops(Bbin2,'EulerNumber').EulerNumber;
+            end
+    
             sz1 = sort(size(Bbin2));
             szRa = sz1(1)/sz1(2);
 
             sz1 = sort(sizesRefs(iRef,:));
             szRef = sz1(1)/sz1(2);
-            partidaDiffY(iRef) = szRa/szRef;
+            partidaDiffY = szRa/szRef;
 
-%             if iRef == 8 && size(Bbin2,2)/sxRef < partidaDiffY(iRef)
-%             if size(Bbin2,2)/sxRef < partidaDiffY(iRef)
-%                 partidaDiffY(iRef) = size(Bbin2,2)/sxRef;
-%             end
+    %         if iRef == 8 && size(Bbin2,2)/sxRef < partidaDiffY(iRef)
+    %         if size(Bbin2,2)/sxRef < partidaDiffY(iRef)
+    %             partidaDiffY(iRef) = size(Bbin2,2)/sxRef;
+    %         end
         end
-    end
 
-    [minVal,kRef] = min(dist);
+    end
 
     if ismember(kRef,fanKs)
         tolPartidasMean = 0.5;
+        tolPartidasDiffY = 5e-2;
     end
 
     partidaDiffY = abs(1-partidaDiffY);
     
-    if partidaMean(kRef)<tolPartidasMean || minVal > tolPartidasMinVal || partidaDiffY(kRef) > tolPartidasDiffY 
+    if partidaMean < tolPartidasMean || minres > tolPartidasMinVal || partidaDiffY > tolPartidasDiffY || (kRef==19 && eulerN ~= 0)
         part = true;
     end
-    if kRef == 19 && eulerN~=0
-%         strOla = sprintf("EulerN:%d",eulerN);
-% 
-%         figure;
-%         sgtitle(strOla)
-%         subplot(1,3,1)
-%         imshow(Brgb)
-%         subplot(1,3,2)
-%         imshow(Brgb2)
-%         subplot(1,3,3)
-%         imshow(Brgb3)
-% 
-%         figure;
-%         sgtitle(strOla)
-%         subplot(1,3,1)
-%         imshow(B)
-%         subplot(1,3,2)
-%         imshow(B2)
-%         subplot(1,3,3)
-%         imshow(B3)
-% 
-%         figure;
-%         sgtitle(strOla)
-%         subplot(1,3,1)
-%         imshow(Bbin)
-%         subplot(1,3,2)
-%         imshow(Bbin2)
-%         subplot(1,3,3)
-%         imshow(Bbin3)
+    str = sprintf("meanRel=%.2f\n minVal=%d\n DiffY:%d",partidaMean,minres,partidaDiffY);
 
-        part = true;
-    end
-    str = sprintf("meanRel=%.2f\n minVal=%d\n DiffY:%d",partidaMean(kRef),minVal,partidaDiffY(kRef));
-
-    if false %showplot && kRef==8
-        iRef = kRef;
-
-        oriRef = oriRefs(iRef);
-        sxRef = sizesRefs(iRef,1);
-
-        Brgb2 = imrotate(Brgb,oriRef-oriB);
-        Bbin2 = imrotate(Bbin,oriRef-oriB);
-        B2 = imrotate(B,oriRef-oriB);
-
-        Bbin2 = bwareaopen(Bbin2,sxRef);
-        Bbin2 = Bbin2(:,any(Bbin2,1));
-        Bbin2 = Bbin2(any(Bbin2,2),:);
         
-        Brgb2 = Brgb2(:,any(B2,1),:);
-        Brgb2 = Brgb2(any(B2,2),:,:);
-
-        B2 = B2(:,any(B2,1));
-        B2 = B2(any(B2,2),:);
-
-        Brgb2 = imresize(Brgb2,[sxRef NaN]);
-        Bbin2 = imresize(Bbin2,[sxRef NaN]);
-        B2 = imresize(B2,[sxRef NaN]);
-
-        Bbin2 = bwmorph(Bbin2,"close",3);
-%         Bbin2 = bwmorph(Bbin2,"dilate",1);
-%         Bbin2 = bwmorph(Bbin2,"fill",10);
-        Bbin2 = bwareaopen(Bbin2, sxRef);
-        
-
-        [~,Nb] = bwlabel(Bbin2);
-        if Nb==0 || Nb==2
-            disp("fail")
-            Brgb2 = Brgb;
-            Bbin2 = Bbin;
-            B2 = B;
-        end
-
-        featsIm = getFeats(Brgb2,B2,Bbin2,nFeats);
-        dists(1) = norm(featsIm - AllFeatsRef(:,iRef));
-
-        Brgb3 = imrotate(Brgb2,180);
-        Bbin3 = imrotate(Bbin2,180);
-        B3 = imrotate(B2,180);
-
-        [~,Nb] = bwlabel(Bbin3);
-        if Nb==0 || Nb==2
-            disp("fail")
-            Brgb3 = Brgb;
-            Bbin3 = Bbin;
-            B3 = B;
-        end
-        
-        figure;
-        sgtitle("Brgb")
-        subplot(1,3,1)
-        imshow(Brgb)
-        subplot(1,3,2)
-        imshow(Brgb2)
-        subplot(1,3,3)
-        imshow(Brgb3)
-
-        figure;
-        sgtitle("B")
-        subplot(1,3,1)
-        imshow(B)
-        subplot(1,3,2)
-        imshow(B2)
-        subplot(1,3,3)
-        imshow(B3)
-
-        figure;
-        sgtitle("Bbin")
-        subplot(1,3,1)
-        imshow(Bbin)
-        subplot(1,3,2)
-        imshow(Bbin2)
-        subplot(1,3,3)
-        imshow(Bbin3)
-    end
-    
-    
 end
 
-function feats = getFeats(ARGB,Agray,Abin,nFeats)
+function feats = getFeats(ARGB,Agray,Abin)
     s = regionprops(Abin,'Eccentricity','Solidity');
-    meanR = mean(ARGB(:,:,1),'all');
-    meanG = mean(ARGB(:,:,2),'all');
-    meanB = mean(ARGB(:,:,3),'all');
+
+    meanR = mean(ARGB,[1 2]);
+    meanRGB = meanR(:)';
+
     Ahsv = rgb2hsv(ARGB);
     meanV = mean(Ahsv(:,:,3),'all');
     ola = -real(log(invmoments(Agray)))/20;
-    feats = [meanR meanG meanB meanV ola s.Eccentricity s.Solidity]';
+    
+    feats = [meanRGB meanV ola s.Eccentricity s.Solidity]';
 end
 
 function Ibin = autobin(I)
-%     Ibin = double(imbinarize(I));
-
-%     T = adaptthresh(I,0.2,'ForegroundPolarity','dark');
-    [counts,x] = imhist(I,16);
+    [counts,~] = imhist(I,16);
     T = otsuthresh(counts);
     Ibin = double(imbinarize(I,T));
 
@@ -1185,4 +924,99 @@ function [B,mask] = removeFundoDado(A,FundoLims,minS)
 
 
     B = mask.*A;
+end
+
+function phi = invmoments(F)
+%INVMOMENTS Compute invariant moments of image.
+%   PHI = INVMOMENTS(F) computes the moment invariants of the image
+%   F. PHI is a seven-element row vector containing the moment
+%   invariants as defined in equations (11.3-17) through (11.3-23) of
+%   Gonzalez and Woods, Digital Image Processing, 2nd Ed.
+%
+%   F must be a 2-D, real, nonsparse, numeric or logical matrix.
+
+%   Copyright 2002-2004 R. C. Gonzalez, R. E. Woods, & S. L. Eddins
+%   Digital Image Processing Using MATLAB, Prentice-Hall, 2004
+%   $Revision: 1.5 $  $Date: 2003/11/21 14:39:19 $
+
+if (ndims(F) ~= 2) || issparse(F) || ~isreal(F) || ~(isnumeric(F) || ...
+                                                    islogical(F))
+   error(['F must be a 2-D, real, nonsparse, numeric or logical ' ...
+          'matrix.']);
+end
+
+F = double(F);
+phi = compute_phi(compute_eta(compute_m(F)));
+end
+ 
+%-------------------------------------------------------------------%
+function m = compute_m(F)
+
+[M, N] = size(F);
+[x, y] = meshgrid(1:N, 1:M);
+ 
+% Turn x, y, and F into column vectors to make the summations a bit
+% easier to compute in the following.
+x = x(:);
+y = y(:);
+F = F(:);
+ 
+% DIP equation (11.3-12)
+m.m00 = sum(F);
+% Protect against divide-by-zero warnings.
+if (m.m00 == 0)
+   m.m00 = eps;
+end
+% The other central moments: 
+m.m10 = sum(x .* F);
+m.m01 = sum(y .* F);
+m.m11 = sum(x .* y .* F);
+m.m20 = sum(x.^2 .* F);
+m.m02 = sum(y.^2 .* F);
+m.m30 = sum(x.^3 .* F);
+m.m03 = sum(y.^3 .* F);
+m.m12 = sum(x .* y.^2 .* F);
+m.m21 = sum(x.^2 .* y .* F);
+
+end
+
+%-------------------------------------------------------------------%
+function e = compute_eta(m)
+
+% DIP equations (11.3-14) through (11.3-16).
+
+xbar = m.m10 / m.m00;
+ybar = m.m01 / m.m00;
+
+e.eta11 = (m.m11 - ybar*m.m10) / m.m00^2;
+e.eta20 = (m.m20 - xbar*m.m10) / m.m00^2;
+e.eta02 = (m.m02 - ybar*m.m01) / m.m00^2;
+e.eta30 = (m.m30 - 3 * xbar * m.m20 + 2 * xbar^2 * m.m10) / m.m00^2.5;
+e.eta03 = (m.m03 - 3 * ybar * m.m02 + 2 * ybar^2 * m.m01) / m.m00^2.5;
+e.eta21 = (m.m21 - 2 * xbar * m.m11 - ybar * m.m20 + ...
+           2 * xbar^2 * m.m01) / m.m00^2.5;
+e.eta12 = (m.m12 - 2 * ybar * m.m11 - xbar * m.m02 + ...
+           2 * ybar^2 * m.m10) / m.m00^2.5;
+
+end
+%-------------------------------------------------------------------%
+function phi = compute_phi(e)
+
+% DIP equations (11.3-17) through (11.3-23).
+
+phi(1) = e.eta20 + e.eta02;
+phi(2) = (e.eta20 - e.eta02)^2 + 4*e.eta11^2;
+phi(3) = (e.eta30 - 3*e.eta12)^2 + (3*e.eta21 - e.eta03)^2;
+phi(4) = (e.eta30 + e.eta12)^2 + (e.eta21 + e.eta03)^2;
+phi(5) = (e.eta30 - 3*e.eta12) * (e.eta30 + e.eta12) * ...
+         ( (e.eta30 + e.eta12)^2 - 3*(e.eta21 + e.eta03)^2 ) + ...
+         (3*e.eta21 - e.eta03) * (e.eta21 + e.eta03) * ...
+         ( 3*(e.eta30 + e.eta12)^2 - (e.eta21 + e.eta03)^2 );
+phi(6) = (e.eta20 - e.eta02) * ( (e.eta30 + e.eta12)^2 - ...
+                                 (e.eta21 + e.eta03)^2 ) + ...
+         4 * e.eta11 * (e.eta30 + e.eta12) * (e.eta21 + e.eta03);
+phi(7) = (3*e.eta21 - e.eta03) * (e.eta30 + e.eta12) * ...
+         ( (e.eta30 + e.eta12)^2 - 3*(e.eta21 + e.eta03)^2 ) + ...
+         (3*e.eta12 - e.eta30) * (e.eta21 + e.eta03) * ...
+         ( 3*(e.eta30 + e.eta12)^2 - (e.eta21 + e.eta03)^2 );
 end

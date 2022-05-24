@@ -2,35 +2,6 @@ close all
 clear all
 clc
 
-classe = 1 ;
-[regionsRef,regionsRGBRef,bigRefArea] = getRefImages(classe);
-
-
-N = numel(regionsRef);
-Nref=N;
-SS = ceil(sqrt(N));
-
-invMRef = zeros(7,N);
-for k=1:N
-    invMRef(:,k) = invmoments(regionsRef{k});
-end
-
-regionsGray = regionsRGBRef;
-
-figure;
-for k=1:N
-    subplot(SS,SS,k)
-    imshow(regionsRef{k})
-    regionsRef{k} = logical(regionsRef{k});
-    regionsGray{k} = rgb2gray(regionsRGBRef{k});
-    xlabel(k)
-end
-
-nFeats = 11;
-
-AllFeatures = getFeatures(regionsRef,regionsGray,regionsRGBRef,nFeats);
-
-% return
 %%
 
 imName = "../Seq29x/svpi2022_TP2_img_291_01.png";
@@ -47,7 +18,7 @@ imshow(A)
 minSize = 0.1; % 0.2  min nnz for aceptable boundary (percentage)
 minWidth = 0.01; % 0.04 min width of subimage (percentage)
 
-minAreaMigalha = 0.05 * bigRefArea;
+minAreaMigalha = 500;
 
 fmaskRot = zeros(size(A));
 cutx = -3; 
@@ -88,130 +59,30 @@ maxAcceptFundo = 0.4;
 [regions,regionsRGB,~,ObjBord] = getSubImagesV2(A,minSize,relSizes,minWidth,fmaskRot,A0,minAreaMigalha,minSpare,FundoLims,minSizesFundos,minAcceptFundo,maxAcceptFundo);
 
 N=numel(regions);
-% AllFeats = zeros(N,Nref,nFeats);
-partidaMean = zeros(N,Nref);
-partidaDiffY = zeros(N,Nref);
-partsMBbin = [];
-dist = zeros(N,Nref);
-
-for k=1:N
-    B = rgb2gray(regionsRGB{k});
-    Brgb = regionsRGB{k};
-%     Bbin = B;
-%     Bbin = regions{k};
-%     Bbin = bwareaopen(Bbin,10);
-    Bbin = B>0;
-%     figure;
-%     subplot(1,4,1)
-%     imshow(Brgb)
-    oriB = regionprops(Bbin,'Orientation').Orientation;
-    for iRef=1:Nref
-        oriRef = regionprops(regionsRef{iRef},'Orientation').Orientation;
-        sxRef = size(regionsRef{iRef},1);
-%         subplot(1,4,2)
-%         imshow(regionsRGBRef{iRef})
-
-        Brgb2 = imrotate(Brgb,oriRef-oriB);
-%         Bbin2 = imrotate(Bbin,oriRef-oriB);
-        B2 = imrotate(B,oriRef-oriB);
-
-%         Bbin2 = bwareaopen(Bbin2,sxRef);
-%         Bbin2 = Bbin2(:,any(Bbin2,1));
-%         Bbin2 = Bbin2(any(Bbin2,2),:);
-        
-        Brgb2 = Brgb2(:,any(B2,1),:);
-        Brgb2 = Brgb2(any(B2,2),:,:);
-
-%         B2 = B2(:,any(B2,1));
-%         B2 = B2(any(B2,2),:);
-
-        Brgb2 = imresize(Brgb2,[sxRef NaN]);
-%         Bbin2 = imresize(Bbin2,[sxRef NaN]);
-%         B2 = imresize(B2,[sxRef NaN]);
-        B2 = rgb2gray(Brgb2);
-        Bbin2 = B2>0;
-        Bbin2 = bwareaopen(Bbin2, 100); %sxRef
-
-        [~,Nb] = bwlabel(Bbin2);
-        if Nb~=1
-            fprintf("fail k%d iRef%d\n",k,iRef)
-            Brgb2 = Brgb;
-            Bbin2 = Bbin;
-            B2 = B;
-        end
-
-        featsIm = getFeats(Brgb2,B2,Bbin2);
-%         dists(1) = norm(featsIm - AllFeatsRef(:,iRef));
-        dist(k,iRef) = norm(featsIm - AllFeatures(:,iRef));
-        
-        partidaMean(k,iRef) =  mean(Bbin2,'all')/mean(regionsRef{iRef},'all');
-%         partidaDiffY(k,iRef) = size(Bbin2,2)/size(regionsRef{iRef},2);
-
-        sz1 = sort(size(Bbin2));
-        szRa = sz1(1)/sz1(2);
-
-        sz1 = sort(size(regionsRef{iRef}));
-        szRef = sz1(1)/sz1(2);
-        partidaDiffY(k,iRef) = szRa/szRef;
-        
-    end
-end
-
-
 %%
-[minVal,minIdx] = min(dist,[],2);
 
-
-%%
-tolPartidasMean = 0.7;
-tolPartidasMinVal = 3e-1;
-tolPartidasDiffY = 0.05;
-
-partidaDiffY = abs(1-partidaDiffY);
-
+AllFeatsCookies = zeros(N,6);
 for k=1:N
-    figure;
-    sgtitle(sprintf("Bolacha k=%d",k))
-    subplot(1,2,1)
-    imshow(regionsRGB{k})
-    if partidaMean(k,minIdx(k))<tolPartidasMean || minVal(k) > tolPartidasMinVal || partidaDiffY(k,minIdx(k)) > tolPartidasDiffY 
-%     if minVal(k) > tolPartidasMinVal
-        fprintf("Partida %d\n",k);
-        xlabel(sprintf("Partida\n meanRel=%.2f\n minVal=%d\n DiffY:%d",partidaMean(k,minIdx(k)),minVal(k),partidaDiffY(k,minIdx(k))))
-        partsMBbin = [partsMBbin k];
-    end
-%     xlabel(sprintf("%.3f %.3f %.3f\n %.3f\n %.3f %.3f %.3f %.3f %.3f %.3f %.3f\n %.3f %.3f",AllFeats(k,minIdx(k),:)))
-    subplot(1,2,2)
-    imshow(regionsRGBRef{minIdx(k)})
-    title(sprintf("Corr:%d",minIdx(k)))
-    xlabel(sprintf("Diff:%d",minVal(k)))
+    B  = regionsRGB{k};
+    Bhsv = rgb2hsv(B);
+    H = Bhsv(:,:,1);
     
-%     xlabel(sprintf("%.3f %.3f %.3f\n %.3f\n %.3f %.3f %.3f %.3f %.3f %.3f %.3f\n %.3f %.3f",AllFeatures(:,minIdx(k))))
-%     feats = [meanR meanG meanB meanV ola s.Eccentricity s.Solidity]';
-   
-    pause(0.1)
+    stdH = std(H(:))
+
+    meanH = mean(H,"all")
+
+    medianH = median(H,"all")
+
+    modeH = mode(H(H~=0),'all')
+
+    skewnessH = skewness(H,0,'all')
+
+    kurtosisH = kurtosis(H,0,"all")
+
+    AllFeatsCookies(k,:) = [stdH meanH medianH modeH skewnessH kurtosisH];
+
 end
 
-return
-
-
-%% 
-clc
-tolPartidasMean = 0.95;
-tolPartidasMinVal = 2.15e-1; %2.12 a 2.18
-tolPartidasDiffY = 0.04; 
-
-
-parts2 = [];
-for k=1:N
-    fprintf("Partida %d meanRel=%.2f minVal=%d DiffY:%d\n",k,partidaMean(k,minIdx(k)),minVal(k),partidaDiffY(k,minIdx(k)));
-    if partidaMean(k,minIdx(k))< tolPartidasMean || minVal(k) > tolPartidasMinVal || partidaDiffY(k,minIdx(k)) > tolPartidasDiffY 
-        parts2 = [parts2 k];
-    end
-end
-partsTH = find(minVal>tolPartidasMinVal)'
-parts2
-partidas = sort([2 5 8 12 19 16 18 24 25 28 38 39 41 45]) 
 
 
 
