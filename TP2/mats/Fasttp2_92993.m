@@ -505,15 +505,18 @@ function [kRef,minres,part] = getBestMatchv2(img1, AllFeatsRef, oriRefs, sizesRe
 %         B2 = imresize(B2,[sxRef NaN]);
         B2 = rgb2gray(Brgb2);
         Bbin2 = B2>0;
-        Bbin2 = bwareaopen(Bbin2, 100); %sxRef
-        
-        [~,Nb] = bwlabel(Bbin2);
-        if Nb~=1
-            fprintf(">>>>>>>>> fail Nb=%d\n",Nb)
-            Brgb2 = Brgb;
-            Bbin2 = Bbin;
-            B2 = B;
-        end
+%         Bbin2 = bwareaopen(Bbin2, 100); %sxRef
+        Bbin2 = bwareafilt(Bbin2, 1); %sxRef
+        Brgb2 = Brgb2.*repmat(Bbin2,[1 1 3]);
+        B2 = B2.*Bbin2;
+%         
+%         [~,Nb] = bwlabel(Bbin2);
+%         if Nb~=1
+%             fprintf(">>>>>>>>> fail Nb=%d\n",Nb)
+%             Brgb2 = Brgb;
+%             Bbin2 = Bbin;
+%             B2 = B;
+%         end
 
         featsIm = getFeats(Brgb2,B2,Bbin2);
         dist1 = norm(featsIm - AllFeatsRef(:,iRef));
@@ -525,7 +528,7 @@ function [kRef,minres,part] = getBestMatchv2(img1, AllFeatsRef, oriRefs, sizesRe
             partidaMean =  mean(Bbin2,'all')/solRefs(iRef);
             
             if iRef==19
-                eulerN = regionprops(Bbin2,'EulerNumber').EulerNumber;e
+                eulerN = regionprops(Bbin2,'EulerNumber').EulerNumber;
             end
     
             sz1 = sort(size(Bbin2));
