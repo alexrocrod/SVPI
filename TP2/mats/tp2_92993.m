@@ -132,10 +132,10 @@ function NumMec = tp2_92993()
 %%
     [~,regionsRGBRef,~] = getRefImages(classe);
    
-%     for idxImg = 1:MaxImg
+    for idxImg = 1:MaxImg
         tic
     showplot = true;
-    for idxImg = 22
+%     for idxImg = 22
         fprintf("idxImg:%d\n",idxImg);
 
         imName = listaF(idxImg).name;
@@ -568,6 +568,9 @@ function [regions,regionsRGB,fullMask,countBord] = getSubImages(A,minSize,relSiz
     minWidth,fmaskPrev,imgRef,minAreaMigalha,minSparse,FundosLims,minSizesFundos,minAcceptFundo,maxAcceptFundo)
     % get all subimages(regions)
 
+    Ahsv = rgb2hsv(imgRef);
+    H = Ahsv(:,:,1);
+    modeH = mode(H,"all");
 
     global showplot;
 
@@ -575,7 +578,27 @@ function [regions,regionsRGB,fullMask,countBord] = getSubImages(A,minSize,relSiz
     fundoUsed = 0;
     imgRefOld = imgRef;
     maskEnd = ones(size(A));
-    for i=1:length(FundosLims)
+
+    % ainda nao usa o 7 nem o 5
+    if modeH < 1e-3 % Pretos
+        indexes = 8;
+    elseif modeH < 1.25e-1 % Preto Img 6 e 19
+        indexes = 9;
+    elseif modeH < 1.75e-1 % Branco
+        indexes = 1;
+    elseif modeH < 2.6e-1 % Verde
+        indexes = 6;
+    elseif modeH < 5.45e-1 % Azul Tabua
+        indexes = 3;
+    elseif modeH < 5.7e-1 % Azul
+        indexes = 2;
+    elseif modeH < 6.5-1 % Azul Escuro
+        indexes = 4;
+    else % Preto Img 9 e 22
+        indexes = 10;
+    end
+
+    for i=indexes
         [AnoF,mask] = removeFundoDado(imgRefOld,FundosLims(i,:,:),minSizesFundos(i));
         nnzMask = mean(mask,"all");
         fprintf("fundo n%d, mean%.2f \n",i, nnzMask)

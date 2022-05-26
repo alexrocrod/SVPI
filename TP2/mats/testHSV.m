@@ -5,31 +5,32 @@ clc
 %% ColorThresholder
 % 1 Branco -> 11,24 -> v2 funciona bem com minS 100 means 0.30 0.27
 % 2 Azul1 -> 12,25 -> funciona bem com 10 means means 0.29 mas 0.43 no Azul2  
-% 3 Azul2 -> 13,26 -> 2 pontos de azul para 100 means 0.32 mas 0.33 no Azul1 0.30 mas 0.31 no Azul1 
+% 3 Tabua Azul2 -> 13,26 -> 2 pontos de azul para 100 means 0.32 mas 0.33 no Azul1 0.30 mas 0.31 no Azul1 
 % 4 Azul3 -> 7,20 -> perfeito para 10, mean 0.30 mas no Azul4 tambem 0.30
 % 5 Azul4 -> 10,23 -> algumas coisinhas para 100, mean 0.30 com 0.52 no Azul3, mean 0.31
 % 6 Verde -> 27 -> perfeito para 10, mean 0.31
 % 7 Preto -> 9,22 -> deixa falhas 0.32 mas 0.36 no  n5 0.35 mas 0.39
 % 8 Preto2 -> 1,2,3,4,5,8,14,15,16,17,18,21,28,29,30 -> 0.25 a 0.33
 % 9 Preto3 -> 6,19 -> 0.31
+% 10 Preto22-> 9,22....
 
 % da palmiers cheias qd usa close e fill
 %% 
-A=im2double(imread("../Seq29x/svpi2022_TP2_img_291_22.png"));
+A=im2double(imread("../Seq29x/svpi2022_TP2_img_291_10.png"));
 figure;
 imshow(A)
 
 
 %% colorThresholder
-[mask,res] = createMaskPreto22(A,100);
-figure;
-imshow(mask)
-figure;
-imshow(res)
-fprintf("mean %.2f\n",mean(mask,"all"))
-
-
-return
+% [mask,res] = createMaskPreto22(A,100);
+% figure;
+% imshow(mask)
+% figure;
+% imshow(res)
+% fprintf("mean %.2f\n",mean(mask,"all"))
+% 
+% 
+% return
 
 %% All Fundos ColorThres
 
@@ -60,7 +61,8 @@ minSizes = [100 10 100 10 100 10 1000 10 20];
 
 %% depois do colorThresh
 
-for idx = 1:9
+for idx = 1:length(FundoLims)
+    minS = minSizes(idx);
     HSV=rgb2hsv(A); H=HSV(:,:,1); S=HSV(:,:,2); V=HSV(:,:,3);
 
     if FundoLims(idx,1,1) > FundoLims(idx,1,2) 
@@ -69,18 +71,32 @@ for idx = 1:9
         mask = (H >= FundoLims(idx,1,1) & H <= FundoLims(idx,1,2)) & (S >= FundoLims(idx,2,1) & S <= FundoLims(idx,2,2)) & (V >= FundoLims(idx,3,1) & V <= FundoLims(idx,3,2)); %add a condition for value
     end
     
-%     mask = bwmorph(mask,"hbreak",inf);
-    mask=bwareaopen(mask,minSizes(idx));
-
-    mask=~mask; %mask for objects (negation of background)
-       
-%     mask = bwmorph(mask,"hbreak",inf);
-    mask = bwareaopen(mask,minSizes(idx));
-
-    %%%% Sempre??
-    mask = bwmorph(mask,"close",inf);
-    mask = imfill(mask,"holes");
-    %%%%
+    if idx==10
+        mask=bwareaopen(mask,minS);
+    
+        mask=~mask; %mask for objects (negation of background)
+    
+        mask=bwareaopen(mask,minS); %in case we need some cleaning of "small" areas.
+    
+        %%%% Sempre??
+        mask = bwmorph(mask,"close",inf);
+        mask = imfill(mask,"holes");
+        %%%%
+    else
+        mask = bwmorph(mask,"close",inf);
+        mask = bwmorph(mask,"bridge",inf);
+        mask = imfill(mask,"holes");
+        
+        windowSize = 7;
+        kernel = ones(windowSize) / windowSize ^ 2;
+        blurryImage = conv2(single(mask), kernel, 'same');
+        mask = blurryImage > 0.5; % Rethreshold
+        
+        mask = bwareaopen(mask,minS);
+        mask = bwmorph(mask,"bridge",inf);
+        mask = imfill(mask,"holes");
+        mask = bwareaopen(mask,minS);
+    end
 
     fprintf("fundo n%d\n",idx)
     fprintf("mean %.2f\n",mean(mask,"all"))

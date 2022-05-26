@@ -4,21 +4,10 @@
 % Trabalho Pratico 2
 
 
-%% Ideias
-
-
-
 function NumMec = Fasttp2_92993()
+    %% DADOS
 
-%     close all
-%     clear all
-%     clc
-
-    tic
-
-    %% DATA
-
-    FundoLims = zeros(10,3,2);
+    FundoLims = zeros(9,3,2);
 
     FundoLims(:,:,1)=[  0.112	0.076	0.911
                         0.514	0.268	0.188
@@ -26,7 +15,6 @@ function NumMec = Fasttp2_92993()
                         0.614	0.132	0.019
                         0.588	0	    0
                         0.206	0.146	0.519
-                        0.194	0	    0
                         0.995	0	    0
                         0.040	0	    0
                         0.950	0	    0.089];
@@ -38,12 +26,11 @@ function NumMec = Fasttp2_92993()
                         0.704	1	    0.493
                         0.929	1	    1
                         0.274	1	    1
-                        1	    1	    0.181
                         0.008	0.014	0.190
                         0.185	1   	0.241
                         0.179	1   	1];
     
-    minSizesFundos = [100 10 100 10 100 10 1000 10 20 100]; 
+    minSizesFundos = [100 10 100 10 100 10 10 20 100]; 
 
     minAcceptFundo = 0.2;
     maxAcceptFundo = 0.4;
@@ -68,15 +55,7 @@ function NumMec = Fasttp2_92993()
 
     oriRefs = [ 3.38919024622040	1.46852348518252	-21.2005264739338 4.36594225341164	86.0846686159345	7.35814106752544	50.9861987115747 -88.9717264840199	-0.541413482684292	1.83968022026784	-29.9285983834382	-37.3146530651279	-0.219720085201630	-0.158011705759180	76.8122729297615	65.1933090785739	-47.7495263654879	-31.8482857910492	-0.945324350175936	-10.7289926331406	-5.06439439977258	5.62219176743755	51.5618865742229	-80.5126715079722	0	-0.0159581128439894	58.1666067704519	-7.45185780985075];
 
-    bigRefArea = 1.55e4;
-
-    minSize = 0.1; % 0.2  min nnz for aceptable boundary (percentage)
-    minWidth = 0.01; % 0.04 min width of subimage (percentage)
-
-    minAreaMigalha = 0.05 * bigRefArea;
-
-    relSizes = 5; %3
-    minSpare = 0.4; %0.2 da melhor na img4, melhor binarizacao das bolachas vermelhas??
+    minSize = 0.1; % min nnz for aceptable boundary (percentage)
 
     fanKs = [9 10];
 
@@ -90,8 +69,8 @@ function NumMec = Fasttp2_92993()
 
     MaxImg = size(listaF,1);
     
-%     for idxImg = 3
-    for idxImg = 1:MaxImg
+    for idxImg = 3
+%     for idxImg = 1:MaxImg
         tic
         fprintf("idxImg:%d\n",idxImg);
 
@@ -127,20 +106,18 @@ function NumMec = Fasttp2_92993()
 
         %% SubImages
 
-        fmaskRot = zeros(size(A));
-
         % Find other subimages
-%         try 
-        [regions,regionsRGB,ObjBord] = getSubImages(A,minSize,A0,minAreaMigalha,FundoLims,minSizesFundos,minAcceptFundo,maxAcceptFundo);
-%         catch
+        try 
+        [regions,regionsRGB,ObjBord] = getSubImages(A,minSize,A0,FundoLims,minSizesFundos,minAcceptFundo,maxAcceptFundo);
+        catch
 %             fprintf(">>>>>>>>>>>>>>>>fail binarization %d\n",idxImg)
-%             T = table(NumMec, NumSeq, NumImg, ObjBord, ObjPart, ObjOK, beurre, ...
-%                 choco, confit, craker, fan, ginger, lotus, maria, oreo , ...
-%                 palmier, parijse, sugar, wafer, zebra);
-% 
-%             writetable(T,'tp2_92993.txt', 'WriteVariableNames',false, 'WriteMode','append')
-%             continue
-%         end
+            T = table(NumMec, NumSeq, NumImg, ObjBord, ObjPart, ObjOK, beurre, ...
+                choco, confit, craker, fan, ginger, lotus, maria, oreo , ...
+                palmier, parijse, sugar, wafer, zebra);
+
+            writetable(T,'tp2_92993.txt', 'WriteVariableNames',false, 'WriteMode','append')
+            continue
+        end
 
         N = numel(regions);
 
@@ -208,103 +185,19 @@ function NumMec = Fasttp2_92993()
         toc
     end
 
-    toc
-
 end
 
+function B = maskComplex(A0)
 
-function B = maskComplex(A0,minAreaMigalha)
-
-    minAreaMigalha = round(minAreaMigalha);
-
-    rgbImg = A0;
-    [idx,map] = rgb2ind(rgbImg, 0.03, 'nodither'); %// consider changing tolerance here
-    m = mode( idx );
-    frequentRGB = mode(map(m, : ));
-    [~,freqChanel] = max(frequentRGB);
-    
-    Abin = A0;
-    for i = 1:3
-        Abin(:,:,i) = autobin(Abin(:,:,i));
-        Abin(:,:,i) = bwmorph(Abin(:,:,i),"close",inf);
-        Abin(:,:,i) = imfill(Abin(:,:,i),"holes");
-        Abin(:,:,i) = bwareaopen(Abin(:,:,i),100);
-    end
-    
-    Abin(:,:,freqChanel) = 0;
-    
-    B = sum(Abin,3)>0;
+    B = autobin(rgb2gray(A0));
+    B = bwmorph(B,"dilate",3);
     B = bwmorph(B,"close",inf);
-    B = bwmorph(B,"bridge",inf);
     B = imfill(B,"holes");
-    B = bwareaopen(B,minAreaMigalha); % 1000
-   
-    saveB=B;
+    B = bwareaopen(B,500);
 
-    if showplot
-        figure;
-        imshow(B)
-        title("maskComplex 1")
-    end
-
-    A2 = A0;
-    %%
-    
-    Abin = ~saveB.*A2;
-    A2R = Abin(:,:,1);
-    A2R(B) = frequentRGB(1);
-    A2G = Abin(:,:,2);
-    A2G(B) = frequentRGB(2);
-    A2B = Abin(:,:,3);
-    A2B(B) = frequentRGB(3);
-    Abin = cat(3,A2R,A2G,A2B);
-    
-    for i = 1:3
-        Abin(:,:,i) = autobin(Abin(:,:,i));
-        Abin(:,:,i) = bwmorph(Abin(:,:,i),"close",inf);
-        Abin(:,:,i) = bwareaopen(Abin(:,:,i),minAreaMigalha);%2000
-    end
-    
-    Abin(:,:,freqChanel) = 0;
-    
-    B = sum(Abin,3)>0;
-    B = autobinBW(double(B));
-    B = bwareaopen(B,minAreaMigalha);%1000
-    B = bwmorph(B,"open",inf);
-    B = bwareaopen(B,minAreaMigalha);%1000
-    
-    
-    saveB2=B|saveB;
-
-    if showplot
-        figure;
-        imshow(saveB2)
-        title("maskComplex 2")
-    end
-
-    %% HSV
-    Abin = ~saveB2.*A2;
-    A2R = Abin(:,:,1);
-    A2R(saveB2) = frequentRGB(1);
-    A2G = Abin(:,:,2);
-    A2G(saveB2) = frequentRGB(2);
-    A2B = Abin(:,:,3);
-    A2B(saveB2) = frequentRGB(3);
-    Abin = cat(3,A2R,A2G,A2B);
-        
-    Abin = rgb2hsv(Abin);
-           
-    B = autobin(Abin(:,:,1));
-    B = bwareaopen(B,minAreaMigalha);%1000
-    B = bwmorph(B,"open",inf);
-    B = bwareaopen(B,minAreaMigalha);%1000
-    B = bwmorph(B,"bridge",inf);
-    B = imfill(B,"holes");
-   
-    B = (B|saveB2);
 end
 
-function [regions,regionsRGB,countBord] = getSubImages(A,minSize,imgRef,minAreaMigalha,FundosLims,minSizesFundos,minAcceptFundo,maxAcceptFundo)
+function [regions,regionsRGB,countBord] = getSubImages(A,minSize,imgRef,FundosLims,minSizesFundos,minAcceptFundo,maxAcceptFundo)
     % get all subimages(regions)
 
     maxAccept = maxAcceptFundo;
@@ -312,8 +205,33 @@ function [regions,regionsRGB,countBord] = getSubImages(A,minSize,imgRef,minAreaM
     imgRefOld = imgRef;
     maskEnd = ones(size(A));
 
-    for i=1:length(FundosLims)
-        [AnoF,mask] = removeFundoDado(imgRefOld,FundosLims(i,:,:),minSizesFundos(i),i==10);
+    Ahsv = rgb2hsv(imgRef);
+    H = Ahsv(:,:,1);
+    modeH = mode(H,"all");
+
+    if modeH < 1e-3 % Pretos
+        indexes = 7;
+    elseif modeH < 1.25e-1 % Preto Img 6 e 19
+        indexes = 8;
+    elseif modeH < 1.75e-1 % Branco
+        indexes = 1;
+    elseif modeH < 2.6e-1 % Verde
+        indexes = 6;
+    elseif modeH < 5.45e-1 % Azul Tabua
+        indexes = 3;
+    elseif modeH < 5.7e-1 % Azul
+        indexes = 2;
+    elseif modeH < 6.43e-1 % Azul Escuro
+        indexes = 5;
+    elseif modeH < 6.5e-1 % Azul Escuro 2
+        indexes = 4;
+    else % Preto Img 9 e 22
+        indexes = 9;
+    end
+
+%     for i=1:length(FundosLims)
+    for i=indexes
+        [AnoF,mask] = removeFundoDado(imgRefOld,FundosLims(i,:,:),minSizesFundos(i),i==9);
         nnzMask = mean(mask,"all");
 %         fprintf("fundo n%d, mean%.2f \n",i, nnzMask)
         if nnzMask < maxAccept && nnzMask > minAcceptFundo
@@ -327,24 +245,20 @@ function [regions,regionsRGB,countBord] = getSubImages(A,minSize,imgRef,minAreaM
     end
 
     if ~fundoUsed
-        fprintf("Not using a fundo\n")
-        E = maskComplex(imgRef,minAreaMigalha);
+%         fprintf("Not using a fundo\n")
+        E = maskComplex(imgRef);
     
     else
-        fprintf("Usou fundo n%d, mean%.2f \n",fundoUsed, maxAccept)
-%         E = bwareaopen(mask,minAreaMigalha);
-        E = maskEnd;
+%         fprintf("Usou fundo n%d, mean%.2f \n",fundoUsed, maxAccept)
+        E = bwareaopen(maskEnd,500);
     end
 
-%     F = imclearborder(E);
     F = imclearborder(E(2:end-1,2:end-1));
     F = padarray(F,[1 1],0,"both");
 
 
     %% Bolachas Normais e Partidas
     B = F;
-
-%     fullMask = zeros(size(B));
     
     [Bx,~,Nb] = bwboundaries(B,'noholes');
     
@@ -357,23 +271,7 @@ function [regions,regionsRGB,countBord] = getSubImages(A,minSize,imgRef,minAreaM
         boundary = Bx{k};
     
         mask = poly2mask(boundary(:,2), boundary(:,1),sx,sy);
-%         if (nnz(mask) < minSize*sx)
-%             continue
-%         end
 
-        % clean all zeros cols and rows
-%         mask0s = mask(:,any(mask,1));
-%         mask0s = mask0s(any(mask0s,2),:);
-%         if (mean(mask0s,'all') < minSparse)
-%             continue
-%         end % very sparse image % 0.4 ou 0.2??
-%     
-        % remove weird shapes
-%         sizesT = sort(size(mask0s));
-%         if sizesT(2) > relSizes * sizesT(1) || sizesT(1) < minWidth * sx
-%             continue
-%         end
-    
         selected = A.*mask;
         selectedRGB = imgRef.*repmat(mask,[1 1 3]);
 
@@ -384,11 +282,6 @@ function [regions,regionsRGB,countBord] = getSubImages(A,minSize,imgRef,minAreaM
         selected = selected(:,any(selected,1));
         selected = selected(any(selected,2),:);
 
-%         if (nnz(mask) < minAreaMigalha)
-%             fprintf("migalha\n")
-%             continue
-%         end
-        
         regions{count} = selected;
 
         regionsRGB{count} = selectedRGB;
@@ -400,7 +293,6 @@ function [regions,regionsRGB,countBord] = getSubImages(A,minSize,imgRef,minAreaM
 
     %% Borders
 
-
     G = imadjust(E.*not(F));
 
     G = bwareaopen(G,100);
@@ -408,45 +300,8 @@ function [regions,regionsRGB,countBord] = getSubImages(A,minSize,imgRef,minAreaM
     G = imfill(G,"holes");
     G = bwareaopen(G,round(minSize*sx));
 
-%     
-% %     [Bx,~,Nb] = bwboundaries(B,'noholes');
-%     [~,~,countBord] = bwboundaries(B,'noholes');
-% %     countBord
+
     [~,countBord] = bwlabel(G);
-%     Nb
-    
-%     countBord = 0;
-    
-%     for k = Nb+1:length(Bx) % use only interior boundaries
-%     for k = 1:Nb % use only exterior boundaries
-%         boundary = Bx{k};
-%     
-%         mask = poly2mask(boundary(:,2), boundary(:,1),sx,sy);
-% %         if (nnz(mask) < minSize*sx)
-% %             continue
-% %         end
-% 
-% %         % clean all zeros cols and rows
-% %         mask0s = mask(:,any(mask,1));
-% %         mask0s = mask0s(any(mask0s,2),:);
-% %         if (mean(mask0s,'all') < 0.4)
-% %             continue
-% %         end % very sparse image
-%     
-% %         % remove weird shapes
-% %         sizesT = sort(size(mask0s));
-% %         if sizesT(2) > relSizes * sizesT(1) || sizesT(1) < minWidth * sx
-% %             continue
-% %         end
-%       
-% %         if (nnz(mask) < minAreaMigalha)
-% %             fprintf("migalha border\n")
-% %             continue
-% %         end
-% 
-%         countBord = countBord + 1;
-%     
-%     end
 
 end
 
@@ -462,14 +317,9 @@ function [kRef,minres,part] = getBestMatchv2(img1, AllFeatsRef, oriRefs, sizesRe
     minres = 1;
     kRef = 1;
     
-    tolPartidasMean = 0.7;
-    tolPartidasMinVal = 3.5e-1;% 3e-1;
-    tolPartidasDiffY = 0.095; %0.1 falha 1 ou 2x no img3
-
     B = rgb2gray(img1);
     Brgb = img1;
     Bbin = B>0;
-%     Bbin = bwareaopen(Bbin,100); % 10
     Bbin = bwareafilt(Bbin,1);
     
     eulerN = 0;
@@ -482,24 +332,17 @@ function [kRef,minres,part] = getBestMatchv2(img1, AllFeatsRef, oriRefs, sizesRe
     for iRef=listIrefs
         oriRef = oriRefs(iRef);
         sxRef = sizesRefs(iRef,1);
-%         syRef = sizesRefs(iRef,2);
 
         Brgb2 = imrotate(Brgb,oriRef-oriB);
-%         B2 = imrotate(B,oriRef-oriB);
         B2 = rgb2gray(Brgb2);
         
         Brgb2 = Brgb2(:,any(B2,1),:);
         Brgb2 = Brgb2(any(B2,2),:,:);
 
-%         B2 = B2(:,any(B2,1));
-%         B2 = B2(any(B2,2),:);
-
         Brgb2 = imresize(Brgb2,[sxRef NaN]);
-%         B2 = imresize(B2,[sxRef NaN]);
         B2 = rgb2gray(Brgb2);
         Bbin2 = B2>0;
-%         Bbin2 = bwareaopen(Bbin2, 100); %sxRef
-        Bbin2 = bwareafilt(Bbin2, 1); %sxRef
+        Bbin2 = bwareafilt(Bbin2, 1);
         
         Brgb2 = Brgb2.*repmat(Bbin2,[1 1 3]);
         B2 = B2.*Bbin2;
@@ -513,11 +356,11 @@ function [kRef,minres,part] = getBestMatchv2(img1, AllFeatsRef, oriRefs, sizesRe
     
             partidaMean =  mean(Bbin2,'all')/solRefs(iRef);
             
-            if iRef==19
+            if iRef==19 % Smooth Edges
                 windowSize = 21;
                 kernel = ones(windowSize) / windowSize ^ 2;
                 blurryImage = conv2(single(Bbin2), kernel, 'same');
-                Bbin3 = blurryImage > 0.5; % Rethreshold
+                Bbin3 = blurryImage > 0.5; % re threshold
                 eulerN = regionprops(Bbin3,'EulerNumber').EulerNumber;
             end
     
@@ -528,10 +371,6 @@ function [kRef,minres,part] = getBestMatchv2(img1, AllFeatsRef, oriRefs, sizesRe
             szRef = sz1(1)/sz1(2);
             partidaDiffY = szRa/szRef;
 
-    %         if iRef == 8 && size(Bbin2,2)/sxRef < partidaDiffY(iRef)
-    %         if size(Bbin2,2)/sxRef < partidaDiffY(iRef)
-    %             partidaDiffY(iRef) = size(Bbin2,2)/sxRef;
-    %         end
         end
     end
 
@@ -539,11 +378,15 @@ function [kRef,minres,part] = getBestMatchv2(img1, AllFeatsRef, oriRefs, sizesRe
         tolPartidasMean = 0.5;
         tolPartidasDiffY = 5e-2;
         tolPartidasMinVal = 2.2e-1;
+    else
+        tolPartidasMean = 0.7;
+        tolPartidasMinVal = 3.5e-1; % 3e-1;
+        tolPartidasDiffY = 0.095; % 0.1 falha 1 ou 2x no img3
     end
 
-    partidaDiffY = abs(1-partidaDiffY);
+    partidaDiffY = abs(1 - partidaDiffY);
     
-    if partidaMean< tolPartidasMean || minres > tolPartidasMinVal || partidaDiffY > tolPartidasDiffY || (kRef==19 && eulerN ~= 0)
+    if partidaMean< tolPartidasMean || minres > tolPartidasMinVal || partidaDiffY > tolPartidasDiffY || (kRef == 19 && eulerN ~= 0)
         part = true;
     end
 end
@@ -571,14 +414,6 @@ function Ibin = autobin(I)
     end
 end
 
-function Ibin = autobinBW(I)
-    Ibin = double(imbinarize(I));
-
-    if mean(Ibin,'all') > 0.5 % always more black
-        Ibin = not(Ibin);
-    end
-end
-
 function [B,mask] = removeFundoDado(A,FundoLims,minS,is22)
     HSV=rgb2hsv(A); H=HSV(:,:,1); S=HSV(:,:,2); V=HSV(:,:,3);
 
@@ -595,10 +430,8 @@ function [B,mask] = removeFundoDado(A,FundoLims,minS,is22)
     
         mask=bwareaopen(mask,minS); %in case we need some cleaning of "small" areas.
     
-        %%%% Sempre??
         mask = bwmorph(mask,"close",inf);
         mask = imfill(mask,"holes");
-        %%%%
     else
         mask = bwmorph(mask,"close",inf);
         mask = bwmorph(mask,"bridge",inf);
@@ -619,96 +452,91 @@ function [B,mask] = removeFundoDado(A,FundoLims,minS,is22)
 end
 
 function phi = invmoments(F)
-%INVMOMENTS Compute invariant moments of image.
-%   PHI = INVMOMENTS(F) computes the moment invariants of the image
-%   F. PHI is a seven-element row vector containing the moment
-%   invariants as defined in equations (11.3-17) through (11.3-23) of
-%   Gonzalez and Woods, Digital Image Processing, 2nd Ed.
-%
-%   F must be a 2-D, real, nonsparse, numeric or logical matrix.
-
-%   Copyright 2002-2004 R. C. Gonzalez, R. E. Woods, & S. L. Eddins
-%   Digital Image Processing Using MATLAB, Prentice-Hall, 2004
-%   $Revision: 1.5 $  $Date: 2003/11/21 14:39:19 $
-
-if (ndims(F) ~= 2) || issparse(F) || ~isreal(F) || ~(isnumeric(F) || ...
-                                                    islogical(F))
-   error(['F must be a 2-D, real, nonsparse, numeric or logical ' ...
-          'matrix.']);
-end
-
-F = double(F);
-phi = compute_phi(compute_eta(compute_m(F)));
+    %INVMOMENTS Compute invariant moments of image.
+    %   PHI = INVMOMENTS(F) computes the moment invariants of the image
+    %   F. PHI is a seven-element row vector containing the moment
+    %   invariants as defined in equations (11.3-17) through (11.3-23) of
+    %   Gonzalez and Woods, Digital Image Processing, 2nd Ed.
+    %
+    %   F must be a 2-D, real, nonsparse, numeric or logical matrix.
+    
+    %   Copyright 2002-2004 R. C. Gonzalez, R. E. Woods, & S. L. Eddins
+    %   Digital Image Processing Using MATLAB, Prentice-Hall, 2004
+    %   $Revision: 1.5 $  $Date: 2003/11/21 14:39:19 $
+    
+    if ~ismatrix(F) || issparse(F) || ~isreal(F) || ~(isnumeric(F) || islogical(F))
+       error(['F must be a 2-D, real, nonsparse, numeric or logical ' ...
+              'matrix.']);
+    end
+    
+    F = double(F);
+    phi = compute_phi(compute_eta(compute_m(F)));
 end
  
-%-------------------------------------------------------------------%
+
 function m = compute_m(F)
+    [M, N] = size(F);
+    [x, y] = meshgrid(1:N, 1:M);
+     
+    % Turn x, y, and F into column vectors to make the summations a bit
+    % easier to compute in the following.
+    x = x(:);
+    y = y(:);
+    F = F(:);
+     
+    % DIP equation (11.3-12)
+    m.m00 = sum(F);
+    % Protect against divide-by-zero warnings.
+    if (m.m00 == 0)
+       m.m00 = eps;
+    end
+    % The other central moments: 
+    m.m10 = sum(x .* F);
+    m.m01 = sum(y .* F);
+    m.m11 = sum(x .* y .* F);
+    m.m20 = sum(x.^2 .* F);
+    m.m02 = sum(y.^2 .* F);
+    m.m30 = sum(x.^3 .* F);
+    m.m03 = sum(y.^3 .* F);
+    m.m12 = sum(x .* y.^2 .* F);
+    m.m21 = sum(x.^2 .* y .* F);
 
-[M, N] = size(F);
-[x, y] = meshgrid(1:N, 1:M);
- 
-% Turn x, y, and F into column vectors to make the summations a bit
-% easier to compute in the following.
-x = x(:);
-y = y(:);
-F = F(:);
- 
-% DIP equation (11.3-12)
-m.m00 = sum(F);
-% Protect against divide-by-zero warnings.
-if (m.m00 == 0)
-   m.m00 = eps;
 end
-% The other central moments: 
-m.m10 = sum(x .* F);
-m.m01 = sum(y .* F);
-m.m11 = sum(x .* y .* F);
-m.m20 = sum(x.^2 .* F);
-m.m02 = sum(y.^2 .* F);
-m.m30 = sum(x.^3 .* F);
-m.m03 = sum(y.^3 .* F);
-m.m12 = sum(x .* y.^2 .* F);
-m.m21 = sum(x.^2 .* y .* F);
 
-end
-
-%-------------------------------------------------------------------%
 function e = compute_eta(m)
-
-% DIP equations (11.3-14) through (11.3-16).
-
-xbar = m.m10 / m.m00;
-ybar = m.m01 / m.m00;
-
-e.eta11 = (m.m11 - ybar*m.m10) / m.m00^2;
-e.eta20 = (m.m20 - xbar*m.m10) / m.m00^2;
-e.eta02 = (m.m02 - ybar*m.m01) / m.m00^2;
-e.eta30 = (m.m30 - 3 * xbar * m.m20 + 2 * xbar^2 * m.m10) / m.m00^2.5;
-e.eta03 = (m.m03 - 3 * ybar * m.m02 + 2 * ybar^2 * m.m01) / m.m00^2.5;
-e.eta21 = (m.m21 - 2 * xbar * m.m11 - ybar * m.m20 + ...
-           2 * xbar^2 * m.m01) / m.m00^2.5;
-e.eta12 = (m.m12 - 2 * ybar * m.m11 - xbar * m.m02 + ...
-           2 * ybar^2 * m.m10) / m.m00^2.5;
+    % DIP equations (11.3-14) through (11.3-16).
+    
+    xbar = m.m10 / m.m00;
+    ybar = m.m01 / m.m00;
+    
+    e.eta11 = (m.m11 - ybar*m.m10) / m.m00^2;
+    e.eta20 = (m.m20 - xbar*m.m10) / m.m00^2;
+    e.eta02 = (m.m02 - ybar*m.m01) / m.m00^2;
+    e.eta30 = (m.m30 - 3 * xbar * m.m20 + 2 * xbar^2 * m.m10) / m.m00^2.5;
+    e.eta03 = (m.m03 - 3 * ybar * m.m02 + 2 * ybar^2 * m.m01) / m.m00^2.5;
+    e.eta21 = (m.m21 - 2 * xbar * m.m11 - ybar * m.m20 + ...
+               2 * xbar^2 * m.m01) / m.m00^2.5;
+    e.eta12 = (m.m12 - 2 * ybar * m.m11 - xbar * m.m02 + ...
+               2 * ybar^2 * m.m10) / m.m00^2.5;
 
 end
-%-------------------------------------------------------------------%
+
 function phi = compute_phi(e)
-
-% DIP equations (11.3-17) through (11.3-23).
-
-phi(1) = e.eta20 + e.eta02;
-phi(2) = (e.eta20 - e.eta02)^2 + 4*e.eta11^2;
-phi(3) = (e.eta30 - 3*e.eta12)^2 + (3*e.eta21 - e.eta03)^2;
-phi(4) = (e.eta30 + e.eta12)^2 + (e.eta21 + e.eta03)^2;
-phi(5) = (e.eta30 - 3*e.eta12) * (e.eta30 + e.eta12) * ...
-         ( (e.eta30 + e.eta12)^2 - 3*(e.eta21 + e.eta03)^2 ) + ...
-         (3*e.eta21 - e.eta03) * (e.eta21 + e.eta03) * ...
-         ( 3*(e.eta30 + e.eta12)^2 - (e.eta21 + e.eta03)^2 );
-phi(6) = (e.eta20 - e.eta02) * ( (e.eta30 + e.eta12)^2 - ...
-                                 (e.eta21 + e.eta03)^2 ) + ...
-         4 * e.eta11 * (e.eta30 + e.eta12) * (e.eta21 + e.eta03);
-phi(7) = (3*e.eta21 - e.eta03) * (e.eta30 + e.eta12) * ...
-         ( (e.eta30 + e.eta12)^2 - 3*(e.eta21 + e.eta03)^2 ) + ...
-         (3*e.eta12 - e.eta30) * (e.eta21 + e.eta03) * ...
-         ( 3*(e.eta30 + e.eta12)^2 - (e.eta21 + e.eta03)^2 );
+    % DIP equations (11.3-17) through (11.3-23).
+    
+    phi(1) = e.eta20 + e.eta02;
+    phi(2) = (e.eta20 - e.eta02)^2 + 4*e.eta11^2;
+    phi(3) = (e.eta30 - 3*e.eta12)^2 + (3*e.eta21 - e.eta03)^2;
+    phi(4) = (e.eta30 + e.eta12)^2 + (e.eta21 + e.eta03)^2;
+    phi(5) = (e.eta30 - 3*e.eta12) * (e.eta30 + e.eta12) * ...
+             ( (e.eta30 + e.eta12)^2 - 3*(e.eta21 + e.eta03)^2 ) + ...
+             (3*e.eta21 - e.eta03) * (e.eta21 + e.eta03) * ...
+             ( 3*(e.eta30 + e.eta12)^2 - (e.eta21 + e.eta03)^2 );
+    phi(6) = (e.eta20 - e.eta02) * ( (e.eta30 + e.eta12)^2 - ...
+                                     (e.eta21 + e.eta03)^2 ) + ...
+             4 * e.eta11 * (e.eta30 + e.eta12) * (e.eta21 + e.eta03);
+    phi(7) = (3*e.eta21 - e.eta03) * (e.eta30 + e.eta12) * ...
+             ( (e.eta30 + e.eta12)^2 - 3*(e.eta21 + e.eta03)^2 ) + ...
+             (3*e.eta12 - e.eta30) * (e.eta21 + e.eta03) * ...
+             ( 3*(e.eta30 + e.eta12)^2 - (e.eta21 + e.eta03)^2 );
 end
