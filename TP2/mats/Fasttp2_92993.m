@@ -69,8 +69,8 @@ function NumMec = Fasttp2_92993()
 
     MaxImg = size(listaF,1);
     
-    for idxImg = 3
-%     for idxImg = 1:MaxImg
+%     for idxImg = 3
+    for idxImg = 1:MaxImg
         tic
         fprintf("idxImg:%d\n",idxImg);
 
@@ -193,7 +193,7 @@ function B = maskComplex(A0)
     B = bwmorph(B,"dilate",3);
     B = bwmorph(B,"close",inf);
     B = imfill(B,"holes");
-    B = bwareaopen(B,500);
+    B = bwareaopen(B,300);
 
 end
 
@@ -250,7 +250,7 @@ function [regions,regionsRGB,countBord] = getSubImages(A,minSize,imgRef,FundosLi
     
     else
 %         fprintf("Usou fundo n%d, mean%.2f \n",fundoUsed, maxAccept)
-        E = bwareaopen(maskEnd,500);
+        E = bwareaopen(maskEnd,300);
     end
 
     F = imclearborder(E(2:end-1,2:end-1));
