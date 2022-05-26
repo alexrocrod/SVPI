@@ -8,14 +8,14 @@
 
 % De volta a B>0
 % idxImg=1 perfeito
-% idxImg=2 1 imagem classificada mal (a outra versao da vermelha foi partida)
-% idxImg=3 parte pelo menos uma bolacha
-% idxImg=4 quase bem 
-% idxImg=5 falhas oreos
-% idxImg=6 weird shapes do fundo
-% idxImg=7 quase bem
-% idxImg=8 fail regions
-% idxImg=9 falha binarizacao pq tem noises > tentar binarizar depois cada regiao
+% idxImg=2 2 mal classificadas como cookies (uma delas foi partida)
+% idxImg=3 perfeito
+% idxImg=4 belga da partida por minVal
+% idxImg=5 
+% idxImg=6 
+% idxImg=7 
+% idxImg=8 
+% idxImg=9 
 % idxImg=10 algum ruido da poucos erros
 % idxImg=11 quase bem
 % idxImg=12 quase bem
@@ -130,12 +130,12 @@ function NumMec = tp2_92993()
 %     idxImg = 7; showplot = true;
 
 %%
-    [regionsRef,regionsRGBRef,~] = getRefImages(classe);
+    [~,regionsRGBRef,~] = getRefImages(classe);
    
 %     for idxImg = 1:MaxImg
         tic
     showplot = true;
-    for idxImg = 2
+    for idxImg = 22
         fprintf("idxImg:%d\n",idxImg);
 
         imName = listaF(idxImg).name;
@@ -195,8 +195,13 @@ function NumMec = tp2_92993()
 %         end
 
         N = numel(regions);
+        regionsBin = regions;
+        for k=1:N
+            regionsBin{k} = regions{k}>0;
+        end
+%         save matlab.mat
+%         AllFeatsCookies = getFeatures(regionsBin,regions,regionsRGB,13);
         
-  
         if showplot
             SS = ceil(sqrt(N));
             figure;
@@ -223,10 +228,11 @@ function NumMec = tp2_92993()
         partidas = [];
 
         for k=1:N
-            fprintf("Testing k %d\n",k)
-            [kRef,res,part,str] = getBestMatchv2(regionsRGB{k}, AllFeatsRef, oriRefs, sizesRefs, fanKs);
+%             fprintf("Testing k %d\n",k)
+            [kRef,res,part,str] = getBestMatchv2(regionsRGB{k}, AllFeatsRef, oriRefs, sizesRefs, fanKs, regions{k}, regionsBin{k});
+%             [kRef,res,part,str] = getBestMatchv3(AllFeatsCookies(:,k), AllFeatsRef, oriRefs, sizesRefs, fanKs,regionsBin{k});
             
-            if  showplot
+            if showplot
                 figure;
                 subplot(1,2,1)
                 imshow(regionsRGB{k})
@@ -608,7 +614,7 @@ function [regions,regionsRGB,fullMask,countBord] = getSubImages(A,minSize,relSiz
 
     fullMask = zeros(size(B));
     
-    [Bx,~,Nb] = bwboundaries(B);
+    [Bx,~,Nb] = bwboundaries(B,'noholes');
     
     sx = size(B,1);
     sy = size(B,2);
@@ -622,7 +628,6 @@ function [regions,regionsRGB,fullMask,countBord] = getSubImages(A,minSize,relSiz
         hold on
     end
     
-%     for k = Nb+1:length(Bx) % use only interior boundaries
     for k = 1:Nb % use only exterior boundaries
         boundary = Bx{k};
     
@@ -641,9 +646,9 @@ function [regions,regionsRGB,fullMask,countBord] = getSubImages(A,minSize,relSiz
         sizesT = sort(size(mask0s));
         if sizesT(2) > relSizes * sizesT(1) || sizesT(1) < minWidth * sx, continue, end
     
-        mask = bwmorph(mask,"dilate");
-        mask = bwmorph(mask,"close",inf);
-        mask = imfill(mask,"holes");
+%         mask = bwmorph(mask,"dilate");
+%         mask = bwmorph(mask,"close",inf);
+%         mask = imfill(mask,"holes");
 
         if showplot
             plot(boundary(:,2),boundary(:,1),'r','LineWidth',4);
@@ -704,7 +709,7 @@ function [regions,regionsRGB,fullMask,countBord] = getSubImages(A,minSize,relSiz
 
     fullMask = zeros(size(B));
     
-    [Bx,~,Nb] = bwboundaries(B);
+    [Bx,~,Nb] = bwboundaries(B,'noholes');
     
     sx = size(B,1);
     sy = size(B,2);
@@ -718,7 +723,6 @@ function [regions,regionsRGB,fullMask,countBord] = getSubImages(A,minSize,relSiz
 
     countBord = 0;
     
-%     for k = Nb+1:length(Bx) % use only interior boundaries
     for k = 1:Nb % use only exterior boundaries
         boundary = Bx{k};
     
@@ -755,7 +759,7 @@ function [regions,regionsRGB,fullMask,countBord] = getSubImages(A,minSize,relSiz
 
 end
 
-function [kRef,minres,part,str] = getBestMatchv2(img1, AllFeatsRef, oriRefs, sizesRefs, fanKs)
+function [kRef,minres,part,str] = getBestMatchv2(Brgb, AllFeatsRef, oriRefs, sizesRefs, fanKs, B, Bbin)
 
     global showplot;
 
@@ -772,11 +776,11 @@ function [kRef,minres,part,str] = getBestMatchv2(img1, AllFeatsRef, oriRefs, siz
     tolPartidasMinVal = 3.5e-1;% 3e-1;
     tolPartidasDiffY = 0.095; %0.1 falha 1 ou 2x no img3
 
-    B = rgb2gray(img1);
-    Brgb = img1;
-    Bbin = B>0; % Bbin = B
-%     Bbin = imbinarize(B,0.1); % 0.1
-    Bbin = bwareaopen(Bbin,100); % 10
+%     B = imgGray;%rgb2gray(img1);
+%     Brgb = img1;
+%     Bbin = imgBin;%B>0; % Bbin = B
+% %     Bbin = imbinarize(B,0.1); % 0.1
+%     Bbin = bwareaopen(Bbin,100); % 10
 
 %     figure;
 %     subplot(1,3,1)
@@ -793,42 +797,124 @@ function [kRef,minres,part,str] = getBestMatchv2(img1, AllFeatsRef, oriRefs, siz
         sxRef = sizesRefs(iRef,1);
 
         Brgb2 = imrotate(Brgb,oriRef-oriB);
-%         Bbin2 = imrotate(Bbin,oriRef-oriB);
         B2 = imrotate(B,oriRef-oriB);
 
-%         Bbin2 = bwareaopen(Bbin2,sxRef);
-%         Bbin2 = Bbin2(:,any(Bbin2,1));
-%         Bbin2 = Bbin2(any(Bbin2,2),:);
-        
         Brgb2 = Brgb2(:,any(B2,1),:);
         Brgb2 = Brgb2(any(B2,2),:,:);
 
-%         B2 = B2(:,any(B2,1));
-%         B2 = B2(any(B2,2),:);
-
         Brgb2 = imresize(Brgb2,[sxRef NaN]);
-%         Bbin2 = imresize(Bbin2,[sxRef NaN]);
-%         B2 = imresize(B2,[sxRef NaN]);
         B2 = rgb2gray(Brgb2);
         Bbin2 = B2>0;
-        Bbin2 = bwareaopen(Bbin2, 100); %sxRef
+%         Bbin2 = logical(autobinBW(B2));
+%         Bbin2 = bwmorph(Bbin2,"close",inf);
+%         Bbin2 = imfill(Bbin2,"holes");
+        Bbin2 = bwareafilt(Bbin2, 1); %largest blob only
+%         Bbin2 = ~bwareaopen(~Bbin2,100);
 
-%         Bbin2 = bwmorph(Bbin2,"close",3);
-% %         Bbin2 = bwmorph(Bbin2,"dilate",1);
-% %         Bbin2 = bwmorph(Bbin2,"fill",10);
-%         Bbin2 = bwareaopen(Bbin2, sxRef);
-        
-
-        [~,Nb] = bwlabel(Bbin2);
-        if Nb~=1
-            fprintf(">>>>>>>>> fail Nb=%d iref=%d\n",Nb,iRef)
-            Brgb2 = Brgb;
-            Bbin2 = Bbin;
-            B2 = B;
-        end
+        Brgb2 = Brgb2.*repmat(Bbin2,[1 1 3]);
+        B2 = B2.*Bbin2;
 
         featsIm = getFeats(Brgb2,B2,Bbin2);
 %         dists(1) = norm(featsIm - AllFeatsRef(:,iRef));
+        dist1 = norm(featsIm - AllFeatsRef(:,iRef));
+
+        if dist1 < minres
+            kRef = iRef;
+            minres = dist1;
+    
+            partidaMean =  mean(Bbin2,'all')/solRefs(iRef);
+            
+            if iRef==19
+                windowSize = 21;
+                kernel = ones(windowSize) / windowSize ^ 2;
+                blurryImage = conv2(single(Bbin2), kernel, 'same');
+                Bbin3 = blurryImage > 0.5; % Rethreshold
+                eulerN = regionprops(Bbin3,'EulerNumber').EulerNumber;
+            end
+    
+            sz1 = sort(size(Bbin2));
+            szRa = sz1(1)/sz1(2);
+
+            sz1 = sort(sizesRefs(iRef,:));
+            szRef = sz1(1)/sz1(2);
+            partidaDiffY = szRa/szRef;
+
+    %         if iRef == 8 && size(Bbin2,2)/sxRef < partidaDiffY(iRef)
+    %         if size(Bbin2,2)/sxRef < partidaDiffY(iRef)
+    %             partidaDiffY(iRef) = size(Bbin2,2)/sxRef;
+    %         end
+        end
+
+    end
+
+    if ismember(kRef,fanKs)
+        tolPartidasMean = 0.5;
+        tolPartidasDiffY = 5e-2;
+        tolPartidasMinVal = 2.2e-1;
+    end
+
+    partidaDiffY = abs(1-partidaDiffY);
+
+%     if kRef==19 && partidaMean > tolPartidasMean && partidaDiffY < tolPartidasDiffY
+%         tolPartidasMinVal = 7e-2;
+%         fprintf("EulerN%d\n",eulerN)
+%         figure;
+%         subplot(1,3,1)
+%         imshow(Bbin2)
+%         subplot(1,3,2)
+%         imshow(B2)
+%         subplot(1,3,3)
+%         imshow(Brgb2)
+%         pause(0.1)
+%     end
+
+    
+    if partidaMean < tolPartidasMean || minres > tolPartidasMinVal || partidaDiffY > tolPartidasDiffY || (kRef==19 && eulerN ~= 0)
+        part = true;
+    end
+    str = sprintf("meanRel=%.2f\n minVal=%d\n DiffY:%d",partidaMean,minres,partidaDiffY);
+
+        
+end
+
+function features = getFeatures(regions,regionsGray,regionsRGB,nFeats)
+    N = numel(regions);
+    features = zeros(nFeats,N);
+    for k=1:N
+        A = regionsGray{k};
+        Argb = regionsRGB{k};
+        Abin = regions{k};
+%         figure;
+%         subplot(1,3,1)
+%         imshow(Abin)
+%         subplot(1,3,2)
+%         imshow(A)
+%         subplot(1,3,3)
+%         imshow(Argb)
+        features(:,k) = getFeats(Argb,A,Abin);
+    end   
+end
+
+function [kRef,minres,part,str] = getBestMatchv3(featsIm, AllFeatsRef, oriRefs, sizesRefs, fanKs,Bbin2)
+
+    global showplot;
+
+    part = false;
+    solRefs = AllFeatsRef(end,:);
+
+    Nref = length(oriRefs);
+    partidaMean = 0;
+    partidaDiffY = 0;
+    minres = 1;
+    kRef = 1;
+    
+    tolPartidasMean = 0.3;%0.7
+    tolPartidasMinVal = 3.5e-1;% 3e-1;
+    tolPartidasDiffY = 0.095; %0.1 falha 1 ou 2x no img3
+
+    eulerN = 0;
+    for iRef=1:Nref
+
         dist1 = norm(featsIm - AllFeatsRef(:,iRef));
 
         if dist1 < minres
@@ -919,7 +1005,7 @@ function [B,mask] = removeFundoDado(A,FundoLims,minS)
 
     %%%% Sempre??
     mask = bwmorph(mask,"close",inf);
-    mask = imfill(mask,"holes");
+%     mask = imfill(mask,"holes");
     %%%%
 
 

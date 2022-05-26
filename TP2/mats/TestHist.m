@@ -67,17 +67,17 @@ for k=1:N
     Bhsv = rgb2hsv(B);
     H = Bhsv(:,:,1);
     
-    stdH = std(H(:))
+    stdH = std(H(:));
 
-    meanH = mean(H,"all")
+    meanH = mean(H,"all");
 
-    medianH = median(H,"all")
+    medianH = median(H,"all");
 
-    modeH = mode(H(H~=0),'all')
+    modeH = mode(H(H~=0),'all');
 
-    skewnessH = skewness(H,0,'all')
+    skewnessH = skewness(H,0,'all');
 
-    kurtosisH = kurtosis(H,0,"all")
+    kurtosisH = kurtosis(H,0,"all");
 
     AllFeatsCookies(k,:) = [stdH meanH medianH modeH skewnessH kurtosisH];
 

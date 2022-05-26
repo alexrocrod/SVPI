@@ -15,21 +15,21 @@ clc
 
 % da palmiers cheias qd usa close e fill
 %% 
-A=im2double(imread("../Seq29x/svpi2022_TP2_img_291_01.png"));
+A=im2double(imread("../Seq29x/svpi2022_TP2_img_291_22.png"));
 figure;
 imshow(A)
 
 
 %% colorThresholder
-% [mask,res] = createMaskPreto3(A,20);
-% figure;
-% imshow(mask)
-% figure;
-% imshow(res)
-% fprintf("mean %.2f\n",mean(mask,"all"))
-% 
-% 
-% return
+[mask,res] = createMaskPreto22(A,100);
+figure;
+imshow(mask)
+figure;
+imshow(res)
+fprintf("mean %.2f\n",mean(mask,"all"))
+
+
+return
 
 %% All Fundos ColorThres
 

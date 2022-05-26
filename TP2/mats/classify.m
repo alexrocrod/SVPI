@@ -26,9 +26,9 @@ for k=1:N
     xlabel(k)
 end
 
-nFeats = 11;
+nFeats = 13;
 
-AllFeatures = getFeatures(regionsRef,regionsGray,regionsRGBRef,nFeats);
+AllFeatures = getFeaturesRot(regionsRef,regionsGray,regionsRGBRef,nFeats);
 
 % return
 %%
@@ -87,7 +87,14 @@ maxAcceptFundo = 0.4;
 % [regions,regionsRGB,~,ObjBord] = getSubImages(A,minSize,cutx,cuty,relSizes,minWidth,extend,fmaskRot,A0,minAreaMigalha);
 [regions,regionsRGB,~,ObjBord] = getSubImagesV2(A,minSize,relSizes,minWidth,fmaskRot,A0,minAreaMigalha,minSpare,FundoLims,minSizesFundos,minAcceptFundo,maxAcceptFundo);
 
-N=numel(regions);
+N = numel(regions);
+regionsBin = regions;
+for k=1:N
+    regionsBin{k} = regions{k}>0;
+end
+
+AllFeatsCookies = getFeaturesRot(regionsBin,regions,regionsRGB,nFeats)
+
 % AllFeats = zeros(N,Nref,nFeats);
 partidaMean = zeros(N,Nref);
 partidaDiffY = zeros(N,Nref);
@@ -95,52 +102,54 @@ partsMBbin = [];
 dist = zeros(N,Nref);
 
 for k=1:N
-    B = rgb2gray(regionsRGB{k});
-    Brgb = regionsRGB{k};
-%     Bbin = B;
-%     Bbin = regions{k};
-%     Bbin = bwareaopen(Bbin,10);
-    Bbin = B>0;
-%     figure;
-%     subplot(1,4,1)
-%     imshow(Brgb)
+    Bbin = regionsBin{k};
+%     B = rgb2gray(regionsRGB{k});
+%     Brgb = regionsRGB{k};
+% %     Bbin = B;
+% %     Bbin = regions{k};
+% %     Bbin = bwareaopen(Bbin,10);
+%     Bbin = B>0;
+% %     figure;
+% %     subplot(1,4,1)
+% %     imshow(Brgb)
     oriB = regionprops(Bbin,'Orientation').Orientation;
     for iRef=1:Nref
-        oriRef = regionprops(regionsRef{iRef},'Orientation').Orientation;
-        sxRef = size(regionsRef{iRef},1);
-%         subplot(1,4,2)
-%         imshow(regionsRGBRef{iRef})
+%         oriRef = regionprops(regionsRef{iRef},'Orientation').Orientation;
+%         sxRef = size(regionsRef{iRef},1);
+% %         subplot(1,4,2)
+% %         imshow(regionsRGBRef{iRef})
+% 
+%         Brgb2 = imrotate(Brgb,oriRef-oriB);
+        Bbin2 = imrotate(Bbin,-oriB);
+%         B2 = imrotate(B,oriRef-oriB);
 
-        Brgb2 = imrotate(Brgb,oriRef-oriB);
-%         Bbin2 = imrotate(Bbin,oriRef-oriB);
-        B2 = imrotate(B,oriRef-oriB);
+        Bbin2 = bwareaopen(Bbin2,100);
+        Bbin2 = Bbin2(:,any(Bbin2,1));
+        Bbin2 = Bbin2(any(Bbin2,2),:);
+%         
+%         Brgb2 = Brgb2(:,any(B2,1),:);
+%         Brgb2 = Brgb2(any(B2,2),:,:);
+% 
+% %         B2 = B2(:,any(B2,1));
+% %         B2 = B2(any(B2,2),:);
+% 
+%         Brgb2 = imresize(Brgb2,[sxRef NaN]);
+% %         Bbin2 = imresize(Bbin2,[sxRef NaN]);
+% %         B2 = imresize(B2,[sxRef NaN]);
+%         B2 = rgb2gray(Brgb2);
+%         Bbin2 = B2>0;
+%         Bbin2 = bwareaopen(Bbin2, 100); %sxRef
+% 
+%         [~,Nb] = bwlabel(Bbin2);
+%         if Nb~=1
+%             fprintf("fail k%d iRef%d\n",k,iRef)
+%             Brgb2 = Brgb;
+%             Bbin2 = Bbin;
+%             B2 = B;
+%         end
 
-%         Bbin2 = bwareaopen(Bbin2,sxRef);
-%         Bbin2 = Bbin2(:,any(Bbin2,1));
-%         Bbin2 = Bbin2(any(Bbin2,2),:);
-        
-        Brgb2 = Brgb2(:,any(B2,1),:);
-        Brgb2 = Brgb2(any(B2,2),:,:);
-
-%         B2 = B2(:,any(B2,1));
-%         B2 = B2(any(B2,2),:);
-
-        Brgb2 = imresize(Brgb2,[sxRef NaN]);
-%         Bbin2 = imresize(Bbin2,[sxRef NaN]);
-%         B2 = imresize(B2,[sxRef NaN]);
-        B2 = rgb2gray(Brgb2);
-        Bbin2 = B2>0;
-        Bbin2 = bwareaopen(Bbin2, 100); %sxRef
-
-        [~,Nb] = bwlabel(Bbin2);
-        if Nb~=1
-            fprintf("fail k%d iRef%d\n",k,iRef)
-            Brgb2 = Brgb;
-            Bbin2 = Bbin;
-            B2 = B;
-        end
-
-        featsIm = getFeats(Brgb2,B2,Bbin2);
+%         featsIm = getFeats(Brgb2,B2,Bbin2);
+        featsIm = AllFeatsCookies(:,k);
 %         dists(1) = norm(featsIm - AllFeatsRef(:,iRef));
         dist(k,iRef) = norm(featsIm - AllFeatures(:,iRef));
         
@@ -227,25 +236,51 @@ function features = getFeatures(regions,regionsGray,regionsRGB,nFeats)
     end   
 end
 
-function feats = getFeats(ARGB,Agray,Abin,nFeats)
-%     s = regionprops(Abin,'Eccentricity','Solidity');
-%     meanR = mean(ARGB(:,:,1),'all');
-%     meanG = mean(ARGB(:,:,2),'all');
-%     meanB = mean(ARGB(:,:,3),'all');
-%     Ahsv = rgb2hsv(ARGB);
-%     meanV = mean(Ahsv(:,:,3),'all');
-%     ola = -real(log(invmoments(Agray)))/20;
-%     feats = [meanR meanG meanB meanV ola s.Eccentricity s.Solidity]'; 
+function features = getFeaturesRot(regions,regionsGray,regionsRGB,nFeats)
+    
+    N = numel(regions);
+    features = zeros(nFeats,N);
+    for k=1:N
+        Brgb = regionsRGB{k};
+        B = regionsGray{k};
+        Bbin = regions{k};
+        ori = regionprops(Bbin,"Orientation").Orientation;
 
+        Brgb2 = imrotate(Brgb,-ori);
+        B2 = rgb2gray(Brgb2);
+        Bbin2 = B2>0;
+        Bbin2 = bwareaopen(Bbin2, 100);         
+
+        [~,Nb] = bwlabel(Bbin2);
+        if Nb~=1
+            fprintf(">>>>>>>>> fail Nb=%d iref=%d\n",Nb,iRef)
+            Brgb2 = Brgb;
+            Bbin2 = Bbin;
+            B2 = B;
+        end
+        features(:,k) = getFeats(Brgb2,B2,Bbin2,nFeats);
+    end   
+end
+
+function feats = getFeats(ARGB,Agray,Abin,nFeats)
     s = regionprops(Abin,'Eccentricity','Solidity');
-%     meanR = mean(ARGB(:,:,1),'all');
-%     meanG = mean(ARGB(:,:,2),'all');
-%     meanB = mean(ARGB(:,:,3),'all');
+    meanR = mean(ARGB(:,:,1),'all');
+    meanG = mean(ARGB(:,:,2),'all');
+    meanB = mean(ARGB(:,:,3),'all');
     Ahsv = rgb2hsv(ARGB);
-    meanH = mean(Ahsv(:,:,1),'all');
     meanV = mean(Ahsv(:,:,3),'all');
     ola = -real(log(invmoments(Agray)))/20;
-    feats = [meanH meanV ola s.Eccentricity s.Solidity]';
+    feats = [meanR meanG meanB meanV ola s.Eccentricity s.Solidity]'; 
+
+%     s = regionprops(Abin,'Eccentricity','Solidity');
+% %     meanR = mean(ARGB(:,:,1),'all');
+% %     meanG = mean(ARGB(:,:,2),'all');
+% %     meanB = mean(ARGB(:,:,3),'all');
+%     Ahsv = rgb2hsv(ARGB);
+%     meanH = mean(Ahsv(:,:,1),'all');
+%     meanV = mean(Ahsv(:,:,3),'all');
+%     ola = -real(log(invmoments(Agray)))/20;
+%     feats = [meanH meanV ola s.Eccentricity s.Solidity]';
 end
 
 function [B,mask] = removeFundoDado(A,FundoLims,minS)

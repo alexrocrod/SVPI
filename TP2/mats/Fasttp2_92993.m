@@ -6,11 +6,6 @@
 
 %% Ideias
 
-% Oreos pretas, bolacha vermelha
-% encontrar zona oreo mal binarizada e tentar tratar so dessa zona
-% estender a circulos as bolachas para perceber se sao partidas
-
-%% 
 
 
 function NumMec = Fasttp2_92993()
@@ -23,7 +18,7 @@ function NumMec = Fasttp2_92993()
 
     %% DATA
 
-    FundoLims = zeros(9,3,2);
+    FundoLims = zeros(10,3,2);
 
     FundoLims(:,:,1)=[  0.112	0.076	0.911
                         0.514	0.268	0.188
@@ -33,7 +28,8 @@ function NumMec = Fasttp2_92993()
                         0.206	0.146	0.519
                         0.194	0	    0
                         0.995	0	    0
-                        0.040	0	    0];
+                        0.040	0	    0
+                        0.950	0	    0.089];
     
     
     FundoLims(:,:,2)=[  0.185	0.163	1
@@ -44,9 +40,10 @@ function NumMec = Fasttp2_92993()
                         0.274	1	    1
                         1	    1	    0.181
                         0.008	0.014	0.190
-                        0.185	1   	0.241];
+                        0.185	1   	0.241
+                        0.179	1   	1];
     
-    minSizesFundos = [100 10 100 10 100 10 1000 10 20]; 
+    minSizesFundos = [100 10 100 10 100 10 1000 10 20 100]; 
 
     minAcceptFundo = 0.2;
     maxAcceptFundo = 0.4;
@@ -93,7 +90,7 @@ function NumMec = Fasttp2_92993()
 
     MaxImg = size(listaF,1);
     
-%     for idxImg = 1
+%     for idxImg = 3
     for idxImg = 1:MaxImg
         tic
         fprintf("idxImg:%d\n",idxImg);
@@ -134,7 +131,7 @@ function NumMec = Fasttp2_92993()
 
         % Find other subimages
 %         try 
-        [regions,regionsRGB,~,ObjBord] = getSubImages(A,minSize,relSizes,minWidth,fmaskRot,A0,minAreaMigalha,minSpare,FundoLims,minSizesFundos,minAcceptFundo,maxAcceptFundo);
+        [regions,regionsRGB,ObjBord] = getSubImages(A,minSize,A0,minAreaMigalha,FundoLims,minSizesFundos,minAcceptFundo,maxAcceptFundo);
 %         catch
 %             fprintf(">>>>>>>>>>>>>>>>fail binarization %d\n",idxImg)
 %             T = table(NumMec, NumSeq, NumImg, ObjBord, ObjPart, ObjOK, beurre, ...
@@ -307,10 +304,8 @@ function B = maskComplex(A0,minAreaMigalha)
     B = (B|saveB2);
 end
 
-function [regions,regionsRGB,fullMask,countBord] = getSubImages(A,minSize,relSizes,minWidth,fmaskPrev,imgRef,minAreaMigalha, ...
-    minSparse,FundosLims,minSizesFundos,minAcceptFundo,maxAcceptFundo)
+function [regions,regionsRGB,countBord] = getSubImages(A,minSize,imgRef,minAreaMigalha,FundosLims,minSizesFundos,minAcceptFundo,maxAcceptFundo)
     % get all subimages(regions)
-
 
     maxAccept = maxAcceptFundo;
     fundoUsed = 0;
@@ -318,28 +313,22 @@ function [regions,regionsRGB,fullMask,countBord] = getSubImages(A,minSize,relSiz
     maskEnd = ones(size(A));
 
     for i=1:length(FundosLims)
-        [AnoF,mask] = removeFundoDado(imgRefOld,FundosLims(i,:,:),minSizesFundos(i));
+        [AnoF,mask] = removeFundoDado(imgRefOld,FundosLims(i,:,:),minSizesFundos(i),i==10);
         nnzMask = mean(mask,"all");
-        fprintf("fundo n%d, mean%.2f \n",i, nnzMask)
+%         fprintf("fundo n%d, mean%.2f \n",i, nnzMask)
         if nnzMask < maxAccept && nnzMask > minAcceptFundo
             maxAccept = nnzMask;
             A = rgb2gray(AnoF);
             imgRef = AnoF;
             maskEnd = mask;
-            fprintf("Usado fundo n%d, mean%.2f \n",i, nnzMask)
+%             fprintf("Usado fundo n%d, mean%.2f \n",i, nnzMask)
             fundoUsed = i;
         end
     end
 
     if ~fundoUsed
-%     if ~fundoUsed || fundoUsed==7
         fprintf("Not using a fundo\n")
         E = maskComplex(imgRef,minAreaMigalha);
-
-%         E = bwmorph(E,"bridge",inf);
-%         E = bwmorph(E,"close",inf);
-%         E = imfill(E,"holes");
-%         E = bwareaopen(E,100);
     
     else
         fprintf("Usou fundo n%d, mean%.2f \n",fundoUsed, maxAccept)
@@ -355,44 +344,39 @@ function [regions,regionsRGB,fullMask,countBord] = getSubImages(A,minSize,relSiz
     %% Bolachas Normais e Partidas
     B = F;
 
-    fullMask = zeros(size(B));
+%     fullMask = zeros(size(B));
     
-    [Bx,~,Nb] = bwboundaries(B);
+    [Bx,~,Nb] = bwboundaries(B,'noholes');
     
     sx = size(B,1);
     sy = size(B,2);
     
     count = 1;
 
-%     for k = Nb+1:length(Bx) % use only interior boundaries
     for k = 1:Nb % use only exterior boundaries
         boundary = Bx{k};
     
         mask = poly2mask(boundary(:,2), boundary(:,1),sx,sy);
-        if (nnz(mask) < minSize*sx), continue, end
+%         if (nnz(mask) < minSize*sx)
+%             continue
+%         end
 
-        % remove already found
-        if nnz(mask.*fmaskPrev), continue, end
-    
         % clean all zeros cols and rows
-        mask0s = mask(:,any(mask,1));
-        mask0s = mask0s(any(mask0s,2),:);
-        if (mean(mask0s,'all') < minSparse), continue, end % very sparse image % 0.4 ou 0.2??
-    
+%         mask0s = mask(:,any(mask,1));
+%         mask0s = mask0s(any(mask0s,2),:);
+%         if (mean(mask0s,'all') < minSparse)
+%             continue
+%         end % very sparse image % 0.4 ou 0.2??
+%     
         % remove weird shapes
-        sizesT = sort(size(mask0s));
-        if sizesT(2) > relSizes * sizesT(1) || sizesT(1) < minWidth * sx, continue, end
+%         sizesT = sort(size(mask0s));
+%         if sizesT(2) > relSizes * sizesT(1) || sizesT(1) < minWidth * sx
+%             continue
+%         end
     
-        mask = bwmorph(mask,"dilate");
-        mask = bwmorph(mask,"close",inf);
-        mask = imfill(mask,"holes");
-
         selected = A.*mask;
         selectedRGB = imgRef.*repmat(mask,[1 1 3]);
 
-        fullMask = fullMask | mask;
-        fmaskPrev = fmaskPrev | mask;
-    
         % guardar regiao
         selectedRGB = selectedRGB(:,any(selected,1),:);
         selectedRGB = selectedRGB(any(selected,2),:,:);
@@ -400,10 +384,10 @@ function [regions,regionsRGB,fullMask,countBord] = getSubImages(A,minSize,relSiz
         selected = selected(:,any(selected,1));
         selected = selected(any(selected,2),:);
 
-        if (nnz(mask) < minAreaMigalha)
-            fprintf("migalha\n")
-            continue
-        end
+%         if (nnz(mask) < minAreaMigalha)
+%             fprintf("migalha\n")
+%             continue
+%         end
         
         regions{count} = selected;
 
@@ -422,44 +406,47 @@ function [regions,regionsRGB,fullMask,countBord] = getSubImages(A,minSize,relSiz
     G = bwareaopen(G,100);
     G = bwmorph(G,"close",inf);
     G = imfill(G,"holes");
+    G = bwareaopen(G,round(minSize*sx));
 
-    B = G;
-
-    fullMask = zeros(size(B));
+%     
+% %     [Bx,~,Nb] = bwboundaries(B,'noholes');
+%     [~,~,countBord] = bwboundaries(B,'noholes');
+% %     countBord
+    [~,countBord] = bwlabel(G);
+%     Nb
     
-    [Bx,~,Nb] = bwboundaries(B);
-    
-    countBord = 0;
+%     countBord = 0;
     
 %     for k = Nb+1:length(Bx) % use only interior boundaries
-    for k = 1:Nb % use only exterior boundaries
-        boundary = Bx{k};
-    
-        mask = poly2mask(boundary(:,2), boundary(:,1),sx,sy);
-        if (nnz(mask) < minSize*sx), continue, end
-
-        % remove already found
-        if nnz(mask.*fmaskPrev), continue, end
-    
-        % clean all zeros cols and rows
-        mask0s = mask(:,any(mask,1));
-        mask0s = mask0s(any(mask0s,2),:);
-        if (mean(mask0s,'all') < 0.4), continue, end % very sparse image
-    
-        % remove weird shapes
-        sizesT = sort(size(mask0s));
-        if sizesT(2) > relSizes * sizesT(1) || sizesT(1) < minWidth * sx, continue, end
-      
-        fmaskPrev = fmaskPrev | mask;
-
-        if (nnz(mask) < minAreaMigalha)
-            fprintf("migalha border\n")
-            continue
-        end
-
-        countBord = countBord + 1;
-    
-    end
+%     for k = 1:Nb % use only exterior boundaries
+%         boundary = Bx{k};
+%     
+%         mask = poly2mask(boundary(:,2), boundary(:,1),sx,sy);
+% %         if (nnz(mask) < minSize*sx)
+% %             continue
+% %         end
+% 
+% %         % clean all zeros cols and rows
+% %         mask0s = mask(:,any(mask,1));
+% %         mask0s = mask0s(any(mask0s,2),:);
+% %         if (mean(mask0s,'all') < 0.4)
+% %             continue
+% %         end % very sparse image
+%     
+% %         % remove weird shapes
+% %         sizesT = sort(size(mask0s));
+% %         if sizesT(2) > relSizes * sizesT(1) || sizesT(1) < minWidth * sx
+% %             continue
+% %         end
+%       
+% %         if (nnz(mask) < minAreaMigalha)
+% %             fprintf("migalha border\n")
+% %             continue
+% %         end
+% 
+%         countBord = countBord + 1;
+%     
+%     end
 
 end
 
@@ -482,11 +469,17 @@ function [kRef,minres,part] = getBestMatchv2(img1, AllFeatsRef, oriRefs, sizesRe
     B = rgb2gray(img1);
     Brgb = img1;
     Bbin = B>0;
-    Bbin = bwareaopen(Bbin,100); % 10
+%     Bbin = bwareaopen(Bbin,100); % 10
+    Bbin = bwareafilt(Bbin,1);
     
     eulerN = 0;
     oriB = regionprops(Bbin,'Orientation').Orientation;
-    for iRef=1:Nref
+
+    listIrefs = 1:Nref;
+    listIrefs(listIrefs==19) = [];
+    listIrefs = [listIrefs 19];
+
+    for iRef=listIrefs
         oriRef = oriRefs(iRef);
         sxRef = sizesRefs(iRef,1);
 %         syRef = sizesRefs(iRef,2);
@@ -507,16 +500,9 @@ function [kRef,minres,part] = getBestMatchv2(img1, AllFeatsRef, oriRefs, sizesRe
         Bbin2 = B2>0;
 %         Bbin2 = bwareaopen(Bbin2, 100); %sxRef
         Bbin2 = bwareafilt(Bbin2, 1); %sxRef
+        
         Brgb2 = Brgb2.*repmat(Bbin2,[1 1 3]);
         B2 = B2.*Bbin2;
-%         
-%         [~,Nb] = bwlabel(Bbin2);
-%         if Nb~=1
-%             fprintf(">>>>>>>>> fail Nb=%d\n",Nb)
-%             Brgb2 = Brgb;
-%             Bbin2 = Bbin;
-%             B2 = B;
-%         end
 
         featsIm = getFeats(Brgb2,B2,Bbin2);
         dist1 = norm(featsIm - AllFeatsRef(:,iRef));
@@ -528,7 +514,11 @@ function [kRef,minres,part] = getBestMatchv2(img1, AllFeatsRef, oriRefs, sizesRe
             partidaMean =  mean(Bbin2,'all')/solRefs(iRef);
             
             if iRef==19
-                eulerN = regionprops(Bbin2,'EulerNumber').EulerNumber;
+                windowSize = 21;
+                kernel = ones(windowSize) / windowSize ^ 2;
+                blurryImage = conv2(single(Bbin2), kernel, 'same');
+                Bbin3 = blurryImage > 0.5; % Rethreshold
+                eulerN = regionprops(Bbin3,'EulerNumber').EulerNumber;
             end
     
             sz1 = sort(size(Bbin2));
@@ -547,6 +537,8 @@ function [kRef,minres,part] = getBestMatchv2(img1, AllFeatsRef, oriRefs, sizesRe
 
     if ismember(kRef,fanKs)
         tolPartidasMean = 0.5;
+        tolPartidasDiffY = 5e-2;
+        tolPartidasMinVal = 2.2e-1;
     end
 
     partidaDiffY = abs(1-partidaDiffY);
@@ -558,9 +550,6 @@ end
 
 function feats = getFeats(ARGB,Agray,Abin)
     s = regionprops(Abin,'Eccentricity','Solidity');
-%     s = regionprops(Abin,'Eccentricity');
-%     olaM = mean(Abin,"all");
-%     fprintf("Sol %.3f M %.3f\n",s.Solidity, olaM)
 
     meanR = mean(ARGB,[1 2]);
     meanRGB = meanR(:)';
@@ -570,7 +559,6 @@ function feats = getFeats(ARGB,Agray,Abin)
     ola = -real(log(invmoments(Agray)))/20;
     
     feats = [meanRGB meanV ola s.Eccentricity s.Solidity]';
-%     feats = [meanRGB meanV ola s.Eccentricity olaM]';
 end
 
 function Ibin = autobin(I)
@@ -591,7 +579,7 @@ function Ibin = autobinBW(I)
     end
 end
 
-function [B,mask] = removeFundoDado(A,FundoLims,minS)
+function [B,mask] = removeFundoDado(A,FundoLims,minS,is22)
     HSV=rgb2hsv(A); H=HSV(:,:,1); S=HSV(:,:,2); V=HSV(:,:,3);
 
     if FundoLims(:,1,1) > FundoLims(:,1,2) 
@@ -600,16 +588,32 @@ function [B,mask] = removeFundoDado(A,FundoLims,minS)
         mask = (H >= FundoLims(:,1,1) & H <= FundoLims(:,1,2)) & (S >= FundoLims(:,2,1) & S <= FundoLims(:,2,2)) & (V >= FundoLims(:,3,1) & V <= FundoLims(:,3,2)); %add a condition for value
     end
 
-    mask=bwareaopen(mask,minS);
-
-    mask=~mask; %mask for objects (negation of background)
-
-    mask=bwareaopen(mask,minS); %in case we need some cleaning of "small" areas.
-
-    %%%% Sempre??
-    mask = bwmorph(mask,"close",inf);
-    mask = imfill(mask,"holes");
-    %%%%
+    if ~is22
+        mask=bwareaopen(mask,minS);
+    
+        mask=~mask; %mask for objects (negation of background)
+    
+        mask=bwareaopen(mask,minS); %in case we need some cleaning of "small" areas.
+    
+        %%%% Sempre??
+        mask = bwmorph(mask,"close",inf);
+        mask = imfill(mask,"holes");
+        %%%%
+    else
+        mask = bwmorph(mask,"close",inf);
+        mask = bwmorph(mask,"bridge",inf);
+        mask = imfill(mask,"holes");
+        
+        windowSize = 7;
+        kernel = ones(windowSize) / windowSize ^ 2;
+        blurryImage = conv2(single(mask), kernel, 'same');
+        mask = blurryImage > 0.5; % Rethreshold
+        
+        mask = bwareaopen(mask,minS);
+        mask = bwmorph(mask,"bridge",inf);
+        mask = imfill(mask,"holes");
+        mask = bwareaopen(mask,minS);
+    end
 
     B = mask.*A;
 end
