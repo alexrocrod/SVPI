@@ -1,10 +1,10 @@
 % SVPI
 % Alexandre Rodrigues 92993
-% Maio 2022
+% Junho 2022
 % Trabalho Pratico 2
 
 
-function NumMec = Fasttp2_92993()
+function NumMec = tp2_92993()
     %% DADOS
 
     FundoLims = zeros(9,3,2);
@@ -30,11 +30,13 @@ function NumMec = Fasttp2_92993()
                         0.185	1   	0.241
                         0.179	1   	1];
     
-    minSizesFundos = [100 10 100 10 100 10 10 20 100]; 
+    minSizesFundos = [100 10 100 10 100 10 10 20 100]; % for bwareaopen
 
-    minAcceptFundo = 0.2;
+    % Accept Fundo
+    minAcceptFundo = 0.2; 
     maxAcceptFundo = 0.4;
 
+    % All Descriptors of References
     AllFeatsRef=[   0.851757421935144	0.776536487873463	0.510835929768854	0.591310150603512	0.762683556835130	0.409440149116653	0.693367234603474	0.825033468306951	0.391962846012778	0.454997664459511	0.579605935638551	0.540806950963776	0.751610142929411	0.604613562596737	0.529719236915157	0.602079718756263	0.119561056745928	0.204589756481160	0.607132849584929	0.504846328775400	0.614112891171732	0.549581471933048	0.610448753462676	0.557517629858993	0.724518735995067	0.697333538727858	0.569078239703594	0.392564125082701
                     0.667890007872159	0.482861652772511	0.356984372402582	0.421177853857587	0.478931857103038	0.249924944070909	0.646081397231055	0.490997850692844	0.229720585522532	0.369524441163979	0.371631139502426	0.322822109036032	0.495912292542777	0.398282141139289	0.421917826657947	0.429879283026321	0.0977377819814778	0.180394632014547	0.483705903264233	0.267890692862511	0.377960132077778	0.307726861236300	0.545508228776282	0.478937478500177	0.605678857005266	0.585887744547872	0.536073990517136	0.371127465617478
                     0.364205506845117	0.0208778215908343	0.164601972821978	0.202811062696693	0.202958055260017	0.152009197461371	0.484374751797865	0.225464430066816	0.0997661237525818	0.246697117836050	0.134652099181641	0.107475171166373	0.268396318025101	0.197434933569389	0.245258986207018	0.269946425034674	0.0962885154061608	0.166975493418939	0.297087890257416	0.114772616363621	0.176805130922776	0.0624904059984650	0.416149041333989	0.330947389920888	0.407564301220585	0.383442632571171	0.514617536561157	0.358585588908595
@@ -48,31 +50,24 @@ function NumMec = Fasttp2_92993()
                     1.53207091815730	1.14897635420823	1.11407938374136	1.15420740770674	1.03663369566605	0.909542980272982	1.40108807840374	1.24335792379475	0.811173183601329	1.03246256207343	1.15452740597292	1.03110427377705	1.24534624028788	1.03312949009112	1.17393088131174	1.32825622897394	0.540282782055593	1.01934279820066	0.930622587255342	0.721250318346421	1.15737313832833	1.18881001478656	1.26586684141500	1.14940430245986	1.08971134733068	1.18412845479226	1.26711871442992	1.03364281937510
                     0.438462352712190	0.536236806523133	0.323747675892400	0.251193618047179	0.358487622809473	0.197933590658997	0.121668576081582	0.392015244506290	0.670468176413584	0.678318660079544	0.282720851789937	0.270975023484798	0.857733529096273	0.867797007796599	0.270851183121448	0.158553103229933	0.132635353313724	0.0985018381472082	0.712712888821645	0.607891399172778	0.668796199543946	0.748450560285473	0.143985778960761	0.127810988782563	0.857099128710967	0.839592766062695	0.163798400668826	0.485303591979776
                     0.947560044629749	0.960025141420490	0.992083177601848	0.989624900239425	0.941751922933313	0.964118512573569	0.972992320708057	0.996681337820981	0.991406348011542	0.987092261715521	0.990543420351625	0.985483754772711	0.960171198388721	0.964467005076142	0.993995976361122	0.992442916450441	0.991107012285498	0.992374038429518	0.923397449387601	0.950836172189532	0.915243751546647	0.926762265809571	0.976014171833481	0.978447683211880	1	                0.995176999438097	0.971305691821786	0.979185692541857];
-
+    % Reference Sizes
     sizesRefs = [176	197; 165	198; 191	197; 189	192; 211	196; 193	196; 198	197; 216	198; 139	195 ;
                  141	195; 193	196; 190	186; 103	198; 99	196; 206	198; 200	198; 198	196; 195	195; 145	194;
                  164	196; 148	195; 122	196; 190	190; 192	190; 102	198; 108	198; 194	193; 170	197];
 
+    % References Orientations
     oriRefs = [ 3.38919024622040	1.46852348518252	-21.2005264739338 4.36594225341164	86.0846686159345	7.35814106752544	50.9861987115747 -88.9717264840199	-0.541413482684292	1.83968022026784	-29.9285983834382	-37.3146530651279	-0.219720085201630	-0.158011705759180	76.8122729297615	65.1933090785739	-47.7495263654879	-31.8482857910492	-0.945324350175936	-10.7289926331406	-5.06439439977258	5.62219176743755	51.5618865742229	-80.5126715079722	0	-0.0159581128439894	58.1666067704519	-7.45185780985075];
 
-    minSize = 0.1; % min nnz for aceptable boundary (percentage)
-
-    fanKs = [9 10];
-
-
-    %% Init Vars
     NumMec = 92993;
     
-    %% Open Image
-    addpath('../Seq29x')
-    listaF=dir('../Seq29x/svpi2022_TP2_img_*1_*.png');
+    addpath('../')
+    listaF = dir('../svpi2022_TP2_img_*1_*.png');
 
     MaxImg = size(listaF,1);
     
-    for idxImg = 3
-%     for idxImg = 1:MaxImg
+    for idxImg = 1:MaxImg
+        
         tic
-        fprintf("idxImg:%d\n",idxImg);
 
         imName = listaF(idxImg).name;
         
@@ -103,75 +98,57 @@ function NumMec = Fasttp2_92993()
         zebra = 0;
 
         %% SubImages
-
-        % Find other subimages
-%         try 
+        try 
         [regionsRGB,ObjBord] = getSubImages(A0,FundoLims,minSizesFundos,minAcceptFundo,maxAcceptFundo);
-%         catch
-% %             fprintf(">>>>>>>>>>>>>>>>fail binarization %d\n",idxImg)
-%             T = table(NumMec, NumSeq, NumImg, ObjBord, ObjPart, ObjOK, beurre, ...
-%                 choco, confit, craker, fan, ginger, lotus, maria, oreo , ...
-%                 palmier, parijse, sugar, wafer, zebra);
-% 
-%             writetable(T,'tp2_92993.txt', 'WriteVariableNames',false, 'WriteMode','append')
-%             continue
-%         end
+        catch
+            T = table(NumMec, NumSeq, NumImg, ObjBord, ObjPart, ObjOK, beurre, ...
+                choco, confit, craker, fan, ginger, lotus, maria, oreo , ...
+                palmier, parijse, sugar, wafer, zebra);
 
-        N = numel(regionsRGB);
+            writetable(T,'tp2_92993.txt', 'WriteVariableNames',false, 'WriteMode','append')
+            continue
+        end
 
         %% Compare
 
-        matchs = zeros(N,1);
-        resx = zeros(N,1);
-        partidas = [];
-
-        for k=1:N
-            [matchs(k),resx(k),part] = getBestMatchv2(regionsRGB{k}, AllFeatsRef, oriRefs, sizesRefs, fanKs);
+        for k = 1:numel(regionsRGB)
+            [match,part] = getBestMatchv2(regionsRGB{k}, AllFeatsRef, oriRefs, sizesRefs);
             
             if part
-                partidas = [partidas k];
+                ObjPart = ObjPart + 1;
             else
                 ObjOK = ObjOK + 1;
+                if match < 3
+                    beurre = beurre + 1;
+                elseif match < 5
+                    choco = choco + 1;
+                elseif match < 7
+                    confit = confit + 1;
+                elseif match < 9
+                    craker = craker + 1;
+                elseif match < 11
+                    fan = fan + 1;
+                elseif match < 13
+                    ginger = ginger + 1;
+                elseif match < 15
+                    lotus = lotus + 1;
+                elseif match < 17
+                    maria = maria + 1;
+                elseif match < 19
+                    oreo = oreo + 1;
+                elseif match < 21
+                    palmier = palmier + 1;
+                elseif match < 23
+                    parijse = parijse + 1;
+                elseif match < 25
+                    sugar = sugar + 1;
+                elseif match < 27
+                    wafer = wafer + 1;
+                else
+                    zebra = zebra + 1;
+                end 
             end
         end
-
-        ObjPart = length(partidas);
-
-        %% Contar
-        
-        for k=1:N
-            if ismember(k,partidas), continue, end
-            if matchs(k) < 3
-                beurre = beurre + 1;
-            elseif matchs(k) < 5
-                choco = choco + 1;
-            elseif matchs(k) < 7
-                confit = confit + 1;
-            elseif matchs(k) < 9
-                craker = craker + 1;
-            elseif matchs(k) < 11
-                fan = fan + 1;
-            elseif matchs(k) < 13
-                ginger = ginger + 1;
-            elseif matchs(k) < 15
-                lotus = lotus + 1;
-            elseif matchs(k) < 17
-                maria = maria + 1;
-            elseif matchs(k) < 19
-                oreo = oreo + 1;
-            elseif matchs(k) < 21
-                palmier = palmier + 1;
-            elseif matchs(k) < 23
-                parijse = parijse + 1;
-            elseif matchs(k) < 25
-                sugar = sugar + 1;
-            elseif matchs(k) < 27
-                wafer = wafer + 1;
-            else
-                zebra = zebra + 1;
-            end     
-        end
-       
         
         %% Write Table Entry
         T = table(NumMec, NumSeq, NumImg, ObjBord, ObjPart, ObjOK, beurre, ...
@@ -185,7 +162,7 @@ function NumMec = Fasttp2_92993()
 
 end
 
-function B = maskComplex(A0)
+function B = maskComplex(A0) % Quando a remocao do fundo nao funcionou
 
     B = autobin(rgb2gray(A0));
     B = bwmorph(B,"dilate",3);
@@ -198,70 +175,57 @@ end
 function [regionsRGB,countBord] = getSubImages(imgRef,FundosLims,minSizesFundos,minAcceptFundo,maxAcceptFundo)
     % get all subimages(regions)
 
-    maxAccept = maxAcceptFundo;
-    fundoUsed = 0;
-    imgRefOld = imgRef;
+    %% Detetar Fundo
 
     Ahsv = rgb2hsv(imgRef);
     H = Ahsv(:,:,1);
     modeH = mode(H,"all");
 
     if modeH < 1e-3 % Pretos
-        indexes = 7;
+        iFu = 7;
     elseif modeH < 1.25e-1 % Preto Img 6 e 19
-        indexes = 8;
+        iFu = 8;
     elseif modeH < 1.75e-1 % Branco
-        indexes = 1;
+        iFu = 1;
     elseif modeH < 2.6e-1 % Verde
-        indexes = 6;
+        iFu = 6;
     elseif modeH < 5.45e-1 % Azul Tabua
-        indexes = 3;
+        iFu = 3;
     elseif modeH < 5.7e-1 % Azul
-        indexes = 2;
+        iFu = 2;
     elseif modeH < 6.43e-1 % Azul Escuro
-        indexes = 5;
+        iFu = 5;
     elseif modeH < 6.5e-1 % Azul Escuro 2
-        indexes = 4;
+        iFu = 4;
     else % Preto Img 9 e 22
-        indexes = 9;
+        iFu = 9;
     end
 
-%     for i=1:length(FundosLims)
-    for i=indexes
-        [AnoF,mask] = removeFundoDado(imgRefOld,FundosLims(i,:,:),minSizesFundos(i),i==9);
-        nnzMask = mean(mask,"all");
-%         fprintf("fundo n%d, mean%.2f \n",i, nnzMask)
-        if nnzMask < maxAccept && nnzMask > minAcceptFundo
-            maxAccept = nnzMask;
-            imgRef = AnoF;
-            maskEnd = mask;
-%             fprintf("Usado fundo n%d, mean%.2f \n",i, nnzMask)
-            fundoUsed = i;
-        end
-    end
+    % Remover o fundo
+    [AnoF,mask] = removeFundoDado(imgRef,FundosLims(iFu,:,:),minSizesFundos(iFu),iFu==9);
+    nnzMask = mean(mask,"all");
 
-    if ~fundoUsed
-%         fprintf("Not using a fundo\n")
-        E = maskComplex(imgRef);
-    
+    % Aceitar remocao
+    if nnzMask < maxAcceptFundo && nnzMask > minAcceptFundo 
+        imgRef = AnoF;
+        E = mask;
     else
-%         fprintf("Usou fundo n%d, mean%.2f \n",fundoUsed, maxAccept)
-        E = bwareaopen(maskEnd,300);
+        E = maskComplex(imgRef);
     end
+
 
     F = imclearborder(E(2:end-1,2:end-1));
     F = padarray(F,[1 1],0,"both");
 
 
     %% Bolachas Normais e Partidas
-    B = F;
+
+    [Bx,~,Nb] = bwboundaries(F,'noholes');
     
-    [Bx,~,Nb] = bwboundaries(B,'noholes');
+    sx = size(F,1);
+    sy = size(F,2);
     
-    sx = size(B,1);
-    sy = size(B,2);
-    
-    count = 1;
+    regionsRGB = cell(Nb,1);
 
     for k = 1:Nb % use only exterior boundaries
         boundary = Bx{k};
@@ -274,10 +238,8 @@ function [regionsRGB,countBord] = getSubImages(imgRef,FundosLims,minSizesFundos,
         selectedRGB = selectedRGB(:,any(mask,1),:);
         selectedRGB = selectedRGB(any(mask,2),:,:);
 
-        regionsRGB{count} = selectedRGB;
+        regionsRGB{k} = selectedRGB;
         
-        count = count + 1;
-    
     end
 
 
@@ -288,15 +250,13 @@ function [regionsRGB,countBord] = getSubImages(imgRef,FundosLims,minSizesFundos,
     G = bwareaopen(G,100);
     G = bwmorph(G,"close",inf);
     G = imfill(G,"holes");
-    G = bwareaopen(G,300);
-
+    G = bwareaopen(G,100);
 
     [~,countBord] = bwlabel(G);
 
 end
 
-function [kRef,minres,part] = getBestMatchv2(img1, AllFeatsRef, oriRefs, sizesRefs, fanKs)
-
+function [kRef,part] = getBestMatchv2(img1, AllFeatsRef, oriRefs, sizesRefs)
 
     part = false;
     solRefs = AllFeatsRef(end,:);
@@ -364,7 +324,7 @@ function [kRef,minres,part] = getBestMatchv2(img1, AllFeatsRef, oriRefs, sizesRe
         end
     end
 
-    if ismember(kRef,fanKs)
+    if ismember(kRef,[9 10])
         tolPartidasMean = 0.5;
         tolPartidasDiffY = 5e-2;
         tolPartidasMinVal = 2.2e-1;
@@ -376,7 +336,7 @@ function [kRef,minres,part] = getBestMatchv2(img1, AllFeatsRef, oriRefs, sizesRe
 
     partidaDiffY = abs(1 - partidaDiffY);
     
-    if partidaMean< tolPartidasMean || minres > tolPartidasMinVal || partidaDiffY > tolPartidasDiffY || (kRef == 19 && eulerN ~= 0)
+    if partidaMean < tolPartidasMean || minres > tolPartidasMinVal || partidaDiffY > tolPartidasDiffY || (kRef == 19 && eulerN ~= 0)
         part = true;
     end
 end
@@ -462,7 +422,6 @@ function phi = invmoments(F)
     F = double(F);
     phi = compute_phi(compute_eta(compute_m(F)));
 end
- 
 
 function m = compute_m(F)
     [M, N] = size(F);
