@@ -1,0 +1,948 @@
+<?xml version="1.0"?>
+<!--  Thursday, June 16, 2022 14:27:55  -->
+
+<Investigation
+	Version="7030105"
+	Lock="0"
+	Pwd=""
+	SpcReportEveryNRuns="0"
+	SpcReportFile="SpcReport.txt">
+<Variables
+/>
+<BgScripts>
+<Script
+	Name="BgScriptA"
+/>
+<Script
+	Name="BgScriptB"
+/>
+<Script
+	Name="BgScriptC"
+/>
+<Script
+	Name="BgScriptD"
+/>
+<Script
+	Name="BgScriptE"
+/>
+</BgScripts>
+<Calibrations
+/>
+<FileIoMgr>
+<FileIo
+	RtId="2852805374448"
+/>
+<FileIo
+	RtId="2852803711360"
+/>
+<FileIo
+	RtId="2852805457472"
+/>
+<FileIo
+	RtId="2852806676608"
+/>
+<FileIo
+	RtId="2852806677104"
+/>
+<FileIo
+	RtId="2852806677600"
+/>
+<FileIo
+	RtId="2852806678096"
+/>
+<FileIo
+	RtId="2852806678592"
+/>
+<FileIo
+	RtId="2852806679088"
+/>
+<FileIo
+	RtId="2852806679584"
+/>
+</FileIoMgr>
+<SerialIoMgr>
+<SerialIo
+	BaudRate="9600"
+	DataBits="8"
+	Parity="0"
+	StopBits="0"
+	FlowControl="0"
+/>
+<SerialIo
+	BaudRate="9600"
+	DataBits="8"
+	Parity="0"
+	StopBits="0"
+	FlowControl="0"
+/>
+</SerialIoMgr>
+<UdpIoMgr
+/>
+<EthernetIpMgr
+	ip=""
+/>
+<TcpIoMgr
+/>
+<ModbusIoMgr
+/>
+<Alignments
+/>
+<CLMngr
+/>
+<GeFanucMgr
+/>
+<HmiIoMgr
+	addr="127.0.0.1"
+	port="5085"
+	run="0"
+/>
+<ProfinetMgr
+	ip=""
+/>
+<Subroutines>
+<Sub
+	RtName="Main"
+	RtType="5"
+	RtId="2852780836832"
+	ParentInstr="0"
+	InstrType="2"
+	Collapsed="0"
+	ExecFlags="0">
+<Inputs
+/>
+<Outputs
+/>
+<Params
+/>
+<Instructions>
+<Instruction
+	RtName="Original"
+	RtType="5"
+	RtId="2852808540768"
+	ParentInstr="0"
+	InstrType="3"
+	Collapsed="1"
+	ImgSrcType="4"
+	Calibration="0"
+	RestoreCalibration="0"
+	DisplayGrid="0"
+	GridSize="50"
+	DisplayOrigin="0"
+	PalType="1"
+	ShowRawPixels="1"
+	Zoom="1"
+	WndPosLeft="0"
+	WndPosTop="0"
+	WndPosRight="660"
+	WndPosBottom="549"
+	WndPosShowCmd="1"
+	WndPosPtScrollX="0"
+	WndPosPtScrollY="0"
+	WndPosSizeScrollX="639"
+	WndPosSizeScrollY="479"
+	WndToolbarVisible="1"
+	bLogImages="0"
+	bDisableNumFile="0"
+	bLogCurIndex="0"
+	bLogMaxIndex="100"
+	strLogDir="C:\ProgramData\Teledyne DALSA\Sherlockx64\images"
+	strLogPrefix="imgA-log-"
+	strLogExt="BMP"
+	bLogWrap="1"
+	bFtpLogImages="0"
+	bDisableNumFtp="0"
+	nFtpLogCurIndex="-1"
+	nFtpLogMaxIndex="100"
+	strFtpLogDir="/Public"
+	strFtpLogPrefix="imgA-ftp-log-"
+	strFtpLogExt="JPG"
+	bFtpLogWrap="1"
+	bFtpLogOverlay="0"
+	strFtpLogServer="user:password@ftpServer or ftpServer"
+	bAcqHWTrigger="0"
+	bAcqTimeout="5000"
+	RealBpp="12"
+	SrcBpp="12"
+	HwAcqTimeout="-1"
+	AcqTimeoutNoErrSkipExec="0">
+<Inputs>
+<id0
+	RtId="2852856554048"
+	Connected="0">
+<Obj
+	Type="1"
+	Val="1"
+/>
+</id0>
+</Inputs>
+<Outputs>
+<id0
+	RtId="2852808525040"
+	ConnVar="0"
+	Watch="0"
+	SpcOn="0"
+	Hidden="0"
+	Lmark="0">
+<Obj
+	Type="3"
+	Val="0"
+/>
+<Annot
+	Type="0"
+	X="-1"
+	Y="-1"
+	Clr="0"
+	Text=""
+	Display="1"
+	Highlight="0"
+	So="0">
+<Coord
+	Size="0"
+	Value=""
+/>
+</Annot>
+</id0>
+<id1
+	RtId="2852808524240"
+	ConnVar="0"
+	Watch="0"
+	SpcOn="0"
+	Hidden="0"
+	Lmark="0">
+<Obj
+	Type="1"
+	Val="0"
+/>
+<Annot
+	Type="0"
+	X="-1"
+	Y="-1"
+	Clr="0"
+	Text=""
+	Display="1"
+	Highlight="0"
+	So="0">
+<Coord
+	Size="0"
+	Value=""
+/>
+</Annot>
+</id1>
+<id2
+	RtId="2852808525840"
+	ConnVar="0"
+	Watch="0"
+	SpcOn="0"
+	Hidden="0"
+	Lmark="0">
+<Obj
+	Type="10">
+<Val
+	HdlType="0"
+/>
+</Obj>
+<Annot
+	Type="0"
+	X="-1"
+	Y="-1"
+	Clr="0"
+	Text=""
+	Display="1"
+	Highlight="0"
+	So="0">
+<Coord
+	Size="0"
+	Value=""
+/>
+</Annot>
+</id2>
+</Outputs>
+<Params
+/>
+<ImgSrc
+	File=".\images\default.bmp"
+/>
+<Image
+	Width="640"
+	Height="480"
+	Attr="1"
+/>
+<Proxy
+	RtName="[None]"
+	RtType="7"
+	RtId="2852856632848"
+	ValType="1027">
+<Obj
+	Type="10">
+<Val
+	HdlType="0"
+/>
+</Obj>
+</Proxy>
+</Instruction>
+<Instruction
+	RtName="Trabalho"
+	RtType="5"
+	RtId="2852857081264"
+	ParentInstr="0"
+	InstrType="3"
+	Collapsed="0"
+	ImgSrcType="2"
+	Calibration="0"
+	RestoreCalibration="0"
+	DisplayGrid="0"
+	GridSize="50"
+	DisplayOrigin="0"
+	PalType="1"
+	ShowRawPixels="1"
+	Zoom="1"
+	WndPosLeft="26"
+	WndPosTop="26"
+	WndPosRight="686"
+	WndPosBottom="575"
+	WndPosShowCmd="1"
+	WndPosPtScrollX="0"
+	WndPosPtScrollY="0"
+	WndPosSizeScrollX="639"
+	WndPosSizeScrollY="479"
+	WndToolbarVisible="1"
+	bLogImages="0"
+	bDisableNumFile="0"
+	bLogCurIndex="0"
+	bLogMaxIndex="100"
+	strLogDir="C:\ProgramData\Teledyne DALSA\Sherlockx64\images"
+	strLogPrefix="imgB-log-"
+	strLogExt="BMP"
+	bLogWrap="1"
+	bFtpLogImages="0"
+	bDisableNumFtp="0"
+	nFtpLogCurIndex="-1"
+	nFtpLogMaxIndex="100"
+	strFtpLogDir="/Public"
+	strFtpLogPrefix="imgB-ftp-log-"
+	strFtpLogExt="JPG"
+	bFtpLogWrap="1"
+	bFtpLogOverlay="0"
+	strFtpLogServer="user:password@ftpServer or ftpServer"
+	bAcqHWTrigger="0"
+	bAcqTimeout="5000"
+	RealBpp="12"
+	SrcBpp="8"
+	HwAcqTimeout="-1"
+	AcqTimeoutNoErrSkipExec="0">
+<Inputs>
+<id0
+	RtId="2852856559248"
+	Connected="0">
+<Obj
+	Type="1"
+	Val="1"
+/>
+</id0>
+</Inputs>
+<Outputs>
+<id0
+	RtId="2852808520240"
+	ConnVar="0"
+	Watch="0"
+	SpcOn="0"
+	Hidden="0"
+	Lmark="0">
+<Obj
+	Type="3"
+	Val="0"
+/>
+<Annot
+	Type="0"
+	X="-1"
+	Y="-1"
+	Clr="0"
+	Text=""
+	Display="1"
+	Highlight="0"
+	So="0">
+<Coord
+	Size="0"
+	Value=""
+/>
+</Annot>
+</id0>
+<id1
+	RtId="2852808521040"
+	ConnVar="0"
+	Watch="0"
+	SpcOn="0"
+	Hidden="0"
+	Lmark="0">
+<Obj
+	Type="1"
+	Val="0"
+/>
+<Annot
+	Type="0"
+	X="-1"
+	Y="-1"
+	Clr="0"
+	Text=""
+	Display="1"
+	Highlight="0"
+	So="0">
+<Coord
+	Size="0"
+	Value=""
+/>
+</Annot>
+</id1>
+<id2
+	RtId="2852808521840"
+	ConnVar="0"
+	Watch="0"
+	SpcOn="0"
+	Hidden="0"
+	Lmark="0">
+<Obj
+	Type="10">
+<Val
+	HdlType="0"
+/>
+</Obj>
+<Annot
+	Type="0"
+	X="-1"
+	Y="-1"
+	Clr="0"
+	Text=""
+	Display="1"
+	Highlight="0"
+	So="0">
+<Coord
+	Size="0"
+	Value=""
+/>
+</Annot>
+</id2>
+</Outputs>
+<Params
+/>
+<ImgSrc
+	ShareBuffer="1"
+	IsType="1"
+	ImgType="1"
+	SrcBpp="8"
+	SoSrcRtId="2852808540768"
+	ParentSo="2852857081264"
+/>
+<Image
+	Width="640"
+	Height="480"
+	Attr="1"
+/>
+<Proxy
+	RtName="[None]"
+	RtType="7"
+	RtId="2852856637968"
+	ValType="1027">
+<Obj
+	Type="10">
+<Val
+	HdlType="0"
+/>
+</Obj>
+</Proxy>
+</Instruction>
+<Instruction
+	RtName="Begin"
+	RtType="5"
+	RtId="2852806991744"
+	ParentInstr="2852808540768"
+	InstrType="4"
+	Collapsed="0"
+	ParentSo="2852808540768"
+/>
+<Instruction
+	RtName="End"
+	RtType="5"
+	RtId="2852806992016"
+	ParentInstr="2852808540768"
+	InstrType="5"
+	Collapsed="0"
+	ParentSo="2852808540768"
+/>
+<Instruction
+	RtName="Begin"
+	RtType="5"
+	RtId="2852808638592"
+	ParentInstr="2852857081264"
+	InstrType="4"
+	Collapsed="0"
+	ParentSo="2852857081264"
+/>
+<Instruction
+	RtName="RectA"
+	RtType="5"
+	RtId="2852692067008"
+	ParentInstr="0"
+	InstrType="1"
+	Collapsed="0"
+	RoiType="67109120"
+	Interpolate="0"
+	RoiLocked="1"
+	ShowOutline="1"
+	ShowAnnot="1"
+	HdrLocked="0"
+	HdrLine="0"
+	HdrAnchorCoord="0"
+	HdrLocX="5"
+	HdrLocY="-5"
+	WriteChanges="1"
+	Locked="1"
+	Selected="1"
+	Tolerance="0"
+	Cond="FALSE"
+	RoiSoRtId="2852857081264"
+	RoiAlignId="0">
+<Coords
+	Rotation="0"
+	Elements="0">
+<Val
+	Size="2"
+	Value="(0,0),(639,479)"
+/>
+</Coords>
+<OrgCoords
+	Rotation="0"
+	Elements="0">
+<Val
+	Size="2"
+	Value="(0,0),(639,479)"
+/>
+</OrgCoords>
+<Preprocessors
+/>
+<Algorithms
+/>
+<Proxy
+	RtName="[None]"
+	RtType="7"
+	RtId="2852856636048"
+	ValType="1028">
+<Obj
+	Type="10">
+<Val
+	HdlType="0"
+/>
+</Obj>
+</Proxy>
+</Instruction>
+<Instruction
+	FormulaId="_Ipe_System_CGetDate_"
+	RtName="GetDateA"
+	RtType="5"
+	RtId="2852808632608"
+	ParentInstr="0"
+	InstrType="17"
+	Collapsed="0"
+	Tag="ex1-GetDateA">
+<Inputs
+/>
+<Outputs>
+<id0
+	RtId="2852808519440"
+	ConnVar="0"
+	Watch="0"
+	SpcOn="0"
+	Hidden="0"
+	Lmark="0">
+<Obj
+	Type="4"
+	Val="***Empty***"
+/>
+<Annot
+	Type="0"
+	X="-1"
+	Y="-1"
+	Clr="0"
+	Text=""
+	Display="1"
+	Highlight="0"
+	So="0">
+<Coord
+	Size="0"
+	Value=""
+/>
+</Annot>
+</id0>
+</Outputs>
+<Params
+/>
+</Instruction>
+<Instruction
+	FormulaId="_Ipe_System_CGetTime_"
+	RtName="GetTimeA"
+	RtType="5"
+	RtId="2852808641040"
+	ParentInstr="0"
+	InstrType="17"
+	Collapsed="0"
+	Tag="ex1-GetTimeA">
+<Inputs
+/>
+<Outputs>
+<id0
+	RtId="2852808526640"
+	ConnVar="0"
+	Watch="0"
+	SpcOn="0"
+	Hidden="0"
+	Lmark="0">
+<Obj
+	Type="4"
+	Val="***Empty***"
+/>
+<Annot
+	Type="0"
+	X="-1"
+	Y="-1"
+	Clr="0"
+	Text=""
+	Display="1"
+	Highlight="0"
+	So="0">
+<Coord
+	Size="0"
+	Value=""
+/>
+</Annot>
+</id0>
+</Outputs>
+<Params
+/>
+</Instruction>
+<Instruction
+	FormulaId="_Ipe_Array_CSArrCreate_"
+	RtName="CreateA"
+	RtType="5"
+	RtId="2852808630432"
+	ParentInstr="0"
+	InstrType="17"
+	Collapsed="0"
+	Tag="ex1-CreateA">
+<Inputs>
+<id0
+	RtId="2852856557584"
+	Connected="0">
+<Obj
+	Type="3"
+	Val="0"
+/>
+</id0>
+</Inputs>
+<Outputs>
+<id0
+	RtId="2852808522640"
+	ConnVar="0"
+	Watch="0"
+	SpcOn="0"
+	Hidden="0"
+	Lmark="0">
+<Obj
+	Type="4099">
+<Val
+	Size="0"
+/>
+</Obj>
+<Annot
+	Type="0"
+	X="-1"
+	Y="-1"
+	Clr="0"
+	Text=""
+	Display="1"
+	Highlight="0"
+	So="0">
+<Coord
+	Size="0"
+	Value=""
+/>
+</Annot>
+</id0>
+</Outputs>
+<Params
+/>
+</Instruction>
+<Instruction
+	FormulaId="_Ipe_Array_CSArrAppend_"
+	RtName="AppendA"
+	RtType="5"
+	RtId="2852808633968"
+	ParentInstr="0"
+	InstrType="17"
+	Collapsed="0"
+	Tag="ex1-AppendA">
+<Inputs>
+<id0
+	RtId="2852856558624"
+	Connected="2852808522640">
+<Obj
+	Type="4099">
+<Val
+	Size="0"
+/>
+</Obj>
+</id0>
+<id1
+	RtId="2852856554880"
+	Connected="2852808519440">
+<Obj
+	Type="4"
+	Val="***Empty***"
+/>
+</id1>
+<InfInputsId1
+	Count="3">
+<Input
+	RtId="2852856559664"
+	Connected="0">
+<Obj
+	Type="4"
+	Val=","
+/>
+</Input>
+<Input
+	RtId="2852805362736"
+	Connected="2852808526640">
+<Obj
+	Type="4"
+	Val="***Empty***"
+/>
+</Input>
+<Input
+	RtId="2852856645440"
+	Connected="0">
+<Obj
+	Type="4"
+	Val=","
+/>
+</Input>
+</InfInputsId1>
+</Inputs>
+<Outputs>
+<id0
+	RtId="2852857252960"
+	ConnVar="0"
+	Watch="0"
+	SpcOn="0"
+	Hidden="0"
+	Lmark="0">
+<Obj
+	Type="4099">
+<Val
+	Size="0"
+/>
+</Obj>
+<Annot
+	Type="0"
+	X="-1"
+	Y="-1"
+	Clr="0"
+	Text=""
+	Display="1"
+	Highlight="0"
+	So="0">
+<Coord
+	Size="0"
+	Value=""
+/>
+</Annot>
+</id0>
+</Outputs>
+<Params
+/>
+</Instruction>
+<Instruction
+	FormulaId="_Ipe_String_CPackStr_"
+	RtName="PackStrA"
+	RtType="5"
+	RtId="2852808641312"
+	ParentInstr="0"
+	InstrType="17"
+	Collapsed="0"
+	Tag="ex1-PackStrA">
+<Inputs>
+<id0
+	RtId="2852856558000"
+	Connected="2852857252960">
+<Obj
+	Type="4099">
+<Val
+	Size="0"
+/>
+</Obj>
+</id0>
+</Inputs>
+<Outputs>
+<id0
+	RtId="2852857264160"
+	ConnVar="0"
+	Watch="0"
+	SpcOn="0"
+	Hidden="0"
+	Lmark="0">
+<Obj
+	Type="4"
+	Val="***Empty***"
+/>
+<Annot
+	Type="0"
+	X="-1"
+	Y="-1"
+	Clr="0"
+	Text=""
+	Display="1"
+	Highlight="0"
+	So="0">
+<Coord
+	Size="0"
+	Value=""
+/>
+</Annot>
+</id0>
+</Outputs>
+<Params
+/>
+</Instruction>
+<Instruction
+	RtName="append file A"
+	RtType="5"
+	RtId="2852808644304"
+	ParentInstr="0"
+	InstrType="704"
+	Collapsed="0">
+<Inputs>
+<id0
+	RtId="2852856558208"
+	Connected="0">
+<Obj
+	Type="4"
+	Val="FicheiroResultados"
+/>
+</id0>
+<id1
+	RtId="2852856555088"
+	Connected="2852857264160">
+<Obj
+	Type="4"
+	Val=""
+/>
+</id1>
+</Inputs>
+<Outputs>
+<id0
+	RtId="2852857254560"
+	ConnVar="0"
+	Watch="0"
+	SpcOn="0"
+	Hidden="0"
+	Lmark="0">
+<Obj
+	Type="1"
+	Val="0"
+/>
+<Annot
+	Type="0"
+	X="-1"
+	Y="-1"
+	Clr="0"
+	Text=""
+	Display="1"
+	Highlight="0"
+	So="0">
+<Coord
+	Size="0"
+	Value=""
+/>
+</Annot>
+</id0>
+</Outputs>
+<Params
+/>
+</Instruction>
+<Instruction
+	RtName="End"
+	RtType="5"
+	RtId="2852808634512"
+	ParentInstr="2852857081264"
+	InstrType="5"
+	Collapsed="0"
+	ParentSo="2852857081264"
+/>
+</Instructions>
+<Structure>
+<Branch
+	Parent="0">
+<Children>
+<Child
+	Id="2852780836832"
+/>
+</Children>
+</Branch>
+<Branch
+	Parent="2852780836832">
+<Children>
+<Child
+	Id="2852808540768"
+/>
+<Child
+	Id="2852857081264"
+/>
+</Children>
+</Branch>
+<Branch
+	Parent="2852808540768">
+<Children>
+<Child
+	Id="2852806991744"
+/>
+<Child
+	Id="2852806992016"
+/>
+</Children>
+</Branch>
+<Branch
+	Parent="2852857081264">
+<Children>
+<Child
+	Id="2852808638592"
+/>
+<Child
+	Id="2852692067008"
+/>
+<Child
+	Id="2852808632608"
+/>
+<Child
+	Id="2852808641040"
+/>
+<Child
+	Id="2852808630432"
+/>
+<Child
+	Id="2852808633968"
+/>
+<Child
+	Id="2852808641312"
+/>
+<Child
+	Id="2852808644304"
+/>
+<Child
+	Id="2852808634512"
+/>
+</Children>
+</Branch>
+</Structure>
+</Sub>
+</Subroutines>
+<Watched
+/>
+</Investigation>
